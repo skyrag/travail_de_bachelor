@@ -4,7 +4,7 @@ Afin de finaliser mon bachelor a l'HEIG-VD, j'ai l'ocassion de réaliser un trav
 
 ## Description du projet
 
-Le projet a pour but de créer un jeu ayant un style similaire a des gros jeux déjà existants mais en y ajoutant un twist pour le rendre un peu unique. L'objectif est en aucun cas de créer quelque chose de révolutionnaire, mais de créer un jeu entier qui serait du même gabarie que des géants du secteur et avec lequel les joueurs s'amuseront. Pour un state of the art des géants dont je vais m'inspirer aller voir le GDD.
+Le projet a pour but de créer un jeu ayant un style similaire a des gros jeux déjà existants mais en y ajoutant un twist pour le rendre un peu unique. L'objectif est en aucun cas de créer quelque chose de révolutionnaire, mais de créer un jeu entier qui serait du même gabarie que des géants du secteur et avec lequel les joueurs s'amuseront. On cherche donc a réaliser un jeu jouable en ligne multijoueur autobattler, ou 8 personne pourront s'affronter dans la même partie.
 
 ## Technologie utilisés
 
@@ -15,8 +15,8 @@ Pour ce projet je vais utiliser le framework Play pour le developper, il aura do
 
 Dans cette section, je décrit les fonctionnalités qui seront attendues a la fin du projet. On listera aussi de potentielle fonctionnalité future.
 ### Must have
-- un système de login 
-- un système de connection multijoueurs    
+- un système de login, où chaque utilisateur pourra se connecter et regarder ses statisques soit le nombre de victoire dans un premier temps
+- un système de connection multijoueurs, où l'on pourra connecter 8 personne a la même partie afin qu'ils s'affrontent.    
 - un système de stockage des données utilisateurs 
 - un système de partie opérationnel : Donc où un joueurs pourrait lancer une partie pour jouer contre d'autre joueur ou des bots. donc cela inclut
     - un système de boutique pour acheté les unités
@@ -29,7 +29,10 @@ Dans cette section, je décrit les fonctionnalités qui seront attendues a la fi
 ### Could have
 - un système d'augment pendant la partie : durant la partie plusieurs choix aléatoire sont proposer aux joueurs afin d'améliorer leur équipes ou de changer leur partie actuel.
 - un pouvoir spécifique aux joueurs, et ou chaque joueurs pourrait choisir entre certains pouvoir afin de changer la dynamique de sa parti.
+- une IA complexe et challengeante, qui pourrait poser un vrai danger a des joueurs connaissant le jeu ou les jeux de ce genre.
 ### Won't have
+- une vrai direction artistique
+- une bande son
 ## durée du projet
 Je dois mettre un travail équivalent a 13h de travail par semaine le long du semestre, et 45h lorsque mon semestre sera finit donc en juillet. cela fera un total de 450h de travail disponible.
 
