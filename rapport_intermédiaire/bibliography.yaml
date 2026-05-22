@@ -1,0 +1,157 @@
+## Framework
+playFrameworkDocs:
+  type: Reference
+  title: Play Framework Documentation 3.0.x
+  author: Play Framework
+  url: https://www.playframework.com/documentation/3.0.x/Home
+
+playFrameworkScalaTemplates:
+  type: Reference
+  title: Play Framework Scala Templates
+  author: Play Framework
+  url: https://www.playframework.com/documentation/3.0.x/ScalaTemplates
+
+playFrameworkWebSockets:
+  type: Reference
+  title: Play Framework Java WebSockets
+  author: Play Framework
+  url: https://www.playframework.com/documentation/3.0.x/JavaWebSockets
+
+
+## DB
+jooqPlayFramework:
+  type: Blog
+  title: Using jOOQ with Play Framework
+  author: Lukas Eder
+  url: https://blog.jooq.org/using-jooq-with-play-framework/
+
+jooqImpedanceMismatch:
+  type: Blog
+  title: There is No Such Thing as Object Relational Impedance Mismatch
+  author: Lukas Eder
+  url: https://blog.jooq.org/there-is-no-such-thing-as-object-relational-impedance-mismatch/
+
+playFrameworkDatabaseDocs:
+  type: Reference
+  title: Play Framework Database Documentation
+  author: Play Framework
+  url: https://www.playframework.com/documentation/3.0.x/Databases
+
+postgresql:
+  type: Reference
+  title: PostgreSQL Official Website
+  author: PostgreSQL Global Development Group
+  url: https://www.postgresql.org/
+
+
+## Frontend
+phaser:
+  type: Reference
+  title: Phaser Official Website
+  author: Phaser Studio
+  url: https://phaser.io/
+
+pixijs:
+  type: Reference
+  title: PixiJS Official Website
+  author: PixiJS Team
+  url: https://pixijs.com/
+
+phaserVsPixijs:
+  type: Article
+  title: Phaser vs PixiJS for Making 2D Games
+  author: Ritza
+  url: https://dev.to/ritza/phaser-vs-pixijs-for-making-2d-games-2j8c
+
+pixijsOrPhaserStackOverflow:
+  type: thread
+  title: Decide Pixi.js or Phaser
+  author: Stack Overflow Community
+  url: https://stackoverflow.com/questions/38509629/decide-pixi-js-or-phaser
+
+htmlGameDiscussion:
+  type: thread
+  title: Is It Worth Developing a Game Made Only in HTML/JS?
+  author: Reddit Community
+  url: https://www.reddit.com/r/gamedev/comments/vdp8h0/is_it_worth_developing_a_game_made_only_in/?tl=fr
+
+webgl:
+  type: Web
+  title: WebGL Wikipedia
+  author: Wikipédia
+  url: https://fr.wikipedia.org/wiki/WebGL
+
+renderingBenchmark:
+  type: Web
+  title: JS Game Rendering Benchmark
+  author: Shirajuki
+  url: https://github.com/Shirajuki/js-game-rendering-benchmark
+
+engineComparison:
+  type: Web
+  title: Canvas Engines Comparison
+  author: slaylines
+  url: https://github.com/slaylines/canvas-engines-comparison
+
+
+## CI/CD
+riotContainerArticle:
+  type: Article
+  title: Thinking Inside Container
+  author: Riot Games
+  url: https://www.riotgames.com/en/news/thinking-inside-container
+
+riotTechBlog:
+  type: Blog
+  title: Riot Games Technology Blog
+  author: Riot Games
+  url: https://technology.riotgames.com/
+
+
+## Authentification
+Oauth2:
+  type: Web
+  title: Oauth2
+  author: Aaron Parecki
+  url: https://oauth.net/2/
+
+webAuthenticationApi:
+  type: Reference
+  title: Web Authentication API
+  author: MDN Web Docs
+  url: https://www.playframework.com/documentation/2.1.5/JavaGuide4
+
+
+## Connection
+actorModelWikipedia:
+  type: Web
+  title: Modèle d'acteur
+  author: Wikipédia
+  url: https://fr.wikipedia.org/wiki/Modèle_d%27acteur
+
+raft:
+  type: Web
+  title: Raft
+  author: Olivier Lemer
+  url: https://sdr-classroom.github.io/slides/7-1-consensus-raft/
+
+ablyLongPolling:
+  type: Article
+  title: What is Long Polling?
+  author: Ably
+  url: https://ably.com/topic/long-polling
+
+serverSentEvents:
+  type: Reference
+  title: Using Server-Sent Events
+  author: MDN Web Docs
+  url: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+
+## Conception
+
+eventSourcing:
+  type: Web
+  title: What is event sourcing?
+  author: GenesisDB
+  url: https://www.eventsourcing.dev/what-is-event-sourcing
+
