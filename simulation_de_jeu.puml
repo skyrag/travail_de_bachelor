@@ -1,0 +1,163 @@
+@startuml
+'https://plantuml.com/class-diagram
+skinparam classAttributeIconSize 0
+hide empty members
+top to bottom direction
+
+abstract class Unite {
+- health : int
+- mana : int
+- baseAttack : int
+- attackDamage : double
+- abilityPower : double
+- attackSpeed : double
+- armor : int
+- magicResist : int
+- criticalChance : double
+- criticalDamage : double
+- range : int
+___
+- recomputeStats()
++ addStatsModifier(e : Effet)
++ subscribe (o :Observer, Events)
++ unsubscribe (o :Observer, Events)
++ notifyObservers (o :Observer, Events)
+}
+
+class Stats {
+
+}
+
+class Competence {
++ description : String
+}
+
+abstract class Effet {
+- effect : Consumer<Unite>
+---
++ linkEffect(u :Unite)
++ unlinkEffect(u :Unite)
++ applyEffect(caster :Unite, targets :Unite[])
++ setStrategy(strategy)
++ damageTarget(baseDamage :int, scaling : Pair<Stats, double>[])
++ stunTarget(duration :double)
++ modifyStats(changes : Pair<Stats, double>[])
+}
+
+abstract class Famille {
+}
+
+abstract class Specialisation {
+}
+
+class ObserverEffect {
++ linkEffect(u :Unite)
++ unlinkEffect(u :Unite)
+}
+
+class StatsModifier {
++ linkEffect(u :Unite)
++ unlinkEffect(u :Unite)
+}
+
+
+class Team {
+- MaxUnit :int
++ GetUnits() : Unite[]
+}
+
+class Combat {
+}
+
+class Geralt {
+}
+
+class Witcher {
++ description : String
+}
+
+class Geurrier {
++ description : String
+}
+
+class ObserverBus {
++ subscribe (o :Observer, Events)
++ unsubscribe (o :Observer, Events)
++ notifyObservers (o :Observer, Events)
+}
+
+abstract class Groupe {
++ description : String
+- currentMember : String[]
++ addMember(name : String)
++ removeMember(name : String)
+}
+
+Enum Events {
+ON_ATTACK
+ON_MAXMANA
+ON_HALFHP
+ON_BATTLEBEGIN
+}
+
+Enum Stats {
+HP
+MANA
+ATTACK_DAMAGE
+ABILITY_POWER
+BASE_ATTACK
+ATTACK_SPEED
+ARMOR
+MAGIC_RESIST
+CRITICAL_CHANCE
+CRITICAL_DAMAGE
+RANGE
+}
+
+interface publisher {
++ subscribe (o :Observer, Events)
++ unsubscribe (o :Observer, Events)
++ notifyObservers (o :Observer, Events)
+}
+
+interface Observer {
++ update(caster :Unite, targets :Unite[])
+}
+
+Effet ..> Stats
+ObserverEffect ..> Observer
+
+
+Unite "1" --> "0..1" Competence
+Unite "1..*"-- "1" Famille : Member
+Unite "1..*"-- "0..x" Specialisation :Member
+Unite ..|> publisher
+
+
+ObserverBus o--> Observer
+ObserverBus ..|> publisher
+ObserverBus <-- Unite
+ObserverBus ..> Events
+
+Competence o--> "0..x" Effet
+Effet <|-- ObserverEffect
+Effet <|-- StatsModifier
+
+Famille --|> Groupe
+Specialisation --|> Groupe
+
+Groupe --> Effet
+
+Team "0..x" o--> "0..x" Unite
+Team "*" -- "*" Groupe
+
+Combat "1" -- "2" Team
+
+Geralt --|> Unite
+
+Witcher --|> Famille
+
+Geurrier --|> Specialisation
+
+
+@enduml

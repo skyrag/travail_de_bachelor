@@ -1,0 +1,50 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+== Buying phase ==
+
+User -> Event : acheter un unité
+Event -> Gold : retire le montant du cout de l'unité choisie
+Event -> Shop : retire l'unité du shop a diposition du User
+Event -> Board : instancie et place l'unité sur la place du banc la plus a gauche
+alt si suite a cette event il y a trois copie de la même unité
+    Event -> Board : On fusionne les trois unité en une et on augmente le niveau de l'unité de 1
+
+end
+
+User -> Event : vendre une unité
+Event -> Board : change la position de l'unité et l'enlève de l'équipe
+Event -> Gold : rajoute le coût de l'unité a l'argent de l'utilisateur
+Event -> Shop : remplie de pool d'unité avec les unités vendue
+
+User -> Event : Bouger une unité
+Event -> Board : change l'unité de place
+
+User -> Event : donner un object a une unité
+Event -> Unit : l'unité gagne l'object
+Event -> Inventory : on enlève l'object de l'inventaire
+
+User -> Event : fusionner des objects
+Event -> Inventory : on enlève les deux objects
+Event -> Inventory : on rajoute le résultat de la fusion
+
+User -> Event : Reroll le shop
+Event -> Gold : on enlève les golds nécessaire au reroll
+Event -> Shop : on change le shop a disposition du user en prenant 5 unité dans le pool
+
+User -> Event : achat d'exp
+Event -> Gold : on enlève les golds nécessaire a l'achat d'exp
+Event -> Exp : on rajoute l'exp
+
+Event -> Event : après un certain temps on passe en == Fighting phase ==
+
+== Fighting phase ==
+
+Event -> Event : on lance le combat en prenant deux équipes
+
+User -> User : si l'on ne change pas son équipe on peut faire n'importe quel action
+
+Event -> Event : le combat est fini il y a un vainqueur
+Event -> Hp : le perdant perds des pv en fonction des unité en vie et de l'avancement de la partie
+Event -> Event : on retourne en == Buying phase ==
+@enduml

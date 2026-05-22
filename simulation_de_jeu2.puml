@@ -1,0 +1,93 @@
+@startuml
+'https://plantuml.com/class-diagram
+class Unit {
+- health : int
+- startingMana : int
+- maxMana : int
+- baseAttack : int
+- attackSpeed : double
+- armor : int
+- magicResist : int
+- range : int
+}
+
+class PlayableUnit {
+- niveau : int
+- maxHealth : int
+- startingMana : int
+- maxMana : int
+- baseAttack : int
+- attackDamage : double
+- abilityPower : double
+- attackSpeed : double
+- armor : int
+- magicResist : int
+- criticalChance : double
+- criticalDamage : double
+- damageAmp : int
+- range : int
+- position : <int, int>
+
++ PlayableUnit(Unit unit) : PlayableUnit
++ ComputeStats() : void
+}
+
+Enum Events {
+constant
+onEndOfTurn
+WarCryBuff
+WarcryDuel
+OnManaMax
+}
+
+Enum Target {
+self
+team
+oneEnnemy
+aoe
+ennemies
+}
+
+Enum Stats {
+
+}
+
+class Trait {
+- treshold int[]
+}
+
+abstract class effect {
++ apply(Unit)
++ toComponent()
+
+}
+
+abstract class warcry {
+}
+
+class warcrystats {
+
+}
+
+class constantEffect {
+
+}
+
+class PermanentEffect {
+}
+
+class ComponentUnit {
+-
++ componentUnit(PlayableUnit unit) : ComponentUnit
++ addEffectComponent(Events event) : void
++ removeEffectComponent(Events event) : void
+}
+
+PlayableUnit --> Unit : baseStats
+
+constantEffect --|> effect
+PermanentEffect --|> effect
+warcry --|> effect
+warcrystats --|> warcry
+
+@enduml

@@ -1,0 +1,137 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+top to bottom direction
+
+object User {
+<u>id</u>
+username
+oauth_provider
+oauth_sub
+prénom
+nom
+email
+}
+
+object Participation {
+placement
+}
+
+object Game {
+<u>id</u>
+date
+patch_version
+}
+
+object Changement {
+<u>id</u>
+eventType
+event_version
+paylod (JSON)
+created_at
+seq_number
+}
+
+Note top
+Changement a pour clé composite la clé étrangère
+de Participation(game_id et user_id) et id
+end Note
+
+
+object Snapshot {
+<u>id</u>
+state (JSON)
+created_at
+last_changement_seq
+}
+
+Note left
+Snapshot a pour clé composite la clé étrangère
+de Participation(game_id et user_id) et id
+end Note
+
+
+Participation "*" --> "1" User : user_id
+Participation "8" --> "1" Game : game_id
+
+Changement "1..*" --> "1" Participation
+
+Snapshot "1..*" --> "1" Participation
+
+
+
+
+
+object Unit {
+<u>id</u>
+patch
+name
+art
+coût
+---
+health
+mana
+baseAttack
+attackDamage
+abilityPower
+attackSpeed
+armor
+magicResist
+criticalChance
+criticalDamage
+range
+}
+
+object Ability {
+<u>id</u>
+name
+description
+}
+
+object Object {
+<u>id</u>
+patch
+name
+description
+}
+
+object Effect {
+<u>id</u>
+type
+value
+cible
+durée
+}
+
+object Trait {
+<u>id</u>
+name
+icon
+}
+
+object shop_level {
+<u>lvl</u>
+<u>patch</u>
+common_chances
+uncommon_chances
+rare_chances
+epic_chances
+legendary_chances
+}
+
+object Trait_bonus {
+<u>id</u>
+threshold
+}
+
+Unit "1..*" -- "1..*" Trait
+Unit "1" --> "1" Ability
+
+Trait "1" -- "1..*" Trait_bonus
+
+Ability "*" --> "1..*" Effect
+Trait_bonus "*" --> "1..*" Effect
+
+Object "*" --> "1..*" Effect
+
+@enduml

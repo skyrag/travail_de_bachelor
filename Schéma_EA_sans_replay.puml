@@ -1,0 +1,154 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+top to bottom direction
+
+object User {
+<u>id</u>
+username
+oauth_provider
+oauth_sub
+prénom
+nom
+email
+}
+
+object team {
+placement
+<u>version</u>
+gold
+pv
+niveau
+winstreak
+}
+Note right
+en terme de clé composite la participation aura
+l'id de la game et l'id du user
+Contrainte :
+    - une équipe ne stocke que la dernière version de shop
+    - une équipe ne stocke que la dernière version de state
+    - une équipe ne va stocker au maximum que les 25 unité qui forment l'équipe
+    - pour une unique partie un user ne peut participer qu'une seule fois
+end Note
+
+object Game {
+<u>id</u>
+date
+patch_version
+seed
+}
+
+object Pool {
+nb
+}
+
+object instanceUnit {
+<u>id</u>
+positions
+}
+
+object combat {
+<u>round</u>
+}
+
+Note left
+L'historique a pour clé composite les clé étrangères
+de game_id, les deux équipes et le round
+end Note
+
+team "*" -- "1" User : user_id
+team "8" -- "1" Game : game_id
+team -- "0..10" Object
+
+
+instanceUnit "0..*" --o "1" team
+instanceUnit  -- "0..3" Object
+
+combat "1..*" -- "1" Game
+combat "1..*" --> "2" team
+combat  --> "1" team : vainqueur
+
+
+Pool "*" -- "*" Unit
+Pool -- Game
+
+object Unit {
+<u>id</u>
+patch
+name
+art
+coût
+---
+health
+mana
+baseAttack
+attackDamage
+abilityPower
+attackSpeed
+armor
+magicResist
+criticalChance
+criticalDamage
+range
+}
+
+object Ability {
+<u>id</u>
+name
+description
+}
+
+object Object {
+<u>id</u>
+patch
+name
+description
+}
+
+object Effect {
+<u>id</u>
+type
+value
+cible
+durée
+}
+
+object Trait {
+<u>id</u>
+name
+icon
+}
+
+object shop_level {
+<u>lvl</u>
+<u>patch</u>
+common_chances
+uncommon_chances
+rare_chances
+epic_chances
+legendary_chances
+}
+
+object Trait_bonus {
+<u>id</u>
+threshold
+}
+
+Unit "1..*" -- "1..*" Trait
+Unit "1" --> "1" Ability
+
+Trait "1" -- "1..*" Trait_bonus
+
+Ability "*" --> "1..*" Effect
+Trait_bonus "*" --> "1..*" Effect
+
+Object "*" --> "1..*" Effect
+
+
+
+
+
+instanceUnit "*" --> "1" Unit
+
+
+@enduml
