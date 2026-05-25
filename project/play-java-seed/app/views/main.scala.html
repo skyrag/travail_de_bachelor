@@ -19,6 +19,15 @@
          * the page content. *@
         @content
 
-        <script src="@routes.Assets.versioned("javascripts/main.js")" type="text/javascript"></script>
+        @Html("""
+         <script type="importmap"> {
+            "imports": {
+                "pixi.js": "https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs"
+            }
+         }
+         </script>
+         """)
+
+        <script type="module" src="@routes.Assets.versioned("javascripts/main.js")"></script>
     </body>
 </html>
