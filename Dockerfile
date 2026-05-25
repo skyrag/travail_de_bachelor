@@ -4,7 +4,7 @@ RUN apk add --no-cache bash curl
 
 WORKDIR /app
 
-COPY . .
+COPY project/play-java-seed/ .
 
 RUN ./sbt update
 
