@@ -6,6 +6,6 @@ WORKDIR /app
 
 COPY project/play-java-seed/ .
 
-RUN ./sbt update
+RUN sbt update
 
-CMD ["./sbt", "test"]
+CMD ["sbt", "test"]
