@@ -8,11 +8,31 @@
 
 <!DOCTYPE html>
 <html lang="en">
+    @*
+    *<head>
+    *
+    *    Here's where we render the page title `String`.
+    *    <title>@title</title>
+    *    <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
+    *    <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+    *</head>
+    *@
     <head>
-        @* Here's where we render the page title `String`. *@
         <title>@title</title>
-        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
-        <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+
+        <style>
+        html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        }
+
+        canvas {
+        display: block;
+        }
+        </style>
     </head>
     <body>
         @* And here's where we render the `Html` object containing

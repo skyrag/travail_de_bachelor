@@ -1,8 +1,12 @@
 import { Application, Assets, Container,Graphics, Sprite } from 'pixi.js';
-import {setup} from "./Drag.js";
+import {Dragger} from "./Drag.js";
 import {Unit} from "./Unit.js";
 import {Item} from "./Item.js";
 import {Trait} from "./Trait.js";
+import {Shop} from "./Shop.js";
+import {Team} from "./Team.js";
+import {Arena} from "./Arena.js";
+
 
 (async () => {
     // Create a new application
@@ -19,23 +23,26 @@ import {Trait} from "./Trait.js";
 
     app.stage.addChild(container);
 
+
     // Load the unit texture
-    const fighting = await Assets.load('assets/images/Geralt_sprite.png');
-    const shop = await Assets.load("assets/images/Geralt_shopSprite.png");
-    const trait = await Assets.load("assets/images/médaillon_TheWitcher.png");
+    const geraltFighting = await Assets.load('assets/images/Geralt_sprite.png');
+    const geraltShop = await Assets.load("assets/images/Geralt_shopSprite.png");
+    const witcherTrait = await Assets.load("assets/images/médaillon_TheWitcher.png");
     const item = await Assets.load("assets/images/item.png");
+    const buttonSprite = await Assets.load('assets/images/RerollButton.png');
+    const arenaSprite = await Assets.load('assets/images/arena.png');
 
     // setup drag and drop
-    setup(app);
+    const dragger = new Dragger(app);
 
     // setup geralt
-    const geralt = new Unit(app, "geralt", fighting, shop);
+    const geralt = new Unit(app, "geralt", geraltFighting, geraltShop, dragger);
 
     // setup item
     const bfSword = new Item("bfSword", "a big sword", item);
 
     // setup trait
-    const witcher = new Trait("witcher", "hunters of monsters", trait);
+    const witcher = new Trait("witcher", "hunters of monsters", witcherTrait);
 
     // setup shop place holder (gold)
     const rectWidth = window.innerWidth -300;
@@ -64,13 +71,49 @@ import {Trait} from "./Trait.js";
         .stroke({ width: 4, color: 'black' });
     container.addChild(rect3);
 
+    // bench placeholder (blanc)
+    const rectWidth4 = window.innerWidth -700;
+    const rectHeight4 = 175;
+    const rect4 = new Graphics()
+        .rect(350, 4 * window.innerHeight / 6 , rectWidth4, rectHeight4)
+        .fill(0xffffff)
+        .stroke({ width: 4, color: 'black' });
+    container.addChild(rect4);
 
-    // Create a 5x5 grid of units
-    for (let i = 0; i < 25; i++) {
-        var x = (i % 5) * 100 + 375;
-        var y = Math.floor(i / 5) * 100 + 75;
-        geralt.create(x,y);
+    // arena placeholder (green)
+    /*
+    const rectWidth5 = window.innerWidth -500;
+    const rectHeight5 = window.innerHeight /2;
+    const rect5 = new Graphics()
+        .rect(350, window.innerHeight/12 , rectWidth5, rectHeight5)
+        .fill(0x00ff00)
+        .stroke({ width: 4, color: 'black' });
+    container.addChild(rect5);
+
+     */
+
+    // creating arena
+    const arena = new Arena(app, arenaSprite);
+    dragger.setArena(arena);
+
+    // creating the team
+    const team = new Team(app);
+    dragger.setBench(team);
+
+    // creating the shop
+    const shop = new Shop(app, team);
+
+
+    // create shopUnits
+    const list = [];
+    for (let i = 0; i < 5 ; i++){
+        list.push(geralt.copy());
     }
+    console.log(list);
+    shop.resetShop(list);
+
+    // rerollbutton
+    shop.createButton(buttonSprite, list);
 
 
     // Move the container to the top left
