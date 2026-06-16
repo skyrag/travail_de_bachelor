@@ -29,4 +29,15 @@ public class HomeControllerTest extends WithApplication {
         assertEquals(OK, result.status());
     }
 
+    @Test
+    public void testCreateWidget() {
+        Http.RequestBuilder request = Helpers.fakeRequest()
+                .method(POST)
+                .bodyForm(ImmutableMap.of("email","widget 6", "password", "6"))
+                .uri("/login");
+
+        Result result = route(app, request);
+        assertEquals(SEE_OTHER, result.status());
+    }
+
 }
