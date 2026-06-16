@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import play.data.Form;
 import play.data.FormFactory;
 import play.i18n.MessagesApi;
+import model.groupConstraints.LoginCheck;
+import model.groupConstraints.RegisterCheck;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -18,6 +20,7 @@ import static play.libs.Scala.asScala;
  * This controller contains an action to handle HTTP requests
  * to the application's home page.
  */
+@Singleton
 public class HomeController extends Controller {
 
     /**
@@ -26,7 +29,7 @@ public class HomeController extends Controller {
      * this method will be called when the application receives a
      * <code>GET</code> request with a path of <code>/</code>.
      */
-    private final Form<UserData> form;
+    private final FormFactory formFactory;
     private MessagesApi messagesApi;
     private final List<User> users;
 
@@ -35,7 +38,7 @@ public class HomeController extends Controller {
 
     @Inject
     public HomeController(FormFactory formFactory, MessagesApi messagesApi) {
-        this.form = formFactory.form(UserData.class);
+        this.formFactory = formFactory;
         this.messagesApi = messagesApi;
         this.users = com.google.common.collect.Lists.newArrayList(
                 new User("mail 1", "456"),
@@ -49,21 +52,57 @@ public class HomeController extends Controller {
         return ok(views.html.index.render());
     }
 
+    // la fonction pour get le formulaire de login
     public Result login(Http.Request request) {
-        return ok(views.html.login.render(asScala(users), form, request, messagesApi.preferred(request)));
+        return ok(views.html.login.render(asScala(users), formFactory.form(UserData.class, LoginCheck.class), request, messagesApi.preferred(request)));
     }
 
+    // la fonction pour get le formulaire d'enregistrement
+    public Result register(Http.Request request) {
+        return ok(views.html.register.render(asScala(users), formFactory.form(UserData.class, RegisterCheck.class), request, messagesApi.preferred(request)));
+    }
+
+    // la fonction a appeler a la fin du formulaire d'enregistrement pour enregistrer ou non la personne sur la db
+    public Result registerIn(Http.Request request) {
+        final Form<UserData> registerFomr = formFactory.form(UserData.class, RegisterCheck.class).bindFromRequest(request);
+
+        if (registerFomr.hasErrors()) {
+            logger.error("errors = {}", registerFomr.errors());
+            return badRequest(views.html.register.render(asScala(users), registerFomr, request, messagesApi.preferred(request)));
+        } else {
+            UserData data = registerFomr.get();
+            //faire l'appel a la DB pour checker si il y a déjà quelqu'un dans la DB avec la même addresse mail
+            // Si il y a renoyer une erreur
+            // Si il y a pas enregistrer la personne et la logger automatiquement
+            if (false) { // TODO a changer quand on aura la DB
+                return badRequest(views.html.register.render(asScala(users), formFactory.form(UserData.class, RegisterCheck.class).fill(new UserData(data.getEmail())), request, messagesApi.preferred(request)));
+            } else {
+                // appel a la DB et redirect sur la page principale
+                return redirect(routes.HomeController.login());
+            }
+
+        }
+
+    }
+
+    // la fonction a appeler a la fin du formulaire de login pour log la personne ou non.
     public Result authenticate(Http.Request request) {
-        final Form<UserData> loginForm = form.bindFromRequest(request);
+        final Form<UserData> loginForm = formFactory.form(UserData.class, LoginCheck.class).bindFromRequest(request);
 
         if (loginForm.hasErrors()) {
             logger.error("errors = {}", loginForm.errors());
             return badRequest(views.html.login.render(asScala(users), loginForm, request, messagesApi.preferred(request)));
         } else {
             UserData data = loginForm.get();
-            users.add(new User(data.getEmail(), data.getPassword()));
-            return redirect(routes.HomeController.login())
-                    .flashing("info", "User added!");
+            // faire un appel a la DB pour checker si les identifiant sont similaires
+            // Si non on lève une erreur
+            // Si oui alors on loggue la personne a son compte.
+            if (false) { // TODO a changer lorsque l'on aura l'appel a la DB
+                return badRequest(views.html.login.render(asScala(users), loginForm, request, messagesApi.preferred(request)));
+            } else {
+                users.add(new User(data.getEmail(), data.getPassword())); //TODO- remplacer par le login lorsque l'on aura la DB
+                return redirect(routes.HomeController.login());
+            }
         }
     }
 }

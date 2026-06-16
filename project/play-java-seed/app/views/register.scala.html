@@ -33,12 +33,18 @@
         }
     }
 
-    @helper.form(routes.HomeController.authenticate()) {
+    @helper.form(routes.HomeController.registerIn()) {
         @helper.CSRF.formField
+
+        @helper.inputText(form("firstName"))
+
+        @helper.inputText(form("lastName"))
 
         @helper.inputText(form("email"))
 
         @helper.inputText(form("password"))
+
+        @helper.inputText(form("repeatPassword"))
 
         <button type="submit">Create user</button>
     }
