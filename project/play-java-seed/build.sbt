@@ -3,8 +3,18 @@ organization := "autoBattler"
 
 version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayJava)
+lazy val root = (project in file("."))
+  .enablePlugins(PlayJava)
+  .settings(
+    name := """play-auto-battler""",
+    version := "0.1",
+    libraryDependencies ++= Seq(
+      guice,
+      javaJpa,
+      "org.hibernate" % "hibernate-core" % "6.6.20.Final",
+    ),
+    PlayKeys.externalizeResourcesExcludes += baseDirectory.value / "conf" / "META-INF" / "persistence.xml"
+  )
+
 
 scalaVersion := "2.13.18"
-
-libraryDependencies += guice
