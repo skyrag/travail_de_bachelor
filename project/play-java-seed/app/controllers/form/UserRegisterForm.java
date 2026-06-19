@@ -1,20 +1,23 @@
-package controllers;
+package controllers.form;
 
 import play.data.validation.Constraints;
 import play.data.validation.Constraints.Validate;
 import play.data.validation.Constraints.Validatable;
-import play.data.validation.Constraints;
 import play.data.validation.ValidationError;
 import model.groupConstraints.LoginCheck;
 import model.groupConstraints.RegisterCheck;
 
+import java.util.Objects;
+
 
 @Validate(groups = {RegisterCheck.class})
-public class UserData implements Validatable<ValidationError>{
+public class UserRegisterForm implements Validatable<ValidationError>{
 
     @Constraints.Required private String firstName;
 
     @Constraints.Required private String lastName;
+
+    @Constraints.Required private String username;
 
     @Constraints.Required(groups = {RegisterCheck.class, LoginCheck.class})
     @Constraints.Email(groups = {RegisterCheck.class})
@@ -26,19 +29,27 @@ public class UserData implements Validatable<ValidationError>{
     @Constraints.Required(groups = {RegisterCheck.class})
     private String repeatPassword;
 
-    public UserData (){
+    public UserRegisterForm(){
     }
 
-    public UserData (String email){
+    public UserRegisterForm(String email){
         this.email = email;
     }
 
     @Override
     public ValidationError validate() {
-        if (password != repeatPassword) {
+        if (!Objects.equals(password, repeatPassword)) {
             return new ValidationError("repeatPassword", "Passwords do not match");
         }
         return null;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setEmail(String email) {

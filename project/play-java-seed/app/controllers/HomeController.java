@@ -1,5 +1,6 @@
 package controllers;
 
+import controllers.form.UserRegisterForm;
 import play.mvc.*;
 import model.User;
 import org.slf4j.Logger;
@@ -54,28 +55,28 @@ public class HomeController extends Controller {
 
     // la fonction pour get le formulaire de login
     public Result login(Http.Request request) {
-        return ok(views.html.login.render(asScala(users), formFactory.form(UserData.class, LoginCheck.class), request, messagesApi.preferred(request)));
+        return ok(views.html.login.render(asScala(users), formFactory.form(UserRegisterForm.class, LoginCheck.class), request, messagesApi.preferred(request)));
     }
 
     // la fonction pour get le formulaire d'enregistrement
     public Result register(Http.Request request) {
-        return ok(views.html.register.render(asScala(users), formFactory.form(UserData.class, RegisterCheck.class), request, messagesApi.preferred(request)));
+        return ok(views.html.register.render(asScala(users), formFactory.form(UserRegisterForm.class, RegisterCheck.class), request, messagesApi.preferred(request)));
     }
 
     // la fonction a appeler a la fin du formulaire d'enregistrement pour enregistrer ou non la personne sur la db
     public Result registerIn(Http.Request request) {
-        final Form<UserData> registerFomr = formFactory.form(UserData.class, RegisterCheck.class).bindFromRequest(request);
+        final Form<UserRegisterForm> registerFomr = formFactory.form(UserRegisterForm.class, RegisterCheck.class).bindFromRequest(request);
 
         if (registerFomr.hasErrors()) {
             logger.error("errors = {}", registerFomr.errors());
             return badRequest(views.html.register.render(asScala(users), registerFomr, request, messagesApi.preferred(request)));
         } else {
-            UserData data = registerFomr.get();
+            UserRegisterForm data = registerFomr.get();
             //faire l'appel a la DB pour checker si il y a déjà quelqu'un dans la DB avec la même addresse mail
             // Si il y a renoyer une erreur
             // Si il y a pas enregistrer la personne et la logger automatiquement
             if (false) { // TODO a changer quand on aura la DB
-                return badRequest(views.html.register.render(asScala(users), formFactory.form(UserData.class, RegisterCheck.class).fill(new UserData(data.getEmail())), request, messagesApi.preferred(request)));
+                return badRequest(views.html.register.render(asScala(users), formFactory.form(UserRegisterForm.class, RegisterCheck.class).fill(new UserRegisterForm(data.getEmail())), request, messagesApi.preferred(request)));
             } else {
                 // appel a la DB et redirect sur la page principale
                 return redirect(routes.HomeController.login());
@@ -87,13 +88,13 @@ public class HomeController extends Controller {
 
     // la fonction a appeler a la fin du formulaire de login pour log la personne ou non.
     public Result authenticate(Http.Request request) {
-        final Form<UserData> loginForm = formFactory.form(UserData.class, LoginCheck.class).bindFromRequest(request);
+        final Form<UserRegisterForm> loginForm = formFactory.form(UserRegisterForm.class, LoginCheck.class).bindFromRequest(request);
 
         if (loginForm.hasErrors()) {
             logger.error("errors = {}", loginForm.errors());
             return badRequest(views.html.login.render(asScala(users), loginForm, request, messagesApi.preferred(request)));
         } else {
-            UserData data = loginForm.get();
+            UserRegisterForm data = loginForm.get();
             // faire un appel a la DB pour checker si les identifiant sont similaires
             // Si non on lève une erreur
             // Si oui alors on loggue la personne a son compte.

@@ -1,6 +1,7 @@
 @import play.mvc.Http.Request
 @import model.User
-@(users: Seq[User], form: Form[UserData])(implicit request: Request, messages: play.i18n.Messages)
+@import controllers.form.UserRegisterForm
+@(users: Seq[User], form: Form[UserRegisterForm])(implicit request: Request, messages: play.i18n.Messages)
 
 @main("Login") {
 
@@ -36,7 +37,7 @@
     @helper.form(routes.HomeController.authenticate()) {
         @helper.CSRF.formField
 
-        @helper.inputText(form("email"), Symbol("_label") -> "Adresse email")// TODO remplacer les choses pour que l'on ait un username ou mail
+        @helper.inputText(form("email"), Symbol("_label") -> "username/mail")
 
         @helper.inputText(form("password"))
 
