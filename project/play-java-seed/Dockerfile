@@ -16,4 +16,4 @@ COPY --from=build /app/target/universal/app/* .
 
 EXPOSE 9000
 
-CMD ["bin/play-java-seed", "-Dplay.http.secret.key=changeme"]
+CMD ["bin/play-java-seed"]

@@ -12,6 +12,7 @@ lazy val root = (project in file("."))
       guice,
       javaJpa,
       "org.hibernate" % "hibernate-core" % "6.6.20.Final",
+      "org.postgresql" % "postgresql" % "42.7.7"
     ),
     PlayKeys.externalizeResourcesExcludes += baseDirectory.value / "conf" / "META-INF" / "persistence.xml"
   )

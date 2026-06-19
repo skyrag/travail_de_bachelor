@@ -1,4 +1,12 @@
-faire un .env avec les bonne valeur #TODO
+faire un .env avec les bonne valeur // TODO pour l'instant (# Database Configuration
+POSTGRES_USER=battler_user
+POSTGRES_PASSWORD=battler_password
+POSTGRES_DB=battler_db
+POSTGRES_PORT=5432
+
+
+APPLICATION_SECRET=OT6sSfOkw7slrF+CyMEX9aleP7K/HXTsIkvNg8mnMX0=
+)
 
 
 # 1. rebuild
