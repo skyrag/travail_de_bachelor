@@ -1,4 +1,4 @@
-package controllers.form;
+package model.form;
 
 import play.data.validation.Constraints;
 import play.data.validation.Constraints.Validate;
@@ -19,11 +19,11 @@ public class UserRegisterForm implements Validatable<ValidationError>{
 
     @Constraints.Required private String username;
 
-    @Constraints.Required(groups = {RegisterCheck.class, LoginCheck.class})
+    @Constraints.Required(groups = {RegisterCheck.class})
     @Constraints.Email(groups = {RegisterCheck.class})
     private String email;
 
-    @Constraints.Required(groups = {RegisterCheck.class, LoginCheck.class})
+    @Constraints.Required(groups = {RegisterCheck.class})
     private String password;
 
     @Constraints.Required(groups = {RegisterCheck.class})

@@ -1,6 +1,7 @@
 package controllers;
 
-import controllers.form.UserRegisterForm;
+import model.form.UserLoginForm;
+import model.form.UserRegisterForm;
 import play.mvc.*;
 import model.User;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class HomeController extends Controller {
 
     // la fonction pour get le formulaire de login
     public Result login(Http.Request request) {
-        return ok(views.html.login.render(asScala(users), formFactory.form(UserRegisterForm.class, LoginCheck.class), request, messagesApi.preferred(request)));
+        return ok(views.html.login.render(asScala(users), formFactory.form(UserLoginForm.class, LoginCheck.class), request, messagesApi.preferred(request)));
     }
 
     // la fonction pour get le formulaire d'enregistrement
@@ -65,13 +66,13 @@ public class HomeController extends Controller {
 
     // la fonction a appeler a la fin du formulaire d'enregistrement pour enregistrer ou non la personne sur la db
     public Result registerIn(Http.Request request) {
-        final Form<UserRegisterForm> registerFomr = formFactory.form(UserRegisterForm.class, RegisterCheck.class).bindFromRequest(request);
+        final Form<UserRegisterForm> registerForm = formFactory.form(UserRegisterForm.class, RegisterCheck.class).bindFromRequest(request);
 
-        if (registerFomr.hasErrors()) {
-            logger.error("errors = {}", registerFomr.errors());
-            return badRequest(views.html.register.render(asScala(users), registerFomr, request, messagesApi.preferred(request)));
+        if (registerForm.hasErrors()) {
+            logger.error("errors = {}", registerForm.errors());
+            return badRequest(views.html.register.render(asScala(users), registerForm, request, messagesApi.preferred(request)));
         } else {
-            UserRegisterForm data = registerFomr.get();
+            UserRegisterForm data = registerForm.get();
             //faire l'appel a la DB pour checker si il y a déjà quelqu'un dans la DB avec la même addresse mail
             // Si il y a renoyer une erreur
             // Si il y a pas enregistrer la personne et la logger automatiquement
@@ -79,6 +80,7 @@ public class HomeController extends Controller {
                 return badRequest(views.html.register.render(asScala(users), formFactory.form(UserRegisterForm.class, RegisterCheck.class).fill(new UserRegisterForm(data.getEmail())), request, messagesApi.preferred(request)));
             } else {
                 // appel a la DB et redirect sur la page principale
+                users.add(new User(data.getEmail(), data.getPassword()));
                 return redirect(routes.HomeController.login());
             }
 
@@ -88,20 +90,20 @@ public class HomeController extends Controller {
 
     // la fonction a appeler a la fin du formulaire de login pour log la personne ou non.
     public Result authenticate(Http.Request request) {
-        final Form<UserRegisterForm> loginForm = formFactory.form(UserRegisterForm.class, LoginCheck.class).bindFromRequest(request);
+        final Form<UserLoginForm> loginForm = formFactory.form(UserLoginForm.class, LoginCheck.class).bindFromRequest(request);
 
         if (loginForm.hasErrors()) {
             logger.error("errors = {}", loginForm.errors());
             return badRequest(views.html.login.render(asScala(users), loginForm, request, messagesApi.preferred(request)));
         } else {
-            UserRegisterForm data = loginForm.get();
+            UserLoginForm data = loginForm.get();
             // faire un appel a la DB pour checker si les identifiant sont similaires
             // Si non on lève une erreur
             // Si oui alors on loggue la personne a son compte.
             if (false) { // TODO a changer lorsque l'on aura l'appel a la DB
                 return badRequest(views.html.login.render(asScala(users), loginForm, request, messagesApi.preferred(request)));
             } else {
-                users.add(new User(data.getEmail(), data.getPassword())); //TODO- remplacer par le login lorsque l'on aura la DB
+                //TODO- remplacer par le login lorsque l'on aura la DB
                 return redirect(routes.HomeController.login());
             }
         }

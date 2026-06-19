@@ -1,7 +1,7 @@
 @import play.mvc.Http.Request
 @import model.User
-@import controllers.form.UserRegisterForm
-@(users: Seq[User], form: Form[UserRegisterForm])(implicit request: Request, messages: play.i18n.Messages)
+@import model.form.UserLoginForm
+@(users: Seq[User], form: Form[UserLoginForm])(implicit request: Request, messages: play.i18n.Messages)
 
 @main("Login") {
 
@@ -37,9 +37,9 @@
     @helper.form(routes.HomeController.authenticate()) {
         @helper.CSRF.formField
 
-        @helper.inputText(form("email"), Symbol("_label") -> "username/mail")
+        @helper.inputText(form("usernameOrMail"), Symbol("_label") -> "Username/email")
 
-        @helper.inputText(form("password"))
+        @helper.inputText(form("Password"))
 
         <button type="submit">Create user</button>
     }
