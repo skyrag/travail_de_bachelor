@@ -2,6 +2,15 @@ package model.entities;
 
 import jakarta.persistence.*;
 
+import java.util.Objects;
+
+/**
+ * Represents a user of the application.
+ * <p>
+ * A user can authenticate either through a local account
+ * using a password hash or through an external OAuth provider.
+ * The entity is persisted in the {@code users} table.
+ */
 @Entity
 @Table(name = "users")
 public class User {
@@ -14,10 +23,21 @@ public class User {
     public String surname;
     public String name;
     public String email;
-    public String password_hash;
 
-    public String oauth_provider;
-    public String oauth_sub;
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    /**
+     * OAuth provider name (e.g. Google, GitHub).
+     */
+    @Column(name = "oauth_provider")
+    private String oauthProvider;
+
+    /**
+     * Unique identifier provided by the OAuth provider.
+     */
+    @Column(name = "oauth_sub")
+    private String oauthSub;
 
     public long getId() {
         return id;
@@ -60,26 +80,40 @@ public class User {
     }
 
     public String getPasswordHash() {
-        return password_hash;
+        return passwordHash;
     }
 
     public void setPasswordHash(String passwordHash) {
-        this.password_hash = passwordHash;
+        this.passwordHash = passwordHash;
     }
 
     public String getOauth_provider() {
-        return oauth_provider;
+        return oauthProvider;
     }
 
     public void setOauth_provider(String oauth_provider) {
-        this.oauth_provider = oauth_provider;
+        this.oauthProvider = oauth_provider;
     }
 
     public String getOauth_sub() {
-        return oauth_sub;
+        return oauthSub;
     }
 
     public void setOauth_sub(String oauth_sub) {
-        this.oauth_sub = oauth_sub;
+        this.oauthSub = oauth_sub;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if (o instanceof User u ){
+            return Objects.equals(u.id, this.id);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
     }
 }
