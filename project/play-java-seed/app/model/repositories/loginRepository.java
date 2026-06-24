@@ -51,7 +51,7 @@ public class loginRepository implements UserRepo{
     @Override
     public CompletionStage<User> get(User user) {
         return supplyAsync(() -> wrap(em ->
-                em.find(User.class, user.id)
+                em.find(User.class, user.getId())
         ), executionContext);
     }
 

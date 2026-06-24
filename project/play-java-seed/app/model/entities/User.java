@@ -17,12 +17,12 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public long id;
+    private long id;
 
-    public String username;
-    public String surname;
-    public String name;
-    public String email;
+    private String username;
+    private String surname;
+    private String name;
+    private String email;
 
     @Column(name = "password_hash")
     private String passwordHash;

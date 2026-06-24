@@ -86,22 +86,22 @@ public class TestLoginRepositories {
 
         // setup of a user to add
         User alice = new User();
-        alice.username = "userAlice";
-        alice.email = "alice@test.ch";
-        alice.name = "alice";
-        alice.surname = "surAlice";
-        alice.oauth_provider = null;
-        alice.oauth_sub = null;
-        alice.password_hash = "hashAlice";
+        alice.setUsername("userAlice");
+        alice.setEmail("alice@test.ch");
+        alice.setName("alice");
+        alice.setSurname("surAlice");
+        alice.setOauth_provider(null);
+        alice.setOauth_sub(null);
+        alice.setPasswordHash("hashAlice");
 
         // adding a user
         repo.add(alice);
 
         // asserting that we get our user back
-        Boolean resEmail = repo.existsByEmail(alice.email)
+        Boolean resEmail = repo.existsByEmail(alice.getEmail())
                 .toCompletableFuture()
                 .join();
-        Boolean resUsername = repo.existsByUsername(alice.username)
+        Boolean resUsername = repo.existsByUsername(alice.getUsername())
                 .toCompletableFuture()
                 .join();
 
@@ -118,13 +118,13 @@ public class TestLoginRepositories {
 
         // setup of a user to add
         User bob = new User();
-        bob.name = "bob";
-        bob.surname = "surBob";
-        bob.username = "userBob";
-        bob.email ="bob@test.ch";
-        bob.oauth_provider = "google";
-        bob.oauth_sub = "bob'stoken";
-        bob.password_hash = "hashBob";
+        bob.setName("bob");
+        bob.setSurname("surBob");
+        bob.setUsername("userBob");
+        bob.setEmail("bob@test.ch");
+        bob.setOauth_provider("google");
+        bob.setOauth_sub("bob'sid");
+        bob.setPasswordHash("hashBob");
 
         // adding the user
         User saved = repo.add(bob)
@@ -152,22 +152,22 @@ public class TestLoginRepositories {
 
         // setup of users to get
         User bob = new User();
-        bob.name = "bob";
-        bob.surname = "surBob";
-        bob.username = "userBob";
-        bob.email ="bob@test.ch";
-        bob.oauth_provider = "google";
-        bob.oauth_sub = "bob'stoken";
-        bob.password_hash = "hashBob";
+        bob.setName("bob");
+        bob.setSurname("surBob");
+        bob.setUsername("userBob");
+        bob.setEmail("bob@test.ch");
+        bob.setOauth_provider("google");
+        bob.setOauth_sub("bob'sid");
+        bob.setPasswordHash("hashBob");
 
         User alice = new User();
-        alice.username = "userAlice";
-        alice.email = "alice@test.ch";
-        alice.name = "alice";
-        alice.surname = "surAlice";
-        alice.oauth_provider = null;
-        alice.oauth_sub = null;
-        alice.password_hash = "hashAlice";
+        alice.setUsername("userAlice");
+        alice.setEmail("alice@test.ch");
+        alice.setName("alice");
+        alice.setSurname("surAlice");
+        alice.setOauth_provider(null);
+        alice.setOauth_sub(null);
+        alice.setPasswordHash("hashAlice");
 
         // adding the users
         repo.add(bob);
