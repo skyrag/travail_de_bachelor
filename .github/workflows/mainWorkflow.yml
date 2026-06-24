@@ -19,19 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t app-test .
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
 
       - name: Run tests
-        run: |
-          docker create --name test-container app-test \
-          sbt clean coverage test coverageReport coverageAggregate
-
-          docker start -v /var/run/docker.sock:/var/run/docker.sock -a test-container
-
-          docker cp test-container:/app/target ./target
-
-          docker rm test-container
+        run: sbt clean coverage test coverageReport coverageAggregate
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
