@@ -19,11 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-
       - name: Build Docker image
         run: docker build -t app-test .
 
@@ -32,7 +27,7 @@ jobs:
           docker create --name test-container app-test \
           sbt clean coverage test coverageReport coverageAggregate
 
-          docker start -a test-container
+          docker start -v /var/run/docker.sock:/var/run/docker.sock -a test-container
 
           docker cp test-container:/app/target ./target
 
