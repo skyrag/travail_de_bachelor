@@ -33,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: target/scala-*/scoverage-report
+          path: project/play-java-seed/target/scala-*/scoverage-report
