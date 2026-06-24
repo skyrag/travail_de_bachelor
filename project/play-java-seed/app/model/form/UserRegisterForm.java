@@ -4,7 +4,6 @@ import play.data.validation.Constraints;
 import play.data.validation.Constraints.Validate;
 import play.data.validation.Constraints.Validatable;
 import play.data.validation.ValidationError;
-import model.groupConstraints.LoginCheck;
 import model.groupConstraints.RegisterCheck;
 
 import java.util.Objects;

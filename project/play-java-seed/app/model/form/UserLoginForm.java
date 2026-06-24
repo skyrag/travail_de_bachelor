@@ -2,13 +2,10 @@ package model.form;
 
 
 import model.groupConstraints.LoginCheck;
-import model.groupConstraints.RegisterCheck;
 import play.data.validation.Constraints;
 import play.data.validation.Constraints.Validate;
 import play.data.validation.ValidationError;
 
-import javax.validation.Constraint;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,9 +36,6 @@ public class UserLoginForm implements Constraints.Validatable<ValidationError> {
         } else {
             return null;
         }
-        // check un premier regex pour savoir si le string a un @
-        // ensuite si c'est un mail on check avec notre regex
-        // sinon all good ?
     }
 
     public void setUsernameOrMail(String usernameOrMail) {

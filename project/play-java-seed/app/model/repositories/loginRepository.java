@@ -1,6 +1,5 @@
 package model.repositories;
 
-import jakarta.persistence.Entity;
 import model.DatabaseExecutionContext;
 import model.entities.User;
 import play.db.jpa.JPAApi;
@@ -10,7 +9,6 @@ import java.util.concurrent.CompletionStage;
 import javax.inject.Inject;
 import jakarta.persistence.EntityManager;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 

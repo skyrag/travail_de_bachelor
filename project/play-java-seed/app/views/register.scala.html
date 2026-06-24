@@ -1,29 +1,11 @@
 @import play.mvc.Http.Request
-@import model.User
+@import model.entities.User
 @import model.form.UserRegisterForm
-@(users: Seq[User], form: Form[UserRegisterForm])(implicit request: Request, messages: play.i18n.Messages)
+@(form: Form[UserRegisterForm])(implicit request: Request, messages: play.i18n.Messages)
 
 @main("Login") {
 
     <h1>Login</h1>
-
-    @* Flash shows updates to a page TODO artefact a enlever une fois que l'on a la DB et que on par en quelque chose de plus pro (ca affiche littéralement le mot de passe)*@
-    @request.flash.asScala().data.map { case (email, password) =>
-    <div class="@email">@email</div>
-    }
-
-    <table>
-        <thead>
-            <tr><th>Email</th><th>Password</th>
-        </thead>
-        <tbody>
-        @for(u <- users ) {
-            <tr><td>@u.email</td><td>@u.password</td></tr>
-        }
-        </tbody>
-    </table>
-
-    <hr/>
 
     @* Global errors are not tied to any particular form field *@
     @if(form.hasGlobalErrors) {
