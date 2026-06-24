@@ -23,9 +23,12 @@ jobs:
         run: docker build -t app-test .
 
       - name: Run tests
-        run: |
-          docker run --rm app-test \
-          sbt clean coverage test coverageReport coverageAggregate
+         run: |
+         docker run --rm \
+         -v ${{ github.workspace }}:/workspace \
+         -w /workspace \
+         app-test \
+         sbt clean coverage test coverageReport coverageAggregate
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
