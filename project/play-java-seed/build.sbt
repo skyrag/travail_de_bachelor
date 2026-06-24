@@ -4,7 +4,7 @@ organization := "autoBattler"
 version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayJava)
+  .enablePlugins(PlayJava, JacocoPlugin)
   .settings(
     name := """play-auto-battler""",
     version := "0.1",
@@ -16,6 +16,9 @@ lazy val root = (project in file("."))
       "org.testcontainers" % "testcontainers" % "1.21.4" % "test",
       "org.testcontainers" % "postgresql" % "1.21.4" % "test",
       "org.junit.jupiter" % "junit-jupiter" % "5.10.2" % "test",
+      "org.jacoco" % "org.jacoco.core"  % "0.8.12",
+      "org.jacoco" % "org.jacoco.report" % "0.8.12",
+      "org.jacoco" % "org.jacoco.agent"  % "0.8.12"
     ),
     Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v"),
     scalacOptions ++= List("-feature", "-Werror"),
