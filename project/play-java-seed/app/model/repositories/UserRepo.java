@@ -13,7 +13,7 @@ import java.util.concurrent.CompletionStage;
  * for checking the existence of users based on their email
  * address or username.
  */
-@ImplementedBy(loginRepository.class)
+@ImplementedBy(LoginRepository.class)
 public interface UserRepo {
 
     /**

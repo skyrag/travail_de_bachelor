@@ -12,11 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -34,7 +29,7 @@ public class TestLoginRepositories {
             .withInitScript("Login.sql");
 
 
-    loginRepository repo;
+    LoginRepository repo;
     Application app;
 
     //starting the DB before doing those tests
@@ -70,7 +65,7 @@ public class TestLoginRepositories {
         app = new GuiceApplicationBuilder()
                         .configure(config)
                         .build();
-        repo = app.injector().instanceOf(loginRepository.class);
+        repo = app.injector().instanceOf(LoginRepository.class);
     }
 
     // stopping the app in case it is not after each test

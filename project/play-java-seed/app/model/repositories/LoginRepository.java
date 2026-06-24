@@ -23,13 +23,13 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
  * Each operation is executed within its own transaction through
  * {@link JPAApi#withTransaction(Function)}
  */
-public class loginRepository implements UserRepo{
+public class LoginRepository implements UserRepo{
 
     private final JPAApi jpaApi;
     private final DatabaseExecutionContext executionContext;
 
     @Inject
-    public loginRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
+    public LoginRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
         this.jpaApi = jpaApi;
         this.executionContext = executionContext;
     }

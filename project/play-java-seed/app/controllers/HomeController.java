@@ -2,6 +2,7 @@ package controllers;
 
 import model.form.UserLoginForm;
 import model.form.UserRegisterForm;
+import model.repositories.LoginRepository;
 import play.mvc.*;
 import model.entities.User;
 import org.slf4j.Logger;
@@ -32,15 +33,17 @@ public class HomeController extends Controller {
      * <code>GET</code> request with a path of <code>/</code>.
      */
     private final FormFactory formFactory;
-    private MessagesApi messagesApi;
+    private final MessagesApi messagesApi;
+    private final LoginRepository loginRepo;
 
     private final Logger logger = LoggerFactory.getLogger(getClass()) ;
 
 
     @Inject
-    public HomeController(FormFactory formFactory, MessagesApi messagesApi) {
+    public HomeController(FormFactory formFactory, MessagesApi messagesApi, LoginRepository loginRepository) {
         this.formFactory = formFactory;
         this.messagesApi = messagesApi;
+        this.loginRepo = loginRepository;
 
     }
 
@@ -67,6 +70,15 @@ public class HomeController extends Controller {
             return badRequest(views.html.register.render(registerForm, request, messagesApi.preferred(request)));
         } else {
             UserRegisterForm data = registerForm.get();
+
+            if (loginRepo.existsByEmail(data.getEmail()).toCompletableFuture().join()){
+                return badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class).fill(new UserRegisterForm(data.getEmail())), request, messagesApi.preferred(request)));
+            } else {
+                User newUser = new User();
+                loginRepo
+                return redirect(routes.HomeController.login());
+            }
+
             //faire l'appel a la DB pour checker si il y a déjà quelqu'un dans la DB avec la même addresse mail
             // Si il y a renoyer une erreur
             // Si il y a pas enregistrer la personne et la logger automatiquement
