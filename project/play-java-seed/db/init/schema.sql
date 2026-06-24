@@ -23,7 +23,7 @@ CREATE DOMAIN email AS citext
 
 -- Users table
 CREATE TABLE users (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     surname VARCHAR(30),
     name VARCHAR(30),
     username VARCHAR(50) NOT NULL UNIQUE,

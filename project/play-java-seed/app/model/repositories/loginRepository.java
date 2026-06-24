@@ -1,5 +1,7 @@
 package model.repositories;
 
+import jakarta.persistence.Entity;
+import model.DatabaseExecutionContext;
 import model.entities.User;
 import play.db.jpa.JPAApi;
 
@@ -18,7 +20,7 @@ public class loginRepository implements UserRepo{
     private final DatabaseExecutionContext executionContext;
 
     @Inject
-    public JPAPersonRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
+    public loginRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
         this.jpaApi = jpaApi;
         this.executionContext = executionContext;
     }
@@ -30,17 +32,27 @@ public class loginRepository implements UserRepo{
 
     @Override
     public CompletionStage<List<User>> getAll() {
-        return null;
+        return supplyAsync(() -> wrap(em ->
+                em.createQuery("select u from User u", User.class).getResultList()
+        ), executionContext);
     }
 
     @Override
     public CompletionStage<User> get(User user) {
-        return null;
+        return supplyAsync(() -> wrap(em ->
+                em.find(User.class, user.id)
+        ), executionContext);
     }
 
     @Override
-    public CompletionStage<User> exists(String email, String username) {
-        return null;
+    public CompletionStage<Boolean> exists(String email, String username) {
+        if (email == null) {
+            return supplyAsync(() -> wrap(em -> !em.createQuery(
+                    "select u from User u where u.username == username", User.class).getResultList().isEmpty()), executionContext);
+        } else {
+            return supplyAsync(() -> wrap(em -> !em.createQuery(
+                    "select u from User u where u.email == email", User.class).getResultList().isEmpty()), executionContext);
+        }
     }
 
     private <T> T wrap(Function<EntityManager, T> function) {

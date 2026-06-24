@@ -15,5 +15,5 @@ public interface UserRepo {
     
     CompletionStage<User> get(User user);
 
-    CompletionStage<User> exists(String email, String username);
+    CompletionStage<Boolean> exists(String email, String username);
 }

@@ -1,21 +1,20 @@
 package model.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long id;
 
     public String username;
     public String surname;
     public String name;
     public String email;
+    public String password_hash;
 
     public String oauth_provider;
     public String oauth_sub;
@@ -58,6 +57,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPasswordHash() {
+        return password_hash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.password_hash = passwordHash;
     }
 
     public String getOauth_provider() {
