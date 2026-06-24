@@ -17,7 +17,11 @@ lazy val root = (project in file("."))
       "org.testcontainers" % "postgresql" % "1.21.4" % "test",
       "org.junit.jupiter" % "junit-jupiter" % "5.10.2" % "test",
     ),
-    PlayKeys.externalizeResourcesExcludes += baseDirectory.value / "conf" / "META-INF" / "persistence.xml"
+    Test / testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v"),
+    scalacOptions ++= List("-feature", "-Werror"),
+    javacOptions ++= List("-Xlint:unchecked", "-Xlint:deprecation", "-Werror"),
+    PlayKeys.externalizeResourcesExcludes += baseDirectory.value / "conf" / "META-INF" / "persistence.xml",
+
   )
 
 
