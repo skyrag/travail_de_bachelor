@@ -13,6 +13,8 @@ lazy val root = (project in file("."))
       javaJpa,
       "org.hibernate" % "hibernate-core" % "6.6.20.Final",
       "org.postgresql" % "postgresql" % "42.7.7",
+      "de.mkammerer" % "argon2-jvm" % "2.11",
+
       "org.testcontainers" % "testcontainers" % "1.21.4" % "test",
       "org.testcontainers" % "postgresql" % "1.21.4" % "test",
       "org.junit.jupiter" % "junit-jupiter" % "5.10.2" % "test",

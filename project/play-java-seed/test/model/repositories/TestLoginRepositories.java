@@ -90,7 +90,7 @@ public class TestLoginRepositories {
         alice.setPasswordHash("hashAlice");
 
         // adding a user
-        repo.add(alice);
+        repo.add(alice).toCompletableFuture().join();
 
         // asserting that we get our user back
         User resEmail = repo.getByEmail(alice.getEmail())
@@ -165,8 +165,8 @@ public class TestLoginRepositories {
         alice.setPasswordHash("hashAlice");
 
         // adding the users
-        repo.add(bob);
-        repo.add(alice);
+        repo.add(bob).toCompletableFuture().join();
+        repo.add(alice).toCompletableFuture().join();
 
         List<User> list = repo.getAll()
                 .toCompletableFuture()

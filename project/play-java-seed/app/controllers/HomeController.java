@@ -17,6 +17,9 @@ import model.groupConstraints.RegisterCheck;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static play.libs.Scala.asScala;
 
 /**
@@ -73,7 +76,7 @@ public class HomeController extends Controller {
         } else {
             UserRegisterForm data = registerForm.get();
 
-            if (loginRepo.getByEmail(data.getEmail()).toCompletableFuture().join()){
+            if (loginRepo.getByEmail(data.getEmail()).toCompletableFuture().join() != null){
                 //TODO investiger l'impact et ce qu'on doit faire en cas d'erreur ici
                 return badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class).fill(new UserRegisterForm(data.getEmail())), request, messagesApi.preferred(request)));
             } else {
@@ -98,16 +101,33 @@ public class HomeController extends Controller {
             return badRequest(views.html.login.render( loginForm, request, messagesApi.preferred(request)));
         } else {
             UserLoginForm data = loginForm.get();
-            User user = loginRepo.
-            // faire un appel a la DB pour checker si les identifiant sont similaires
-            // Si non on lève une erreur
-            // Si oui alors on loggue la personne a son compte.
-            if (false) { // TODO a changer lorsque l'on aura l'appel a la DB
-                return badRequest(views.html.login.render(loginForm, request, messagesApi.preferred(request)));
+
+            // we determine whether he used his email ou username
+            Pattern pattern = Pattern.compile("@", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(data.getUsernameOrMail());
+            User user;
+
+            // we look for the user
+            if (matcher.find()){
+                user = loginRepo.getByEmail(data.getUsernameOrMail()).toCompletableFuture().join();
             } else {
-                //TODO- remplacer par le login lorsque l'on aura la DB
-                return redirect(routes.HomeController.login());
+                user = loginRepo.getByUsername(data.getUsernameOrMail()).toCompletableFuture().join();
             }
+
+            // we compare his password with the hash found if some user is found
+            if (user != null){
+                if (hashService.verify(user.getPasswordHash(), data.getPassword().toCharArray())){
+                    // c'est bon maintenant TODO faut crée la session
+                    return redirect(routes.HomeController.index());
+                } else {
+                    //TODO regarder si on a de vrai messages d'erreurs
+                    return badRequest(views.html.login.render(loginForm, request, messagesApi.preferred(request)));
+                }
+            } else {
+                //TODO mettre le même message d'erreur pour pas donner d'indice
+                return badRequest(views.html.login.render(loginForm, request, messagesApi.preferred(request)));
+            }
+
         }
     }
 }

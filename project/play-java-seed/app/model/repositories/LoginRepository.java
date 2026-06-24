@@ -15,13 +15,13 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 /**
  * JPA implementation of {@link UserRepo}.
  * <p>
- * This repository uses Play Framework's {@link JPAApi} to perform
- * database operations on {@link User} entities. All public methods
+ * This repository uses Play Framework's JPAApi to perform
+ * database operations on User entities. All public methods
  * are executed asynchronously using the provided
- * {@link DatabaseExecutionContext}.
+ * DatabaseExecutionContext.
  * <p>
  * Each operation is executed within its own transaction through
- * {@link JPAApi#withTransaction(Function)}
+ * withTransaction(Function)
  */
 public class LoginRepository implements UserRepo{
 
@@ -55,21 +55,25 @@ public class LoginRepository implements UserRepo{
 
     @Override
     public CompletionStage<User> getByEmail(String email) {
-        return supplyAsync(() -> wrap(em -> em.createQuery(
-                "select u from User u where u.email = :email", User.class).setParameter("email", email)
-                .setMaxResults(1)
-                .getResultList()
-                .getFirst()
+        return supplyAsync(() -> wrap(em -> {
+            List<User> list = em.createQuery(
+                            "select u from User u where u.email = :email", User.class).setParameter("email", email)
+                    .setMaxResults(1)
+                    .getResultList();
+            return list.isEmpty()? null : list.getFirst();
+        }
         ), executionContext);
     }
 
     @Override
     public CompletionStage<User> getByUsername(String username) {
-        return supplyAsync(() -> wrap(em -> em.createQuery(
-                "select u from User u where u.username = :username", User.class).setParameter("username", username)
-                .setMaxResults(1)
-                .getResultList()
-                .getFirst()
+        return supplyAsync(() -> wrap(em -> {
+            List<User> list = em.createQuery(
+                            "select u from User u where u.username = :username", User.class).setParameter("username", username)
+                    .setMaxResults(1)
+                    .getResultList();
+            return list.isEmpty()? null : list.getFirst();
+        }
         ), executionContext);
     }
 
