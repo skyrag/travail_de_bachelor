@@ -1,0 +1,30 @@
+-- solution du regex pour valider l'email trouver  : https://dba.stackexchange.com/questions/68266/what-is-the-best-way-to-store-an-email-address-in-postgresql/165923#165923
+CREATE EXTENSION citext;
+CREATE DOMAIN email AS citext
+    CHECK ( value ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$' );
+
+-- Users table
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    surname VARCHAR(30),
+    name VARCHAR(30),
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email email NOT NULL UNIQUE,
+    password_hash VARCHAR(255),
+    oauth_provider TEXT,
+    oauth_sub TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT auth_method_check
+        CHECK (
+            password_hash IS NOT NULL
+            OR oauth_provider IS NOT NULL
+        ),
+    CONSTRAINT oauth_pair_check
+        CHECK (
+            (oauth_provider IS NULL AND oauth_sub IS NULL)
+            OR
+            (oauth_provider IS NOT NULL AND oauth_sub IS NOT NULL)
+        ),
+    CONSTRAINT oauth_unique
+        UNIQUE (oauth_provider, oauth_sub)
+);
