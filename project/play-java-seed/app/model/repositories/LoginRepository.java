@@ -54,20 +54,22 @@ public class LoginRepository implements UserRepo{
     }
 
     @Override
-    public CompletionStage<Boolean> existsByEmail(String email) {
-        return supplyAsync(() -> wrap(em -> !em.createQuery(
+    public CompletionStage<User> getByEmail(String email) {
+        return supplyAsync(() -> wrap(em -> em.createQuery(
                 "select u from User u where u.email = :email", User.class).setParameter("email", email)
+                .setMaxResults(1)
                 .getResultList()
-                .isEmpty()
+                .getFirst()
         ), executionContext);
     }
 
     @Override
-    public CompletionStage<Boolean> existsByUsername(String username) {
-        return supplyAsync(() -> wrap(em -> !em.createQuery(
+    public CompletionStage<User> getByUsername(String username) {
+        return supplyAsync(() -> wrap(em -> em.createQuery(
                 "select u from User u where u.username = :username", User.class).setParameter("username", username)
+                .setMaxResults(1)
                 .getResultList()
-                .isEmpty()
+                .getFirst()
         ), executionContext);
     }
 

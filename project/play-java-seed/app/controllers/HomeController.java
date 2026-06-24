@@ -3,6 +3,7 @@ package controllers;
 import model.form.UserLoginForm;
 import model.form.UserRegisterForm;
 import model.repositories.LoginRepository;
+import model.service.HashService;
 import play.mvc.*;
 import model.entities.User;
 import org.slf4j.Logger;
@@ -15,7 +16,6 @@ import model.groupConstraints.RegisterCheck;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 
 import static play.libs.Scala.asScala;
 
@@ -35,15 +35,17 @@ public class HomeController extends Controller {
     private final FormFactory formFactory;
     private final MessagesApi messagesApi;
     private final LoginRepository loginRepo;
+    private final HashService hashService;
 
     private final Logger logger = LoggerFactory.getLogger(getClass()) ;
 
 
     @Inject
-    public HomeController(FormFactory formFactory, MessagesApi messagesApi, LoginRepository loginRepository) {
+    public HomeController(FormFactory formFactory, MessagesApi messagesApi, LoginRepository loginRepository, HashService hashService) {
         this.formFactory = formFactory;
         this.messagesApi = messagesApi;
         this.loginRepo = loginRepository;
+        this.hashService = hashService;
 
     }
 
@@ -71,26 +73,20 @@ public class HomeController extends Controller {
         } else {
             UserRegisterForm data = registerForm.get();
 
-            if (loginRepo.existsByEmail(data.getEmail()).toCompletableFuture().join()){
+            if (loginRepo.getByEmail(data.getEmail()).toCompletableFuture().join()){
+                //TODO investiger l'impact et ce qu'on doit faire en cas d'erreur ici
                 return badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class).fill(new UserRegisterForm(data.getEmail())), request, messagesApi.preferred(request)));
             } else {
-                User newUser = new User();
-                loginRepo
+                User newUser = new User(data.getFirstName(),
+                        data.getLastName(),
+                        data.getUsername(),
+                        data.getEmail(),
+                        hashService.hash(data.getPassword().toCharArray())
+                );
+                loginRepo.add(newUser);
                 return redirect(routes.HomeController.login());
             }
-
-            //faire l'appel a la DB pour checker si il y a déjà quelqu'un dans la DB avec la même addresse mail
-            // Si il y a renoyer une erreur
-            // Si il y a pas enregistrer la personne et la logger automatiquement
-            if (false) { // TODO a changer quand on aura la DB
-                return badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class).fill(new UserRegisterForm(data.getEmail())), request, messagesApi.preferred(request)));
-            } else {
-                // appel a la DB et redirect sur la page principale
-                return redirect(routes.HomeController.login());
-            }
-
         }
-
     }
 
     // la fonction a appeler a la fin du formulaire de login pour log la personne ou non.
@@ -102,6 +98,7 @@ public class HomeController extends Controller {
             return badRequest(views.html.login.render( loginForm, request, messagesApi.preferred(request)));
         } else {
             UserLoginForm data = loginForm.get();
+            User user = loginRepo.
             // faire un appel a la DB pour checker si les identifiant sont similaires
             // Si non on lève une erreur
             // Si oui alors on loggue la personne a son compte.

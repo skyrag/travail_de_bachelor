@@ -93,15 +93,15 @@ public class TestLoginRepositories {
         repo.add(alice);
 
         // asserting that we get our user back
-        Boolean resEmail = repo.existsByEmail(alice.getEmail())
+        User resEmail = repo.getByEmail(alice.getEmail())
                 .toCompletableFuture()
                 .join();
-        Boolean resUsername = repo.existsByUsername(alice.getUsername())
+        User resUsername = repo.getByUsername(alice.getUsername())
                 .toCompletableFuture()
                 .join();
 
+        assertNotNull(resUsername);
         assertEquals(resEmail, resUsername);
-        assertTrue(resUsername);
 
         // cleaning up
         repo.remove(alice).toCompletableFuture().join();

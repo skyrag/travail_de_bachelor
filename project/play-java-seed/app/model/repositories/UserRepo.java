@@ -54,7 +54,7 @@ public interface UserRepo {
      * @param email the email to check
      * @return a CompletionStage containing the boolean
      */
-    CompletionStage<Boolean> existsByEmail(String email);
+    CompletionStage<User> getByEmail(String email);
 
     /**
      * Checks whether a user already has this username
@@ -62,5 +62,5 @@ public interface UserRepo {
      * @param username the username to check
      * @return a CompletionStage containing the boolean
      */
-    CompletionStage<Boolean> existsByUsername(String username);
+    CompletionStage<User> getByUsername(String username);
 }
