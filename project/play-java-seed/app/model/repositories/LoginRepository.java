@@ -13,7 +13,7 @@ import java.util.function.Function;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 /**
- * JPA implementation of {@link UserRepo}.
+ * JPA implementation of UserRepo.
  * <p>
  * This repository uses Play Framework's JPAApi to perform
  * database operations on User entities. All public methods

@@ -8,15 +8,23 @@ import model.groupConstraints.RegisterCheck;
 
 import java.util.Objects;
 
-
+/**
+ * Form object used for user registration.
+ * <p>
+ * This class is used by Play Framework to bind and validate
+ * incoming HTTP form data from the registration page.
+ * <p>
+ * It contains both field-level validations (annotations)
+ * and cross-field validation (password confirmation).
+ */
 @Validate(groups = {RegisterCheck.class})
 public class UserRegisterForm implements Validatable<ValidationError>{
 
-    @Constraints.Required private String firstName;
+    @Constraints.Required(groups = {RegisterCheck.class}) private String firstName;
 
-    @Constraints.Required private String lastName;
+    @Constraints.Required(groups = {RegisterCheck.class}) private String lastName;
 
-    @Constraints.Required private String username;
+    @Constraints.Required(groups = {RegisterCheck.class}) private String username;
 
     @Constraints.Required(groups = {RegisterCheck.class})
     @Constraints.Email(groups = {RegisterCheck.class})
@@ -31,10 +39,12 @@ public class UserRegisterForm implements Validatable<ValidationError>{
     public UserRegisterForm(){
     }
 
-    public UserRegisterForm(String email){
-        this.email = email;
-    }
-
+    /**
+     * Custom validation logic executed after field validation.
+     * Ensures that password and repeatPassword match.
+     *
+     * @return a ValidationError if passwords do not match, otherwise null
+     */
     @Override
     public ValidationError validate() {
         if (!Objects.equals(password, repeatPassword)) {

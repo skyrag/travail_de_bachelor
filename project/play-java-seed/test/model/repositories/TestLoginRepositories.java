@@ -47,7 +47,6 @@ public class TestLoginRepositories {
     // setting up the config of our play app to be linked with our DB
     @Before
     public void setUp() {
-        System.out.println("on est la");
         Map<String, Object> config = new HashMap<>();
         config.put(
                 "db.default.url",
@@ -146,23 +145,27 @@ public class TestLoginRepositories {
     public void shouldGetAll() {
 
         // setup of users to get
-        User bob = new User();
-        bob.setName("bob");
-        bob.setSurname("surBob");
-        bob.setUsername("userBob");
-        bob.setEmail("bob@test.ch");
-        bob.setOauth_provider("google");
-        bob.setOauth_sub("bob'sid");
-        bob.setPasswordHash("hashBob");
+        User bob = new User("bob",
+                "surBob",
+                "userBob",
+                "bob@test.ch",
+                "google",
+                "bob'sid"
+        );
 
-        User alice = new User();
-        alice.setUsername("userAlice");
-        alice.setEmail("alice@test.ch");
-        alice.setName("alice");
-        alice.setSurname("surAlice");
-        alice.setOauth_provider(null);
-        alice.setOauth_sub(null);
-        alice.setPasswordHash("hashAlice");
+        User alice = new User("alice",
+                "surAlice",
+                "userAlice",
+                "alice@test.ch",
+                "hashAlice"
+        );
+
+        User geralt = new User("geralt",
+                "surGeralt",
+                "userGeralt",
+                "geralt@test.ch",
+                "hashGeralt"
+        );
 
         // adding the users
         repo.add(bob).toCompletableFuture().join();
@@ -174,6 +177,7 @@ public class TestLoginRepositories {
 
         assertTrue(list.contains(alice));
         assertTrue(list.contains(bob));
+        assertFalse(list.contains(geralt));
 
         //cleaning up
         repo.remove(alice)

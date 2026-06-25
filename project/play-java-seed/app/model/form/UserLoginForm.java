@@ -9,6 +9,15 @@ import play.data.validation.ValidationError;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Form object used for user login.
+ * <p>
+ * This class is used by Play Framework to bind and validate
+ * login form data coming from HTTP requests.
+ * <p>
+ * The user can authenticate using either
+ * a username or an email address
+ */
 @Validate(groups = {LoginCheck.class})
 public class UserLoginForm implements Constraints.Validatable<ValidationError> {
 
@@ -21,6 +30,14 @@ public class UserLoginForm implements Constraints.Validatable<ValidationError> {
 
     }
 
+    /**
+     * Custom validation logic for login input.
+     * <p>
+     * If the input contains an "@", it is treated as an email and validated
+     * against an email regex pattern. Otherwise, it is treated as a username.
+     *
+     * @return a ValidationError if the email format is invalid, otherwise null
+     */
     @Override
     public ValidationError validate() {
         Pattern pattern = Pattern.compile("@", Pattern.CASE_INSENSITIVE);
