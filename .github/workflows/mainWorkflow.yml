@@ -19,16 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t app-test .
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
 
       - name: Run tests
         run: |
-          docker run --rm app-test \
-          sbt clean coverage test coverageReport coverageAggregate
+          cd project/play-java-seed
+          sbt clean jacoco
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: target/scala-*/scoverage-report
+          path: project/play-java-seed/target/scala-*/jacoco/report/html
