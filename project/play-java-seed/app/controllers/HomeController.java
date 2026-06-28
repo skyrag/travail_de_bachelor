@@ -17,6 +17,8 @@ import model.groupConstraints.RegisterCheck;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,38 +82,43 @@ public class HomeController extends Controller {
      *
      * @return the html page
      */
-    public Result registerIn(Http.Request request) {
+    public CompletionStage<Result> registerIn(Http.Request request) {
         final Form<UserRegisterForm> registerForm = formFactory.form(UserRegisterForm.class, RegisterCheck.class).bindFromRequest(request);
 
         if (registerForm.hasErrors()) {
             logger.error("errors = {}", registerForm.errors());
-            return badRequest(views.html.register.render(registerForm, request, messagesApi.preferred(request)));
-        } else {
-            UserRegisterForm data = registerForm.get();
+            return CompletableFuture.completedFuture(badRequest(views.html.register.render(registerForm, request, messagesApi.preferred(request))));
+        }
 
-            if (loginRepo.getByEmail(data.getEmail()).toCompletableFuture().join() != null){
-                return badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class)
+        UserRegisterForm data = registerForm.get();
+
+        return loginRepo.getByEmail(data.getEmail()).thenCompose(existingEmail -> {
+            if (existingEmail != null) {
+                return CompletableFuture.completedFuture(badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class)
                                 .withError("email", "this email is already used"),
                         request,
-                        messagesApi.preferred(request)));
-            } else {
-                if (loginRepo.getByUsername(data.getUsername()).toCompletableFuture().join() != null){
+                        messagesApi.preferred(request))));
+            }
+
+            return loginRepo.getByUsername(data.getUsername()).thenApply(existingUsername -> {
+                if (existingUsername != null) {
                     return badRequest(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class)
                                     .withError("username", "this username is already used"),
                             request,
                             messagesApi.preferred(request)));
-                } else {
-                    User newUser = new User(data.getFirstName(),
-                            data.getLastName(),
-                            data.getUsername(),
-                            data.getEmail(),
-                            hashService.hash(data.getPassword().toCharArray())
-                    );
-                    loginRepo.add(newUser);
-                    return redirect(routes.HomeController.login());
                 }
-            }
-        }
+                User newUser = new User(data.getFirstName(),
+                        data.getLastName(),
+                        data.getUsername(),
+                        data.getEmail(),
+                        hashService.hash(data.getPassword().toCharArray())
+                );
+                loginRepo.add(newUser);
+                return redirect(routes.HomeController.login());
+
+            });
+        });
+
     }
 
     /**
@@ -121,35 +128,28 @@ public class HomeController extends Controller {
      *
      * @return the html page
      */
-    public Result authenticate(Http.Request request) {
+    public CompletionStage<Result> authenticate(Http.Request request) {
         final Form<UserLoginForm> loginForm = formFactory.form(UserLoginForm.class, LoginCheck.class).bindFromRequest(request);
 
         if (loginForm.hasErrors()) {
             logger.error("errors = {}", loginForm.errors());
-            return badRequest(views.html.login.render( loginForm, request, messagesApi.preferred(request)));
-        } else {
-            UserLoginForm data = loginForm.get();
-
-            // we determine whether he used his email ou username
-            Pattern pattern = Pattern.compile("@", Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(data.getUsernameOrMail());
-            User user;
-
-            // we look for the user
-            if (matcher.find()){
-                user = loginRepo.getByEmail(data.getUsernameOrMail()).toCompletableFuture().join();
-            } else {
-                user = loginRepo.getByUsername(data.getUsernameOrMail()).toCompletableFuture().join();
-            }
-
-            // we compare his password with the hash found if some user is found
-            if (user != null && hashService.verify(user.getPasswordHash(), data.getPassword().toCharArray())){
-                // c'est bon maintenant TODO faut crée la session
-                return redirect(routes.HomeController.index());
-            } else {
-                return badRequest(views.html.login.render(loginForm.withError("login", "Invalid email or password."), request, messagesApi.preferred(request)));
-            }
-
+            return CompletableFuture.completedFuture(badRequest(views.html.login.render( loginForm, request, messagesApi.preferred(request))));
         }
+
+        UserLoginForm data = loginForm.get();
+        boolean isEmail = data.getUsernameOrMail().contains("@");
+
+        CompletionStage<User> userLookup = isEmail
+                ? loginRepo.getByEmail(data.getUsernameOrMail())
+                : loginRepo.getByUsername(data.getUsernameOrMail());
+
+        return userLookup.thenApply(existingUser -> {
+            if (existingUser != null && hashService.verify(existingUser.getPasswordHash(), data.getPassword().toCharArray())) {
+                // TODO créer la session
+                return redirect(routes.HomeController.index());
+            }
+            return badRequest(views.html.login.render(
+                    loginForm.withError("login", "Invalid email or password."), request, messagesApi.preferred(request)));
+        });
     }
 }
