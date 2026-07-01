@@ -1,9 +1,17 @@
 package controllers;
 
+import model.actor.BridgeActor;
+import model.actor.ConnexionActor;
 import model.form.UserLoginForm;
 import model.form.UserRegisterForm;
 import model.repositories.LoginRepository;
 import model.service.HashService;
+import org.apache.pekko.actor.ActorSystem;
+import org.apache.pekko.actor.typed.ActorRef;
+import org.apache.pekko.actor.typed.javadsl.Adapter;
+import org.apache.pekko.stream.Materializer;
+import org.apache.pekko.stream.OverflowStrategy;
+import play.libs.streams.ActorFlow;
 import play.mvc.*;
 import model.entities.User;
 import org.slf4j.Logger;
@@ -17,8 +25,13 @@ import model.groupConstraints.RegisterCheck;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,17 +48,22 @@ public class HomeController extends Controller {
     private final MessagesApi messagesApi;
     private final LoginRepository loginRepo;
     private final HashService hashService;
+    private final ActorSystem actorSystem;
+    private final Materializer materializer;
+
+    private final ConcurrentHashMap<String, ActorRef<ConnexionActor.Message>> connexions = new ConcurrentHashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger(getClass()) ;
 
 
     @Inject
-    public HomeController(FormFactory formFactory, MessagesApi messagesApi, LoginRepository loginRepository, HashService hashService) {
+    public HomeController(FormFactory formFactory, MessagesApi messagesApi, LoginRepository loginRepository, HashService hashService, ActorSystem actorSystem, Materializer materializer) {
         this.formFactory = formFactory;
         this.messagesApi = messagesApi;
         this.loginRepo = loginRepository;
         this.hashService = hashService;
-
+        this.actorSystem = actorSystem;
+        this.materializer = materializer;
     }
 
     /**
@@ -73,6 +91,13 @@ public class HomeController extends Controller {
      */
     public Result register(Http.Request request) {
         return ok(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class), request, messagesApi.preferred(request)));
+    }
+
+    public Result game(Http.Request request) {
+        String userId = request.session().get("userId")
+                .orElseThrow(() -> new RuntimeException("Unauthorized"));
+
+        return ok(views.html.game.render(request));
     }
 
     /**
@@ -145,11 +170,40 @@ public class HomeController extends Controller {
 
         return userLookup.thenApply(existingUser -> {
             if (existingUser != null && hashService.verify(existingUser.getPasswordHash(), data.getPassword().toCharArray())) {
-                // TODO créer la session
-                return redirect(routes.HomeController.index());
+                return redirect(routes.HomeController.game()).addingToSession(request, "userId", existingUser.getStringId());
             }
             return badRequest(views.html.login.render(
                     loginForm.withError("login", "Invalid email or password."), request, messagesApi.preferred(request)));
         });
+    }
+
+    public WebSocket webSocket() {
+        return WebSocket.Json.accept(request -> {
+            String userId = request.session().get("userId")
+                    .orElseThrow(() -> new RuntimeException("Unauthorized"));
+            System.out.println("banger");
+            return ActorFlow.actorRef(out ->
+                            BridgeActor.create(out, getUserActor(userId, out)),
+                    256,
+                    OverflowStrategy.dropHead(),
+                    actorSystem,
+                    materializer);
+        });
+    }
+
+    private ActorRef<ConnexionActor.Message> getUserActor(String userId, org.apache.pekko.actor.ActorRef ws){
+        ActorRef<ConnexionActor.Message> user = connexions.get(userId);
+
+        if (user != null){
+            return user;
+        }
+
+        user = Adapter.spawn(
+                actorSystem,
+                ConnexionActor.create(ws),
+                userId
+        );
+        connexions.put(userId, user);
+        return user;
     }
 }

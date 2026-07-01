@@ -1,0 +1,20 @@
+@import play.mvc.Http.Request
+
+@(implicit request: Request)
+
+<!DOCTYPE html>
+<html>
+    <body>
+        <div id="message"></div>
+
+        <script>
+        const userId = "@request.session().get("userId").orElse("")";
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(protocol + "//" + window.location.host + "/ws");
+
+        ws.onopen = () => {
+            document.getElementById("message").innerText = "Hello " + userId;
+        };
+    </script>
+    </body>
+</html>

@@ -124,6 +124,10 @@ public class User {
         this.oauthSub = oauth_sub;
     }
 
+    public String getStringId() {
+        return Long.toString(id);
+    }
+
     @Override
     public boolean equals(Object o){
         if (o instanceof User u ){
