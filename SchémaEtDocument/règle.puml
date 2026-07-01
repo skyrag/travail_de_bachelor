@@ -1,0 +1,85 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor       Alice       as Alice
+participant Frontend as Frontend
+participant Backend as Backend
+
+== Acheter une unité ==
+
+Alice -> Frontend : acheter une unité
+Frontend -> Frontend : check si l'argent d'alice est plus grand ou égal au prix de l'unité
+Frontend -> Frontend : check si il y a la place pour placer l'unité sur le terrain
+alt si un des check précédent ne passe pas
+    Frontend -> Alice : error
+end
+Alice -> Backend : acheter un unité
+Backend -> Backend : check si l'unité est bien présente dans le shop d'alice
+Backend -> Backend : check si l'argent d'alice est plus grand ou égal au prix de l'unité
+Backend -> Backend : check si il y a la place pour placer l'unité sur le terrain
+alt si un des check précédent ne passe pas
+    Backend -> Alice : error
+end
+Backend -> Alice : ok
+
+== Vendre une unité ==
+
+Alice -> Backend : vendre une unité
+Backend -> Backend : check si alice a bien l'unité qu'elle veut vendre
+alt si un des check précédent ne passe pas
+    Backend -> Alice : error
+end
+Backend -> Alice : ok
+
+== Bouger une unité ==
+
+Alice -> Backend : Bouger une unité
+Backend -> Backend : check si alice a cette unité
+alt si alice n'as plus de place dans son équipe et que la position n'est ni sur le banc ni celle d'une autre unité
+    Backend -> Alice : error
+end
+alt si il y a actuellement un combat et que la position n'est aps sur le banc
+    Backend -> Alice : error
+end
+Backend -> Backend : check que la nouvelle position soient sur la partie du terrain ou alice peut poser des unité ou sur le banc
+alt si un des check précédent ne passe pas
+    Backend -> Alice : error
+end
+Backend -> Alice : ok
+
+== Donner un object a une unité ==
+
+Alice -> Backend : donner un object a une unité
+Backend -> Backend : check si alice a l'unité et l'object
+Backend -> Backend : check si l'unité a déjà 3 items
+alt si un des check précédent ne passe pas
+    Backend -> Alice : error
+end
+Backend -> Alice : ok
+
+== Demander de changer le magasin ==
+
+alt si alice n'as pas assez d'argent et qu'elle passe par la ui le frontend est déjà sensé levé une erreur
+    Frontend -> Alice : error
+end
+Alice -> Backend : demande pour changer le magasin
+Backend -> Backend : check si alice a assez d'argent
+alt si un des check précédent ne passe pas
+    Backend -> Alice : error
+end
+Backend -> Alice : ok
+
+== Acheter de l'expérience ==
+
+alt si alice n'as pas assez d'argent ou niveau max et qu'elle passe par la ui le frontend est déjà sensé levé une erreur
+    Frontend -> Alice : error
+end
+Alice -> Backend : achat d'exp
+Backend -> Backend : check si alice a assez d'argent
+Backend -> Backend : check si alice est niveau maximum
+alt si un des check précédent ne passe pas
+    Backend -> Alice : error
+end
+Backend -> Alice : ok
+
+@enduml
