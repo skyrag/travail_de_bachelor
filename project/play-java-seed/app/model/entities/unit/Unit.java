@@ -6,6 +6,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a playable unit (champion/character) in the game, tied
+ * to a specific patchVersion of the game's balancing data.
+ * <p>
+ * A Unit holds its base stats (health, mana, attack, armor,
+ * magic resist, range...), its cost, and the definition of its
+ * ability (name, description, and the ordered AbilityFragment
+ * list describing how the ability behaves.
+ */
 @Entity
 @Table(name = "unit")
 public class Unit {
@@ -32,6 +41,10 @@ public class Unit {
     @Column(name = "max_health", nullable = false)
     private Integer maxHealth;
 
+    /**
+     * Mana the unit starts a game/round with (before regeneration or
+     * ability casts).
+     */
     @Column(name = "starting_mana", nullable = false)
     private Integer startingMana;
 
@@ -53,6 +66,10 @@ public class Unit {
     @Column(nullable = false)
     private Integer range;
 
+    /**
+     * The unit's ability, broken down into a list of fragments so that we can have different effect
+     * that may affect different groups of poeple
+     */
     @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AbilityFragment> ability = new ArrayList<>();
 

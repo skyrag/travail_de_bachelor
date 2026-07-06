@@ -3,6 +3,11 @@ package model.entities.event;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
+/**
+ * An event that extends Event.
+ * <p>
+ * It represents an event that changes the health of a user
+ */
 @Entity
 public class LosingHealthEvent extends Event{
 

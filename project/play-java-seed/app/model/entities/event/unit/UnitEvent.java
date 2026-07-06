@@ -8,6 +8,12 @@ import model.entities.event.Event;
 import model.entities.unit.InstanceUnit;
 import model.entities.unit.Unit;
 
+/**
+ * Base event for all unit related event in the game.
+ * <p>
+ * Uses InheritanceType#JOINED so each subclass is mapped to its
+ * own table, joined on the primary key with the base table of event.
+ */
 @Entity
 public abstract class UnitEvent extends Event {
 

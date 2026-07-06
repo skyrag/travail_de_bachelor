@@ -3,6 +3,12 @@ package model.entities.unit.strategie;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
+/**
+ * A strategie that extends Strategie.
+ * <p>
+ * It is a strategie used to apply an effect to the n closest
+ * ennemy or ally depending on the boolean isTargetEnnemy
+ */
 @Entity
 public class NclosestStrategie extends Strategie{
 

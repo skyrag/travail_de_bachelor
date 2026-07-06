@@ -4,12 +4,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import model.entities.unit.Object;
-import model.entities.unit.Unit;
+import model.entities.unit.Item;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An event that extends UnitEvent. It contains objects, and this event describes
+ * the new set of objects that a user want a unit to have
+ */
 @Entity
 public class ChangingUnitObjectEvent extends UnitEvent{
 
@@ -19,14 +22,14 @@ public class ChangingUnitObjectEvent extends UnitEvent{
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "objects_id")
     )
-    private List<Object> objects = new ArrayList<>();
+    private List<Item> items = new ArrayList<>();
 
-    public List<Object> getObjects() {
-        return objects;
+    public List<Item> getObjects() {
+        return items;
     }
 
-    public void setObjects(List<Object> objects) {
-        this.objects = objects;
+    public void setObjects(List<Item> items) {
+        this.items = items;
     }
 
 }

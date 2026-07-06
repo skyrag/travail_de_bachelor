@@ -7,6 +7,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a single round played by a Team within a game.
+ * <p>
+ * A Round is identified by its round number (the
+ * round's position in the overall game sequence) and holds the
+ * ordered list of Events that occurred during it (e.g.
+ * bought unit, reroll shop...), used to reconstruct/replay
+ * what happened.
+ */
 @Entity
 @Table(name = "round")
 public class Round {

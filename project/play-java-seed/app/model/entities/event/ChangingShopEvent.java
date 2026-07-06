@@ -9,6 +9,11 @@ import model.entities.unit.Unit;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An event that extends Event
+ * <p>
+ * it represents an event where we change the shop of a user with the new ones contained in units
+ */
 @Entity
 public class ChangingShopEvent extends Event{
 

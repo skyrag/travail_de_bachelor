@@ -1,5 +1,8 @@
 package model.entities.effect;
 
+/**
+ * An enum used to describe the targeted stats for effect
+ */
 public enum StatType {
     HEALTH,
     MANA,

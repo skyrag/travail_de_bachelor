@@ -7,6 +7,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a single match/game session, tied to a specific
+ * patchVersion of the game's balancing data.
+ * <p>
+ * A Game is deterministic given its seed (used for
+ * reproducible randomness, e.g. shop rolls), and holds the list of
+ * Teams competing in it as well as the Pools of units
+ * available to draw from.
+ */
 @Entity
 @Table(name = "game")
 public class Game {

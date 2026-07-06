@@ -251,11 +251,11 @@ CREATE TABLE round (
 
 CREATE TABLE fight (
     id BIGSERIAL PRIMARY KEY,
-    round1_id BIGINT NOT NULL,
-    round2_id BIGINT NOT NULL,
-    CONSTRAINT fk_fight_round1 FOREIGN KEY (round1_id) REFERENCES round(id) ON DELETE CASCADE ,
-    CONSTRAINT fk_fight_round2 FOREIGN KEY (round2_id) REFERENCES round(id) ON DELETE CASCADE ,
-    CONSTRAINT different_rounds CHECK (round1_id != round2_id)
+    winner BIGINT NOT NULL,
+    loser BIGINT NOT NULL,
+    CONSTRAINT fk_fight_winner FOREIGN KEY (winner) REFERENCES round(id) ON DELETE CASCADE ,
+    CONSTRAINT fk_fight_loser FOREIGN KEY (loser) REFERENCES round(id) ON DELETE CASCADE ,
+    CONSTRAINT different_rounds CHECK (loser != winner)
 );
 
 CREATE TABLE event (
@@ -416,10 +416,10 @@ DECLARE
     r1 round%ROWTYPE;
     r2 round%ROWTYPE;
 BEGIN
-    SELECT * INTO r1 FROM round WHERE id = NEW.round1_id;
-    SELECT * INTO r2 FROM round WHERE id = NEW.round2_id;
+    SELECT * INTO r1 FROM round WHERE id = NEW.winner;
+    SELECT * INTO r2 FROM round WHERE id = NEW.loser;
 
-    IF r1.round_number != r2.round_number THEN
+    IF r1.round != r2.round THEN
         RAISE EXCEPTION 'Les deux rounds doivent avoir le même numéro';
     END IF;
 
@@ -431,7 +431,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- fonction qui vérifie que une unité a maximum 3 objects
+-- fonction qui vérifie que une unité a maximum 3 items
 CREATE OR REPLACE FUNCTION check_unit_objects()
     RETURNS TRIGGER AS $$
 BEGIN
@@ -442,7 +442,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- fonction qui vérifie que un changement d'object ne permet pas a un uité d'avoir plus de 3 objects
+-- fonction qui vérifie que un changement d'object ne permet pas a un uité d'avoir plus de 3 items
 CREATE OR REPLACE FUNCTION check_changing_unit_object_event()
     RETURNS TRIGGER AS $$
 BEGIN
@@ -453,7 +453,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- fonction qui vérifie que une équipe ne puissent pas avoir plus de 10 objects
+-- fonction qui vérifie que une équipe ne puissent pas avoir plus de 10 items
 CREATE OR REPLACE FUNCTION check_team_objects()
     RETURNS TRIGGER AS $$
 BEGIN

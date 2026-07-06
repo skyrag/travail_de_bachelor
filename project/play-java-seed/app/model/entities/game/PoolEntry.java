@@ -5,6 +5,14 @@ import model.entities.unit.Unit;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * Represents, for a given Pool, how many copies of a specific
+ * Unit remain available to be drawn.
+ * <p>
+ * Uses a composite key (pool_id, unit_id) via
+ * PoolEntryId, since there is exactly one entry per unit per
+ * pool.
+ */
 @Entity
 @Table(name = "pool_entry")
 @IdClass(PoolEntry.PoolEntryId.class)
@@ -58,6 +66,10 @@ public class PoolEntry {
         this.createdAt = createdAt;
     }
 
+    /**
+     * Composite primary key for PoolEntry, combining the pool's
+     * id and the unit's id.
+     */
     public static class PoolEntryId implements Serializable {
         private Long pool;
         private Long unit;

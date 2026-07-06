@@ -6,6 +6,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the pool of units of a given PoolRarity available
+ * to draw from within a Game.
+ * <p>
+ * A Pool tracks the available PoolEntry items for its
+ * rarity tier (e.g. how many copies of each unit remain to be drawn),
+ * and is used when rolling/refreshing shops for teams.
+ */
 @Entity
 @Table(name = "pool")
 public class Pool {

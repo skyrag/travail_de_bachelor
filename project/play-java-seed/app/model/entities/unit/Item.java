@@ -1,16 +1,23 @@
 package model.entities.unit;
 
 import jakarta.persistence.*;
-import model.entities.effect.Effect;
 import model.entities.effect.StatChangingEffect;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents an in-game item/object that
+ * a unit can hold or equip, tied to a specific patchVersion of
+ * the game's balancing data.
+ * <p>
+ * An Object has a name, a description, and a list of
+ * StatChangingEffect it grants when equipped/used.
+ */
 @Entity
 @Table(name = "object")
-public class Object {
+public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

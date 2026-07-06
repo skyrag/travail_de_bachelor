@@ -5,6 +5,12 @@ import jakarta.persistence.Entity;
 import model.entities.effect.Effect;
 import model.entities.effect.StatType;
 
+/**
+ * An effect that has a base value, a typeScaling that indicates which
+ * stat of the caster is used to scale this effect, and a coefScaling
+ * that defines the coefficient applied to that stat when computing
+ * the effect's final value.
+ */
 @Entity
 public abstract class ScalingEffect extends Effect {
 

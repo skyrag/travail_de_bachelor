@@ -7,6 +7,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An instance unit is litterally an instance of a unit used to play the game.
+ * It helps keeping track of any changes that may have happened during the game
+ * on the unit used by the user.
+ * It has the unit it is based of, the object wore by the unit, the level of the unit
+ * the position of the unit, and the team it belongs to.
+ * <p>
+ * The main point of this class is to have a base state between round so that
+ * it is easier to reload the current state in case of crash with the help of event too
+ */
 @Entity
 @Table(name = "instance_unit")
 public class InstanceUnit {
@@ -35,7 +45,7 @@ public class InstanceUnit {
             joinColumns = @JoinColumn(name = "instance_unit_id"),
             inverseJoinColumns = @JoinColumn(name = "object_id")
     )
-    private List<Object> objects = new ArrayList<>();
+    private List<Item> items = new ArrayList<>();
 
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
@@ -88,11 +98,11 @@ public class InstanceUnit {
         this.createdAt = createdAt;
     }
 
-    public List<Object> getObjects() {
-        return objects;
+    public List<Item> getObjects() {
+        return items;
     }
 
-    public void setObjects(List<Object> objects) {
-        this.objects = objects;
+    public void setObjects(List<Item> items) {
+        this.items = items;
     }
 }

@@ -5,6 +5,19 @@ import model.entities.Round;
 
 import java.time.LocalDateTime;
 
+/**
+ * Base entity for all events that occur during a Round.
+ * <p>
+ * An Event represents something that happened at a specific
+ * step within a round (e.g. buying a unit, rerolling the shop...).
+ * This class only holds the common persistence
+ * fields shared by every event subtype; concrete events should extend
+ * this class and add their own specific data.
+ * <p>
+ * Uses InheritanceType#JOINED so each subclass is mapped to its
+ * own table, joined on the primary key with this base table.
+ */
+
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Event {

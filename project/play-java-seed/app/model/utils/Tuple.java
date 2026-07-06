@@ -9,6 +9,14 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Objects;
 
+/**
+ * An immutable pair of integer coordinates {@code (x, y)}.
+ * <p>
+ * Typically used to represent a position (e.g. a unit's position on
+ * the board), and is serialized/deserialized to/from SQL as a literal
+ * of the form {@code "(x,y)"} via the nested TupleType
+ * Hibernate converter.
+ */
 public class Tuple {
     private final int x;
     private final int y;
@@ -38,7 +46,11 @@ public class Tuple {
         return "(" + x + "," + y + ")";
     }
 
-    // Convertisseur Hibernate
+    /**
+     * Hibernate custom type mapping a Tuple to/from a raw SQL
+     * value of the form {@code "(x,y)"} (e.g. a Postgres point/composite
+     * type stored as Types#OTHER.
+     */
     public static class TupleType extends ImmutableType<Tuple> {
 
         public TupleType() {
@@ -56,6 +68,17 @@ public class Tuple {
             String val = rs.getString(position);
             if (val == null) return null;
             String clean = val.replaceAll("[()]", "");
+            String[] parts = clean.split(",");
+            return new Tuple(
+                    Integer.parseInt(parts[0].trim()),
+                    Integer.parseInt(parts[1].trim())
+            );
+        }
+
+        @Override
+        public Tuple fromStringValue(CharSequence sequence) {
+            if (sequence == null) return null;
+            String clean = sequence.toString().replaceAll("[()]", "");
             String[] parts = clean.split(",");
             return new Tuple(
                     Integer.parseInt(parts[0].trim()),

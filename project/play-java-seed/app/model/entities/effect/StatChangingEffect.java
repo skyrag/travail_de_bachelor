@@ -3,6 +3,10 @@ package model.entities.effect;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
+/**
+ * An effect that has a value and a typeChange that indicates
+ * which stat the target of this effect will be affected. It will increase by the value
+ */
 @Entity
 public class StatChangingEffect extends Effect{
 

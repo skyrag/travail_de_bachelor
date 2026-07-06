@@ -8,6 +8,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a player's team within a Game owned by a User.
+ * <p>
+ * A Team tracks the player's current state during the game:
+ * their rank among opponents, health, winstreak, level, gold, and the
+ * list of units currently available in their shop.
+ */
 @Entity
 @Table(name = "team")
 public class Team {

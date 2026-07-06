@@ -8,6 +8,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A class that represent one of the part of the ability from a unit.
+ * <p>
+ * It has a list of effect to apply when casting the ability,
+ * and it also has a strategie that helps to determine the target of the effects.
+ * We fragment the ability's effect so that we can have multiple effect that applies on
+ * different target for one ability.
+ */
 @Entity
 @Table(name = "ability_fragment")
 public class AbilityFragment {
