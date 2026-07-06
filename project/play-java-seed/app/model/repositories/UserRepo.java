@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 /**
- * Repository responsible for managing {@link User} entities.
+ * Repository responsible for managing User entities.
  * <p>
  * Provides asynchronous CRUD operations and utility methods
  * for checking the existence of users based on their email

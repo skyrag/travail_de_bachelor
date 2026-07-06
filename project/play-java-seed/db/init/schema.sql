@@ -1,5 +1,7 @@
-/*
+
 CREATE TYPE rarity AS ENUM ('COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY');
+
+CREATE TYPE stat AS ENUM ('HEALTH', 'MANA', 'ATTACKDAMAGE', 'ABILITYPOWER', 'ARMOR', 'MAGICRESIST', 'ATTACKSPEED', 'RANGE');
 
 CREATE TYPE tuple AS (x INTEGER, y INTEGER);
 
@@ -12,9 +14,9 @@ CREATE TABLE shop_level (
                             epic_chance int NOT NULL,
                             legendary_chances int NOT NULL,
                             created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                            PRIMARY KEY (lvl, patch)
+                            PRIMARY KEY (lvl, patch_version)
 );
-*/
+
 
 -- solution du regex pour valider l'email trouver  : https://dba.stackexchange.com/questions/68266/what-is-the-best-way-to-store-an-email-address-in-postgresql/165923#165923
 CREATE EXTENSION citext;
@@ -46,25 +48,24 @@ CREATE TABLE users (
     CONSTRAINT oauth_unique
         UNIQUE (oauth_provider, oauth_sub)
 );
-/*
+
 CREATE TABLE game (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     patch_version VARCHAR(20) NOT NULL,
     seed BIGINT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE pool (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     game_id BIGINT NOT NULL,
     pools_rarity rarity NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_pool_game FOREIGN KEY (game_id) REFERENCES game(id) ON DELETE CASCADE,
-
+    CONSTRAINT fk_pool_game FOREIGN KEY (game_id) REFERENCES game(id) ON DELETE CASCADE
 );
 
 CREATE TABLE unit (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     patch_version VARCHAR(20) NOT NULL,
     name VARCHAR(30) NOT NULL,
     -- art ? TODO
@@ -82,7 +83,7 @@ CREATE TABLE unit (
     range int NOT NULL,
     -- TODO rajouter les traits
     -- TODO rajouter les effect de compétence et les effets permanents.
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- TODO implement unit
@@ -90,13 +91,14 @@ CREATE TABLE pool_entry (
     pool_id BIGINT NOT NULL,
     number int NOT NULL,
     unit_id BIGINT NOT NULL,
-    PRIMARY KEY (pool_id),
+    PRIMARY KEY (pool_id, unit_id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_pool_entry_pool FOREIGN KEY (pool_id) REFERENCES pool(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pool_entry_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pool_entry_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE
 );
 
 CREATE TABLE team (
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     game_id BIGINT NOT NULL,
     rank int NOT NULL,
@@ -105,8 +107,9 @@ CREATE TABLE team (
     lvl int NOT NULL,
     gold int NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_team_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
-    CONSTRAINT fk_team_game FOREIGN KEY (game_id) REFERENCES game(id) ON DELETE CASCADE,
+    CONSTRAINT uq_team_user_game UNIQUE (user_id, game_id),
+    CONSTRAINT fk_team_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_team_game FOREIGN KEY (game_id) REFERENCES game(id) ON DELETE CASCADE
 );
 
 CREATE TABLE teams_shop (
@@ -114,27 +117,518 @@ CREATE TABLE teams_shop (
     team_id BIGINT NOT NULL,
     PRIMARY KEY (unit_id, team_id),
     CONSTRAINT fk_teams_shop_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE,
-    CONSTRAINT fk_teams_shop_team FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE,
+    CONSTRAINT fk_teams_shop_team FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE
 );
 
 CREATE TABLE instance_unit (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     lvl int NOT NULL,
     pos tuple NOT NULL,
     unit_id BIGINT NOT NULL,
     team_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_instance_unit_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE,
-    CONSTRAINT fk_instance_unit_team FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE,
+    CONSTRAINT fk_instance_unit_team FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE
 );
 
 CREATE TABLE object (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     -- TODO icon
     patch_version VARCHAR(20) NOT NULL,
     name VARCHAR(30) NOT NULL,
     description TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
- */
+CREATE TABLE teams_object (
+    team_id BIGINT NOT NULL,
+    object_id BIGINT NOT NULL,
+    PRIMARY KEY (team_id, object_id),
+    CONSTRAINT fk_teams_object_team FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE,
+    CONSTRAINT fk_teams_object_object FOREIGN KEY (object_id) REFERENCES object(id) ON DELETE CASCADE
+);
+
+CREATE TABLE instance_units_object (
+    instance_unit_id BIGINT NOT NULL,
+    object_id BIGINT NOT NULL,
+    PRIMARY KEY (instance_unit_id, object_id),
+    CONSTRAINT fk_instance_units_object_unit FOREIGN KEY (instance_unit_id) REFERENCES instance_unit(id) ON DELETE CASCADE,
+    CONSTRAINT fk_instance_units_object_object FOREIGN KEY (object_id) REFERENCES object(id) ON DELETE CASCADE
+);
+
+CREATE TABLE strategie (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE current_target_strategie (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_current_target_strategie_strategie FOREIGN KEY (id) REFERENCES strategie(id) ON DELETE CASCADE
+);
+
+CREATE TABLE n_closest_strategie (
+    id BIGINT PRIMARY KEY,
+    is_target_ennemy bool NOT NULL,
+    n int NOT NULL,
+    CONSTRAINT fk_n_closest_strategie_strategie FOREIGN KEY (id) REFERENCES strategie(id) ON DELETE CASCADE
+);
+
+CREATE TABLE aoe_around_target (
+    id BIGINT PRIMARY KEY,
+    is_target_ennemy bool NOT NULL,
+    is_center_you bool NOT NULL,
+    size int NOT NULL,
+    CONSTRAINT fk_n_closest_strategie_strategie FOREIGN KEY (id) REFERENCES strategie(id) ON DELETE CASCADE
+);
+
+CREATE TABLE ability_fragment (
+    id BIGSERIAL PRIMARY KEY,
+    strategie_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_ability_fragment_strategie FOREIGN KEY (strategie_id) REFERENCES strategie(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ability_fragment_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE
+);
+
+CREATE TABLE effect (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE scaling_effect (
+    id BIGINT PRIMARY KEY,
+    base int NOT NULL,
+    type_scaling stat NOT NULL,
+    coef_scaling int NOT NULL,
+    CONSTRAINT fk_scaling_effect_effect FOREIGN KEY (id) REFERENCES effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE damaging_effect (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_damaging_effect_effect FOREIGN KEY (id) REFERENCES scaling_effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE healing_effect (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_healing_effect_effect FOREIGN KEY (id) REFERENCES scaling_effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE stunning_effect (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_stunning_effect_effect FOREIGN KEY (id) REFERENCES scaling_effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE stat_changing_effect (
+    id BIGINT PRIMARY KEY,
+    type_change stat NOT NULL,
+    value int NOT NULL,
+    CONSTRAINT fk_stat_changing_effect_effect FOREIGN KEY (id) REFERENCES effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE object_effect (
+    object_id BIGINT NOT NULL,
+    effect_id BIGINT NOT NULL,
+    CONSTRAINT fk_object_effect_object FOREIGN KEY (object_id) REFERENCES object(id) ON DELETE CASCADE,
+    CONSTRAINT fk_object_effect_effect FOREIGN KEY (effect_id) REFERENCES stat_changing_effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE abilitys_effect (
+    ability_fragment_id BIGINT NOT NULL,
+    effect_id BIGINT NOT NULL,
+    PRIMARY KEY (effect_id, ability_fragment_id),
+    CONSTRAINT fk_abilitys_effect_ability_fragment FOREIGN KEY (ability_fragment_id) REFERENCES ability_fragment(id) ON DELETE CASCADE,
+    CONSTRAINT fk_abilitys_effect_effect FOREIGN KEY (effect_id) REFERENCES effect(id) ON DELETE CASCADE
+);
+
+CREATE TABLE round (
+    id BIGSERIAL PRIMARY KEY,
+    round int NOT NULL,
+    team_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_round_team_id FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE,
+    CONSTRAINT unique_team_round UNIQUE (team_id, round)
+);
+
+CREATE TABLE fight (
+    id BIGSERIAL PRIMARY KEY,
+    round1_id BIGINT NOT NULL,
+    round2_id BIGINT NOT NULL,
+    CONSTRAINT fk_fight_round1 FOREIGN KEY (round1_id) REFERENCES round(id) ON DELETE CASCADE ,
+    CONSTRAINT fk_fight_round2 FOREIGN KEY (round2_id) REFERENCES round(id) ON DELETE CASCADE ,
+    CONSTRAINT different_rounds CHECK (round1_id != round2_id)
+);
+
+CREATE TABLE event (
+    id BIGSERIAL PRIMARY KEY,
+    step int NOT NULL,
+    round_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_event_round FOREIGN KEY (round_id) REFERENCES round(id) ON DELETE CASCADE
+);
+
+CREATE TABLE leveling_event (
+    id BIGSERIAL PRIMARY KEY,
+    level int NOT NULL,
+    CONSTRAINT fk_leveling_event_event FOREIGN KEY (id) REFERENCES event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE losing_health_event (
+    id BIGSERIAL PRIMARY KEY,
+    health int NOT NULL,
+    CONSTRAINT fk_losing_health_event_event FOREIGN KEY (id) REFERENCES event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE changing_gold_event (
+    id BIGSERIAL PRIMARY KEY,
+    gold int NOT NULL,
+    CONSTRAINT fk_changing_gold_event_event FOREIGN KEY (id) REFERENCES event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE changing_shop_event (
+    id BIGSERIAL PRIMARY KEY,
+    CONSTRAINT fk_changing_shop_event_event FOREIGN KEY (id) REFERENCES event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE changing_shops_unit (
+    event_id BIGINT NOT NULL,
+    unit_id BIGINT NOT NULL,
+    PRIMARY KEY (event_id, unit_id),
+    CONSTRAINT fk_changing_shops_unit_event FOREIGN KEY (event_id) REFERENCES changing_shop_event(id) ON DELETE CASCADE,
+    CONSTRAINT fk_changing_shops_unit_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE
+);
+
+CREATE TABLE unit_event (
+    id BIGINT PRIMARY KEY,
+    unit_id BIGINT NOT NULL,
+    CONSTRAINT fk_unit_event_event FOREIGN KEY (id) REFERENCES event(id) ON DELETE CASCADE,
+    CONSTRAINT fk_unit_event_unit FOREIGN KEY (unit_id) REFERENCES instance_unit(id) ON DELETE CASCADE
+);
+
+CREATE TABLE buy_unit_event (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_buy_unit_event_event FOREIGN KEY (id) REFERENCES unit_event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE sell_unit_event (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_sell_unit_event_event FOREIGN KEY (id) REFERENCES unit_event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE changing_pos_event (
+    id BIGINT PRIMARY KEY,
+    position tuple NOT NULL,
+    CONSTRAINT fk_changing_pos_event_event FOREIGN KEY (id) REFERENCES unit_event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE changing_unit_object_event (
+    id BIGINT PRIMARY KEY,
+    CONSTRAINT fk_changing_unit_object_event_event FOREIGN KEY (id) REFERENCES unit_event(id) ON DELETE CASCADE
+);
+
+CREATE TABLE changing_unit_object_events_object (
+    event_id BIGINT NOT NULL,
+    objects_id BIGINT NOT NULL,
+    PRIMARY KEY (event_id, objects_id),
+    CONSTRAINT fk_changing_unit_object_events_object_event FOREIGN KEY (event_id) REFERENCES changing_unit_object_event(id) ON DELETE CASCADE,
+    CONSTRAINT fk_changing_unit_object_events_object_object FOREIGN KEY (objects_id) REFERENCES object(id) ON DELETE CASCADE
+);
+-- TODO faire les trigger pour garder la cohérence dans les choses genre le nombre de unit de changingshop ou encore le nombre d'object dans l'inventaire ou encore les héritage propre
+
+-- Fonction qui vérifie qu'un event a exactement un enfant direct
+CREATE OR REPLACE FUNCTION check_event_inheritance()
+RETURNS TRIGGER AS $$
+DECLARE
+child_count INT;
+BEGIN
+SELECT (
+    (SELECT COUNT(*) FROM leveling_event WHERE id = NEW.id) +
+    (SELECT COUNT(*) FROM losing_health_event WHERE id = NEW.id) +
+    (SELECT COUNT(*) FROM changing_gold_event WHERE id = NEW.id) +
+    (SELECT COUNT(*) FROM changing_shop_event WHERE id = NEW.id) +
+    (SELECT COUNT(*) FROM unit_event WHERE id = NEW.id)
+           ) INTO child_count;
+
+IF child_count != 1 THEN
+        RAISE EXCEPTION 'event % doit avoir exactement un enfant, % trouvé(s)', NEW.id, child_count;
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Fonction qui vérifie qu'un unit_event a exactement un enfant direct
+CREATE OR REPLACE FUNCTION check_unit_event_inheritance()
+RETURNS TRIGGER AS $$
+DECLARE
+child_count INT;
+BEGIN
+SELECT (
+           (SELECT COUNT(*) FROM buy_unit_event WHERE id = NEW.id) +
+           (SELECT COUNT(*) FROM sell_unit_event WHERE id = NEW.id) +
+           (SELECT COUNT(*) FROM changing_pos_event WHERE id = NEW.id) +
+           (SELECT COUNT(*) FROM changing_unit_object_event WHERE id = NEW.id)
+           ) INTO child_count;
+
+IF child_count != 1 THEN
+        RAISE EXCEPTION 'unit_event % doit avoir exactement un enfant, % trouvé(s)', NEW.id, child_count;
+END IF;
+
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie qu'un effect a exactement un enfant direct
+CREATE OR REPLACE FUNCTION check_effect_inheritance()
+RETURNS TRIGGER AS $$
+DECLARE
+child_count INT;
+    BEGIN
+    SELECT (
+        (SELECT COUNT(*) FROM scaling_effect WHERE id = NEW.id) +
+        (SELECT COUNT(*) FROM stat_changing_effect WHERE id = NEW.id)
+               ) INTO child_count;
+    IF child_count != 1 THEN
+        RAISE EXCEPTION 'effect % doit avoir exactement un enfant, % trouvé(s)', NEW.id, child_count;
+    end if;
+    RETURN NEW;
+end;
+    $$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie qu'un scaling effect a exactement un enfant direct
+CREATE OR REPLACE FUNCTION check_scaling_effect_inheritance()
+RETURNS TRIGGER AS $$
+    DECLARE child_count INT;
+        BEGIN
+        SELECT (
+            (SELECT COUNT(*) FROM damaging_effect WHERE id = NEW.id) +
+            (SELECT COUNT(*) FROM healing_effect WHERE id = NEW.id) +
+            (SELECT COUNT(*) FROM stunning_effect WHERE id = NEW.id)
+                   ) INTO child_count;
+        IF child_count != 1 THEN
+            RAISE EXCEPTION 'scaling_effect % doit avoir exactement un enfant, % trouvé(s)', NEW.id,  child_count;
+        end if;
+    end;
+    $$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que les fights sont possible( même round et deux teams différentes)
+CREATE OR REPLACE FUNCTION check_fight_rounds()
+    RETURNS TRIGGER AS $$
+DECLARE
+    r1 round%ROWTYPE;
+    r2 round%ROWTYPE;
+BEGIN
+    SELECT * INTO r1 FROM round WHERE id = NEW.round1_id;
+    SELECT * INTO r2 FROM round WHERE id = NEW.round2_id;
+
+    IF r1.round_number != r2.round_number THEN
+        RAISE EXCEPTION 'Les deux rounds doivent avoir le même numéro';
+    END IF;
+
+    IF r1.team_id = r2.team_id THEN
+        RAISE EXCEPTION 'Les deux rounds doivent appartenir à des teams différentes';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que une unité a maximum 3 objects
+CREATE OR REPLACE FUNCTION check_unit_objects()
+    RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT COUNT(*) FROM instance_units_object WHERE instance_unit_id = NEW.instance_unit_id) > 3 THEN
+        RAISE EXCEPTION 'Une unit ne peut pas avoir plus de 3 objets';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que un changement d'object ne permet pas a un uité d'avoir plus de 3 objects
+CREATE OR REPLACE FUNCTION check_changing_unit_object_event()
+    RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT COUNT(*) FROM changing_unit_object_events_object WHERE event_id = NEW.event_id) > 3 THEN
+        RAISE EXCEPTION 'Une unit ne peut pas avoir plus de 3 objets';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que une équipe ne puissent pas avoir plus de 10 objects
+CREATE OR REPLACE FUNCTION check_team_objects()
+    RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT COUNT(*) FROM teams_object WHERE team_id = NEW.team_id) > 10 THEN
+        RAISE EXCEPTION 'Une team ne peut pas avoir plus de 10 objets';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que un changement d'unité dans le magasin possèdent éxactement 5 unité
+CREATE OR REPLACE FUNCTION check_changing_shop_units()
+    RETURNS TRIGGER AS $$
+DECLARE
+    unit_count INT;
+    current_event_id BIGINT;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        current_event_id := OLD.event_id;
+    ELSE
+        current_event_id := NEW.event_id;
+    END IF;
+    SELECT COUNT(*) INTO unit_count
+    FROM changing_shops_unit
+    WHERE event_id = current_event_id;
+
+    IF unit_count != 5 THEN
+        RAISE EXCEPTION 'Un changingshop doit avoir exactement 5 unités, % trouvée(s)', unit_count;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que le magasin d'équipe possède 5 unités ou moins
+CREATE OR REPLACE FUNCTION check_team_shop_units()
+    RETURNS TRIGGER AS $$
+DECLARE
+    unit_count INT;
+    current_team_id BIGINT;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        current_team_id := OLD.team_id;
+    ELSE
+        current_team_id := NEW.team_id;
+    END IF;
+    SELECT COUNT(*) INTO unit_count
+    FROM teams_shop
+    WHERE team_id = current_team_id;
+
+    IF unit_count > 5 THEN
+        RAISE EXCEPTION 'Un magasin d équipe doit avoir au maximum 5 unités, % trouvée(s)', unit_count;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que une partie a forcément 5 pool de champions
+CREATE OR REPLACE FUNCTION check_game_pool()
+    RETURNS TRIGGER AS $$
+DECLARE
+    pool_count INT;
+    current_game_id BIGINT;
+BEGIN
+
+    IF TG_OP = 'DELETE' THEN
+        current_game_id := OLD.game_id;
+    ELSE
+        current_game_id := NEW.game_id;
+    END IF;
+
+    SELECT COUNT(*) INTO pool_count
+    FROM pool
+    WHERE game_id = current_game_id;
+
+    IF pool_count != 5 THEN
+        RAISE EXCEPTION 'Une partie doit avoir 5 pool, % trouvée(s)', pool_count;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- fonction qui vérifie que une partie a forcément 8 équipe
+CREATE OR REPLACE FUNCTION check_game_team()
+    RETURNS TRIGGER AS $$
+DECLARE
+    team_count INT;
+    current_game_id BIGINT;
+BEGIN
+
+    IF TG_OP = 'DELETE' THEN
+        current_game_id := OLD.game_id;
+    ELSE
+        current_game_id := NEW.game_id;
+    END IF;
+
+    SELECT COUNT(*) INTO team_count
+    FROM team
+    WHERE game_id = current_game_id;
+
+    IF team_count != 8 THEN
+        RAISE EXCEPTION 'Une partie doit avoir 5 team, % trouvée(s)', team_count;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE CONSTRAINT TRIGGER check_event_inheritance_trigger
+    AFTER INSERT OR UPDATE ON event
+                                  DEFERRABLE INITIALLY DEFERRED
+                                  FOR EACH ROW
+                                  EXECUTE FUNCTION check_event_inheritance();
+
+CREATE CONSTRAINT TRIGGER check_unit_event_inheritance_trigger
+    AFTER INSERT OR UPDATE ON unit_event
+                                  DEFERRABLE INITIALLY DEFERRED
+                                  FOR EACH ROW
+                                  EXECUTE FUNCTION check_unit_event_inheritance();
+
+CREATE CONSTRAINT TRIGGER check_effect_inheritance_trigger
+    AFTER INSERT OR UPDATE ON unit_event
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE FUNCTION check_effect_inheritance();
+
+CREATE CONSTRAINT TRIGGER check_scaling_effect_inheritance_trigger
+    AFTER INSERT OR UPDATE ON unit_event
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE FUNCTION check_scaling_effect_inheritance();
+
+CREATE CONSTRAINT TRIGGER check_fight_rounds_trigger
+    AFTER INSERT OR UPDATE ON fight
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_fight_rounds();
+
+CREATE CONSTRAINT TRIGGER check_unit_objects_trigger
+    AFTER INSERT ON instance_units_object
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_unit_objects();
+
+CREATE CONSTRAINT TRIGGER check_changing_unit_object_event_trigger
+    AFTER INSERT ON changing_unit_object_events_object
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_changing_unit_object_event();
+
+CREATE CONSTRAINT TRIGGER check_team_objects_trigger
+    AFTER INSERT ON teams_object
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_team_objects();
+
+CREATE CONSTRAINT TRIGGER check_changing_shop_units_trigger
+    AFTER INSERT OR DELETE ON changing_shops_unit
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_changing_shop_units();
+
+CREATE CONSTRAINT TRIGGER check_team_shop_units_trigger
+    AFTER INSERT OR DELETE ON teams_shop
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_team_shop_units();
+
+CREATE CONSTRAINT TRIGGER check_game_pool_trigger
+    AFTER INSERT OR DELETE ON pool
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_game_pool();
+
+CREATE CONSTRAINT TRIGGER check_game_team_trigger
+    AFTER INSERT OR DELETE ON team
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE check_game_team();
