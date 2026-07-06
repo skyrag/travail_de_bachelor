@@ -42,7 +42,7 @@ public class User {
     @Column(name = "oauth_sub")
     private String oauthSub;
 
-    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Team> teams = new ArrayList<>();
 
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)

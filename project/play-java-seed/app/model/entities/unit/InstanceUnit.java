@@ -3,6 +3,8 @@ package model.entities.unit;
 import jakarta.persistence.*;
 import model.entities.Team;
 import model.utils.Tuple;
+import org.hibernate.annotations.Type;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,7 @@ public class InstanceUnit {
     @Column(nullable = false)
     private Integer lvl;
 
+    @Type(Tuple.TupleType.class)
     @Column(nullable = false)
     private Tuple pos;
 
