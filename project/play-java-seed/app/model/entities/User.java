@@ -2,6 +2,9 @@ package model.entities;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -38,6 +41,12 @@ public class User {
      */
     @Column(name = "oauth_sub")
     private String oauthSub;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Team> teams = new ArrayList<>();
+
+    @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
+    private LocalDateTime createdAt;
 
     public User(String name, String surname, String username, String email, String passwordHash) {
         this.name = name;
@@ -128,9 +137,17 @@ public class User {
         return Long.toString(id);
     }
 
+    public List<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(List<Team> teams) {
+        this.teams = teams;
+    }
+
     @Override
-    public boolean equals(Object o){
-        if (o instanceof User u ){
+    public boolean equals(Object o) {
+        if (o instanceof User u) {
             return Objects.equals(u.id, this.id);
         } else {
             return false;

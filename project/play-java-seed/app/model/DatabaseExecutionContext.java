@@ -4,6 +4,7 @@ import org.apache.pekko.actor.ActorSystem;
 import play.api.libs.concurrent.CustomExecutionContext;
 
 import javax.inject.Inject;
+
 /**
  * Execution context dedicated to database operations.
  * <p>

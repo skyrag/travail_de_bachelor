@@ -1,13 +1,13 @@
 package model.repositories;
 
+import jakarta.persistence.EntityManager;
 import model.DatabaseExecutionContext;
 import model.entities.User;
 import play.db.jpa.JPAApi;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import javax.inject.Inject;
-import jakarta.persistence.EntityManager;
 import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -21,7 +21,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
  * DatabaseExecutionContext.
  * <p>
  * Each operation is executed within its own transaction through
- * withTransaction(Function)
+ * JPAApi#withTransaction(Function)
  */
 public class LoginRepository implements UserRepo{
 
@@ -78,15 +78,15 @@ public class LoginRepository implements UserRepo{
     }
 
     @Override
-    public CompletionStage<User> remove(User user){
-        return supplyAsync(() -> wrap(em ->  remove(em, user)));
+    public CompletionStage<User> remove(User user) {
+        return supplyAsync(() -> wrap(em -> remove(em, user)));
     }
 
     /**
      * Executes the provided function inside a JPA transaction.
      *
      * @param function the operation to execute
-     * @param <T> the type returned by the operation
+     * @param <T>      the type returned by the operation
      * @return the result of the operation
      */
     private <T> T wrap(Function<EntityManager, T> function) {
@@ -96,7 +96,7 @@ public class LoginRepository implements UserRepo{
     /**
      * Persists a user entity.
      *
-     * @param em the active entity manager
+     * @param em   the active entity manager
      * @param user the user to persist
      * @return the persisted user
      */
@@ -111,7 +111,7 @@ public class LoginRepository implements UserRepo{
      * The user is first merged into the current persistence context
      * to ensure that detached entities can be removed safely.
      *
-     * @param em the active entity manager
+     * @param em   the active entity manager
      * @param user the user to remove
      * @return the removed user
      */
