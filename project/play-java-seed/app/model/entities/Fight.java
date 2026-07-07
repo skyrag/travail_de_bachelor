@@ -22,4 +22,27 @@ public class Fight {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "loser", nullable = false)
     private Round loser;
+
+    protected Fight(){
+
+    }
+
+    public Fight(Round winner, Round loser){
+        this.winner = winner;
+        this.loser = loser;
+    }
+
+    //getter/setter
+
+    public Long getId() {
+        return id;
+    }
+
+    public Round getLoser() {
+        return loser;
+    }
+
+    public Round getWinner() {
+        return winner;
+    }
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import model.entities.Round;
+import model.entities.unit.InstanceUnit;
 import model.entities.unit.Item;
 
 import java.util.ArrayList;
@@ -24,12 +26,18 @@ public class ChangingUnitObjectEvent extends UnitEvent{
     )
     private List<Item> items = new ArrayList<>();
 
-    public List<Item> getObjects() {
-        return items;
+    protected ChangingUnitObjectEvent () {
+        super();
     }
 
-    public void setObjects(List<Item> items) {
+    public ChangingUnitObjectEvent(InstanceUnit unit, int step, Round round, List<Item> items){
+        super(unit, step, round);
         this.items = items;
     }
 
+
+    // getter/setter
+    public List<Item> getObjects() {
+        return items;
+    }
 }

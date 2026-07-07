@@ -14,23 +14,26 @@ public class StatChangingEffect extends Effect{
     private StatType typeChange;
 
     @Column(nullable = false)
-    private int value;
+    private Integer value;
+
+    protected StatChangingEffect() {
+        super();
+    }
+
+    public StatChangingEffect(StatType typeChange, int value) {
+        super();
+        this.typeChange = typeChange;
+        this.value = value;
+    }
+
+
+    // getter/setter
 
     public int getValue() {
         return value;
     }
 
-    public void setValue(int value) {
-        this.value = value;
-    }
-
     public StatType getTypeChange() {
         return typeChange;
     }
-
-    public void setTypeChange(StatType typeChange) {
-        this.typeChange = typeChange;
-    }
-
-
 }

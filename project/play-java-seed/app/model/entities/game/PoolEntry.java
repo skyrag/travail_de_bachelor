@@ -34,20 +34,20 @@ public class PoolEntry {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public Pool getPool() {
-        return pool;
+    protected PoolEntry() {
+
     }
 
-    public void setPool(Pool pool) {
+    public PoolEntry(Pool pool, Unit unit, int number) {
         this.pool = pool;
+        this.unit = unit;
+        this.number = number;
     }
 
+
+    //getter/setter
     public Unit getUnit() {
         return unit;
-    }
-
-    public void setUnit(Unit unit) {
-        this.unit = unit;
     }
 
     public Integer getNumber() {
@@ -60,10 +60,6 @@ public class PoolEntry {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     /**

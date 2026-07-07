@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import model.entities.Round;
 import model.entities.unit.Unit;
 
 import java.util.ArrayList;
@@ -25,12 +26,19 @@ public class ChangingShopEvent extends Event{
     )
     private List<Unit> units = new ArrayList<>();
 
-    public List<Unit> getUnits() {
-        return units;
+    protected ChangingShopEvent() {
+        super();
     }
 
-    public void setUnits(List<Unit> units) {
+    public ChangingShopEvent(int step, Round round, List<Unit> units) {
+        super(step, round);
         this.units = units;
+    }
+
+
+    //getter/setter
+    public List<Unit> getUnits() {
+        return units;
     }
 }
 

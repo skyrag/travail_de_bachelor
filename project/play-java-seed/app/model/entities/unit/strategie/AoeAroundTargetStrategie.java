@@ -15,27 +15,36 @@ import jakarta.persistence.Entity;
 public class AoeAroundTargetStrategie extends Strategie{
 
     @Column(name = "is_target_ennemy", nullable = false)
-    private boolean isTargetEnnemy;
+    private Boolean isTargetEnnemy;
 
     @Column(name = "is_center_you", nullable = false)
-    private boolean isCenterYou;
+    private Boolean isCenterYou;
 
     @Column(nullable = false)
-    private int size;
+    private Integer size;
 
+    protected AoeAroundTargetStrategie(){
+        super();
+    }
+
+    public AoeAroundTargetStrategie(boolean isTargetEnnemy, boolean isCenterYou, int size){
+        super();
+        this.isTargetEnnemy = isTargetEnnemy;
+        this.isCenterYou = isCenterYou;
+        this.size = size;
+    }
+
+
+    //getter/setter
     public boolean isTargetEnnemy() {
         return isTargetEnnemy;
     }
 
-    public void setTargetEnnemy(boolean targetEnnemy) {
-        isTargetEnnemy = targetEnnemy;
+    public boolean isCenterYou() {
+        return isCenterYou;
     }
 
     public int getN() {
         return size;
-    }
-
-    public void setN(int size) {
-        this.size = size;
     }
 }

@@ -2,6 +2,7 @@ package model.entities.event;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import model.entities.Round;
 
 /**
  * An event that extends Event.
@@ -12,13 +13,20 @@ import jakarta.persistence.Entity;
 public class LevelingEvent extends Event{
 
     @Column(nullable = false)
-    private int level;
+    private Integer level;
 
-    public int getLevel() {
-        return level;
+    protected LevelingEvent () {
+        super();
     }
 
-    public void setLevel(int level) {
-        this.level = level;
+    public LevelingEvent(int step, Round round, int exp){
+        super(step, round);
+        this.level = exp;
+    }
+
+
+    // getter/setter
+    public int getLevel() {
+        return level;
     }
 }

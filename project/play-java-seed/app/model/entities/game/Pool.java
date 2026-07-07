@@ -28,7 +28,7 @@ public class Pool {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "pools_rarity", nullable = false)
-    private PoolRarity poolsRarity;
+    private Rarity poolsRarity;
 
     @OneToMany(mappedBy = "pool", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PoolEntry> entries = new ArrayList<>();
@@ -36,43 +36,33 @@ public class Pool {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    protected Pool(){
+
+    }
+
+    public Pool(Game game, Rarity rarity, List<PoolEntry> entries){
+        this.game = game;
+        this.poolsRarity = rarity;
+        this.entries = entries;
+    }
+
+
+
+
+    //getter/setter
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Game getGame() {
-        return game;
-    }
-
-    public void setGame(Game game) {
-        this.game = game;
-    }
-
-    public PoolRarity getPoolsRarity() {
+    public Rarity getPoolsRarity() {
         return poolsRarity;
-    }
-
-    public void setPoolsRarity(PoolRarity poolsRarity) {
-        this.poolsRarity = poolsRarity;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public List<PoolEntry> getEntries() {
         return entries;
-    }
-
-    public void setEntries(List<PoolEntry> entries) {
-        this.entries = entries;
     }
 }

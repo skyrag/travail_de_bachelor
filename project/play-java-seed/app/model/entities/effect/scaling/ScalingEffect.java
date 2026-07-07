@@ -15,35 +15,37 @@ import model.entities.effect.StatType;
 public abstract class ScalingEffect extends Effect {
 
     @Column(nullable = false)
-    private int base;
+    private Integer base;
 
     @Column(name = "taype_scaling", nullable = false)
     private StatType typeScaling;
 
     @Column(name = "coef_scaling", nullable = false)
-    private int coefScaling;
+    private Integer coefScaling;
+
+    protected ScalingEffect(){
+        super();
+    }
+
+    protected ScalingEffect (int base, StatType typeScaling, int coefScaling) {
+        super();
+        this.base = base;
+        this.typeScaling = typeScaling;
+        this.coefScaling = coefScaling;
+    }
+
+
+    // getter/setter
 
     public int getBase() {
         return base;
-    }
-
-    public void setBase(int base) {
-        this.base = base;
     }
 
     public StatType getTypeScaling() {
         return typeScaling;
     }
 
-    public void setTypeScaling(StatType typeScaling) {
-        this.typeScaling = typeScaling;
-    }
-
     public int getCoefScaling() {
         return coefScaling;
-    }
-
-    public void setCoefScaling(int coefScaling) {
-        this.coefScaling = coefScaling;
     }
 }
