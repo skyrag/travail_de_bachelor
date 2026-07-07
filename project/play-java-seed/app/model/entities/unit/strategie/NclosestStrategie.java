@@ -13,24 +13,27 @@ import jakarta.persistence.Entity;
 public class NclosestStrategie extends Strategie{
 
     @Column(name = "is_target_ennemy", nullable = false)
-    private boolean isTargetEnnemy;
+    private Boolean isTargetEnnemy;
 
     @Column(nullable = false)
-    private int n;
+    private Integer n;
 
+    protected NclosestStrategie(){
+        super();
+    }
+
+    public NclosestStrategie(boolean isTargetEnnemy, int n){
+        this.isTargetEnnemy= isTargetEnnemy;
+        this.n = n;
+    }
+
+
+    //getter/setter
     public boolean isTargetEnnemy() {
         return isTargetEnnemy;
     }
 
-    public void setTargetEnnemy(boolean targetEnnemy) {
-        isTargetEnnemy = targetEnnemy;
-    }
-
     public int getN() {
         return n;
-    }
-
-    public void setN(int n) {
-        this.n = n;
     }
 }

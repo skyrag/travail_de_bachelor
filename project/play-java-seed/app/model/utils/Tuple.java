@@ -7,7 +7,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Objects;
 
 /**
  * An immutable pair of integer coordinates {@code (x, y)}.
@@ -17,28 +16,13 @@ import java.util.Objects;
  * of the form {@code "(x,y)"} via the nested TupleType
  * Hibernate converter.
  */
-public class Tuple {
-    private final int x;
-    private final int y;
-
-    public Tuple(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public int getX() { return x; }
-    public int getY() { return y; }
+public record Tuple(int x, int y) {
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Tuple t)) return false;
         return x == t.x && y == t.y;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(x, y);
     }
 
     @Override

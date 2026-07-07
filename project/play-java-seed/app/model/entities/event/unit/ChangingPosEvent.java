@@ -2,6 +2,8 @@ package model.entities.event.unit;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import model.entities.Round;
+import model.entities.unit.InstanceUnit;
 import model.utils.Tuple;
 import org.hibernate.annotations.Type;
 
@@ -16,11 +18,19 @@ public class ChangingPosEvent extends UnitEvent{
     @Column(nullable = false)
     private Tuple position;
 
-    public Tuple getPosition() {
-        return position;
+    protected ChangingPosEvent() {
+        super();
     }
 
-    public void setPosition(Tuple position) {
+    public ChangingPosEvent (InstanceUnit unit, int step, Round round, Tuple position) {
+        super(unit, step, round);
         this.position = position;
+    }
+
+
+
+    // getter/setter
+    public Tuple getPosition() {
+        return position;
     }
 }

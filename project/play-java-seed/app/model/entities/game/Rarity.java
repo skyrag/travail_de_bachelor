@@ -1,6 +1,6 @@
 package model.entities.game;
 
-public enum PoolRarity {
+public enum Rarity {
     COMMON,
     UNCOMMON,
     RARE,

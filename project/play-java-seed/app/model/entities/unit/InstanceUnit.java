@@ -53,12 +53,21 @@ public class InstanceUnit {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
+    protected InstanceUnit() {
+
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public InstanceUnit(int level, Tuple pos, Unit unit, Team team){
+        this.lvl = level;
+        this.pos = pos;
+        this.unit = unit;
+        this.team = team;
+    }
+
+
+    //getter/stter
+    public Long getId() {
+        return id;
     }
 
     public Integer getLvl() {
@@ -81,24 +90,12 @@ public class InstanceUnit {
         return unit;
     }
 
-    public void setUnit(Unit unit) {
-        this.unit = unit;
-    }
-
     public Team getTeam() {
         return team;
     }
 
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public List<Item> getObjects() {

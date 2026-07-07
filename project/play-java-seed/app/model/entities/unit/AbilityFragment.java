@@ -43,35 +43,30 @@ public class AbilityFragment {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
+    protected AbilityFragment() {
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public AbilityFragment(Strategie strategie, List<Effect> effects, Unit unit){
+        this.strategie = strategie;
+        this.effects = effects;
+        this.unit = unit;
+    }
+
+
+    //getter/setter
+    public Long getId() {
+        return id;
     }
 
     public Strategie getStrategie() {
         return strategie;
     }
 
-    public void setStrategie(Strategie strategie) {
-        this.strategie = strategie;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public List<Effect> getEffects() {
         return effects;
-    }
-
-    public void setEffects(List<Effect> effects) {
-        this.effects = effects;
     }
 }

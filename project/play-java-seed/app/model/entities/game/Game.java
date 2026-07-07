@@ -39,51 +39,41 @@ public class Game {
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Team> teams = new ArrayList<>();
 
-    public Long getId() {
-        return id;
+    protected Game() {
+
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Game(String patchVersion, Long seed, List<Pool> pools, List<Team> teams){
+        this.patchVersion = patchVersion;
+        this.seed = seed;
+        this.pools = pools;
+        this.teams = teams;
+    }
+
+
+
+    //getter/setter
+    public Long getId() {
+        return id;
     }
 
     public String getPatchVersion() {
         return patchVersion;
     }
 
-    public void setPatchVersion(String patchVersion) {
-        this.patchVersion = patchVersion;
-    }
-
     public Long getSeed() {
         return seed;
-    }
-
-    public void setSeed(Long seed) {
-        this.seed = seed;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public List<Pool> getPools() {
         return pools;
     }
 
-    public void setPools(List<Pool> pools) {
-        this.pools = pools;
-    }
-
     public List<Team> getTeams() {
         return teams;
-    }
-
-    public void setTeams(List<Team> teams) {
-        this.teams = teams;
     }
 }

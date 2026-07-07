@@ -2,6 +2,7 @@ package model.entities;
 
 import jakarta.persistence.*;
 import model.entities.game.Game;
+import model.entities.unit.InstanceUnit;
 import model.entities.unit.Unit;
 
 import java.time.LocalDateTime;
@@ -54,31 +55,38 @@ public class Team {
     )
     private List<Unit> shop = new ArrayList<>();
 
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InstanceUnit> units = new ArrayList<>();
+
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
+    protected Team() {
+
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Team(User user, Game game, int gold) {
+        this.user = user;
+        this.game = game;
+        this.gold = gold;
+        this.winstreak = 0;
+        this.health = 100;
+        this.lvl = 1;
+    }
+
+
+
+    //getter/setter
+    public Long getId() {
+        return id;
     }
 
     public User getUser() {
         return user;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public Game getGame() {
         return game;
-    }
-
-    public void setGame(Game game) {
-        this.game = game;
     }
 
     public Integer getRank() {
@@ -129,11 +137,15 @@ public class Team {
         this.shop = shop;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public List<InstanceUnit> getUnits() {
+        return units;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setUnits(List<InstanceUnit> units) {
+        this.units = units;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
