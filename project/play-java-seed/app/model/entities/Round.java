@@ -37,36 +37,32 @@ public class Round {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
+    protected Round() {
+
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Round(int round, Team team){
+        this.round = round;
+        this.team = team;
+    }
+
+
+    //getter/setter
+
+    public Long getId() {
+        return id;
     }
 
     public Integer getRoundNumber() {
         return round;
     }
 
-    public void setRoundNumber(Integer round) {
-        this.round = round;
-    }
-
     public Team getTeam() {
         return team;
     }
 
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public List<Event> getEvents() {

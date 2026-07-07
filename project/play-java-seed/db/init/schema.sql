@@ -81,6 +81,7 @@ CREATE TABLE unit (
     armor int NOT NULL,
     magic_resist int NOT NULL,
     range int NOT NULL,
+    rarity rarity NOT NULL,
     -- TODO rajouter les traits
     -- TODO rajouter les effect de compétence et les effets permanents.
     created_at TIMESTAMP NOT NULL DEFAULT NOW()

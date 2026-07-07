@@ -26,14 +26,16 @@ public abstract class Effect {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    public void setId(long id) {
-        this.id = id;
+    protected Effect () {
+
     }
+
+    // getter/setter
 
     public long getId() {
         return id;
@@ -41,9 +43,5 @@ public abstract class Effect {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }

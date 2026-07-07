@@ -43,48 +43,37 @@ public class Item {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public Long getId() {
-        return id;
+    protected Item(){
+
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Item(String patchVersion, String name, String description, List<StatChangingEffect> effects){
+        this.patchVersion = patchVersion;
+        this.name = name;
+        this.description = description;
+        this.effects = effects;
+    }
+
+
+    //getter/setter
+    public Long getId() {
+        return id;
     }
 
     public String getPatchVersion() {
         return patchVersion;
     }
 
-    public void setPatchVersion(String patchVersion) {
-        this.patchVersion = patchVersion;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setEffects(List<StatChangingEffect> effects) {
-        this.effects = effects;
     }
 
     public List<StatChangingEffect> getEffects() {

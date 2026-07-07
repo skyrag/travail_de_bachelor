@@ -2,6 +2,7 @@ package model.entities.event;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import model.entities.Round;
 
 /**
  * An event that extends Event.
@@ -12,13 +13,20 @@ import jakarta.persistence.Entity;
 public class LosingHealthEvent extends Event{
 
     @Column(nullable = false)
-    private int health;
+    private Integer health;
 
-    public int getHealth() {
-        return health;
+    protected LosingHealthEvent() {
+        super();
     }
 
-    public void setHealth(int health) {
+    public LosingHealthEvent(int step, Round round, int health) {
+        super(step, round);
         this.health = health;
+    }
+
+
+    //getter/setter
+    public int getHealth() {
+        return health;
     }
 }

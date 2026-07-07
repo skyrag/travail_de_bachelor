@@ -9,4 +9,8 @@ import jakarta.persistence.Entity;
  */
 @Entity
 public class CurrentTargetStrategie extends Strategie{
+
+    public CurrentTargetStrategie(){
+        super();
+    }
 }

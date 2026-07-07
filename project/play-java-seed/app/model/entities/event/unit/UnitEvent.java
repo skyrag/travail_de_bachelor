@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import model.entities.Round;
 import model.entities.event.Event;
 import model.entities.unit.InstanceUnit;
 import model.entities.unit.Unit;
@@ -21,11 +22,18 @@ public abstract class UnitEvent extends Event {
     @JoinColumn(name = "unit_id", nullable = false)
     private InstanceUnit unit;
 
-    public InstanceUnit getUnit() {
-        return unit;
+    protected UnitEvent() {
+        super();
     }
 
-    public void setUnit(InstanceUnit unit) {
+    protected UnitEvent (InstanceUnit unit, int step, Round round) {
+        super(step, round);
         this.unit = unit;
+    }
+
+
+    // getter/setter
+    public InstanceUnit getUnit() {
+        return unit;
     }
 }
