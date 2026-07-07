@@ -48,6 +48,26 @@ public class User {
     @Column(name = "created_at", insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    public User(String name, String surname, String username, String email, String passwordHash) {
+        this.name = name;
+        this.surname = surname;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+    }
+
+    public User(String name, String surname,String username, String email, String oauthProvider, String oauthSub) {
+        this.name = name;
+        this.surname = surname;
+        this.username = username;
+        this.email = email;
+        this.oauthProvider = oauthProvider;
+        this.oauthSub = oauthSub;
+    }
+
+    public User() {
+
+    }
     public long getId() {
         return id;
     }

@@ -12,11 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -34,7 +29,7 @@ public class TestLoginRepositories {
             .withInitScript("Login.sql");
 
 
-    loginRepository repo;
+    LoginRepository repo;
     Application app;
 
     //starting the DB before doing those tests
@@ -52,7 +47,6 @@ public class TestLoginRepositories {
     // setting up the config of our play app to be linked with our DB
     @Before
     public void setUp() {
-        System.out.println("on est la");
         Map<String, Object> config = new HashMap<>();
         config.put(
                 "db.default.url",
@@ -70,7 +64,7 @@ public class TestLoginRepositories {
         app = new GuiceApplicationBuilder()
                         .configure(config)
                         .build();
-        repo = app.injector().instanceOf(loginRepository.class);
+        repo = app.injector().instanceOf(LoginRepository.class);
     }
 
     // stopping the app in case it is not after each test
@@ -95,18 +89,18 @@ public class TestLoginRepositories {
         alice.setPasswordHash("hashAlice");
 
         // adding a user
-        repo.add(alice);
+        repo.add(alice).toCompletableFuture().join();
 
         // asserting that we get our user back
-        Boolean resEmail = repo.existsByEmail(alice.getEmail())
+        User resEmail = repo.getByEmail(alice.getEmail())
                 .toCompletableFuture()
                 .join();
-        Boolean resUsername = repo.existsByUsername(alice.getUsername())
+        User resUsername = repo.getByUsername(alice.getUsername())
                 .toCompletableFuture()
                 .join();
 
+        assertNotNull(resUsername);
         assertEquals(resEmail, resUsername);
-        assertTrue(resUsername);
 
         // cleaning up
         repo.remove(alice).toCompletableFuture().join();
@@ -151,27 +145,31 @@ public class TestLoginRepositories {
     public void shouldGetAll() {
 
         // setup of users to get
-        User bob = new User();
-        bob.setName("bob");
-        bob.setSurname("surBob");
-        bob.setUsername("userBob");
-        bob.setEmail("bob@test.ch");
-        bob.setOauth_provider("google");
-        bob.setOauth_sub("bob'sid");
-        bob.setPasswordHash("hashBob");
+        User bob = new User("bob",
+                "surBob",
+                "userBob",
+                "bob@test.ch",
+                "google",
+                "bob'sid"
+        );
 
-        User alice = new User();
-        alice.setUsername("userAlice");
-        alice.setEmail("alice@test.ch");
-        alice.setName("alice");
-        alice.setSurname("surAlice");
-        alice.setOauth_provider(null);
-        alice.setOauth_sub(null);
-        alice.setPasswordHash("hashAlice");
+        User alice = new User("alice",
+                "surAlice",
+                "userAlice",
+                "alice@test.ch",
+                "hashAlice"
+        );
+
+        User geralt = new User("geralt",
+                "surGeralt",
+                "userGeralt",
+                "geralt@test.ch",
+                "hashGeralt"
+        );
 
         // adding the users
-        repo.add(bob);
-        repo.add(alice);
+        repo.add(bob).toCompletableFuture().join();
+        repo.add(alice).toCompletableFuture().join();
 
         List<User> list = repo.getAll()
                 .toCompletableFuture()
@@ -179,6 +177,7 @@ public class TestLoginRepositories {
 
         assertTrue(list.contains(alice));
         assertTrue(list.contains(bob));
+        assertFalse(list.contains(geralt));
 
         //cleaning up
         repo.remove(alice)

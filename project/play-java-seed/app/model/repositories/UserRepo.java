@@ -13,7 +13,7 @@ import java.util.concurrent.CompletionStage;
  * for checking the existence of users based on their email
  * address or username.
  */
-@ImplementedBy(loginRepository.class)
+@ImplementedBy(LoginRepository.class)
 public interface UserRepo {
 
     /**
@@ -49,18 +49,18 @@ public interface UserRepo {
 
 
     /**
-     * Checks whether a user already has this email
+     * Get a user from the DB based on his email
      *
      * @param email the email to check
-     * @return a CompletionStage containing the boolean
+     * @return a CompletionStage containing the user
      */
-    CompletionStage<Boolean> existsByEmail(String email);
+    CompletionStage<User> getByEmail(String email);
 
     /**
-     * Checks whether a user already has this username
+     * Get a user from the DB based on his username
      *
      * @param username the username to check
-     * @return a CompletionStage containing the boolean
+     * @return a CompletionStage containing the user
      */
-    CompletionStage<Boolean> existsByUsername(String username);
+    CompletionStage<User> getByUsername(String username);
 }

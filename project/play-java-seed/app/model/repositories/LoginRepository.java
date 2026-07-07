@@ -23,13 +23,13 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
  * Each operation is executed within its own transaction through
  * JPAApi#withTransaction(Function)
  */
-public class loginRepository implements UserRepo {
+public class LoginRepository implements UserRepo{
 
     private final JPAApi jpaApi;
     private final DatabaseExecutionContext executionContext;
 
     @Inject
-    public loginRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
+    public LoginRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
         this.jpaApi = jpaApi;
         this.executionContext = executionContext;
     }
@@ -54,20 +54,26 @@ public class loginRepository implements UserRepo {
     }
 
     @Override
-    public CompletionStage<Boolean> existsByEmail(String email) {
-        return supplyAsync(() -> wrap(em -> !em.createQuery(
-                        "select u from User u where u.email = :email", User.class).setParameter("email", email)
-                .getResultList()
-                .isEmpty()
+    public CompletionStage<User> getByEmail(String email) {
+        return supplyAsync(() -> wrap(em -> {
+            List<User> list = em.createQuery(
+                            "select u from User u where u.email = :email", User.class).setParameter("email", email)
+                    .setMaxResults(1)
+                    .getResultList();
+            return list.isEmpty()? null : list.getFirst();
+        }
         ), executionContext);
     }
 
     @Override
-    public CompletionStage<Boolean> existsByUsername(String username) {
-        return supplyAsync(() -> wrap(em -> !em.createQuery(
-                        "select u from User u where u.username = :username", User.class).setParameter("username", username)
-                .getResultList()
-                .isEmpty()
+    public CompletionStage<User> getByUsername(String username) {
+        return supplyAsync(() -> wrap(em -> {
+            List<User> list = em.createQuery(
+                            "select u from User u where u.username = :username", User.class).setParameter("username", username)
+                    .setMaxResults(1)
+                    .getResultList();
+            return list.isEmpty()? null : list.getFirst();
+        }
         ), executionContext);
     }
 
