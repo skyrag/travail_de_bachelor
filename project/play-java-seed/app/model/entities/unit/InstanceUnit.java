@@ -98,11 +98,11 @@ public class InstanceUnit {
         return createdAt;
     }
 
-    public List<Item> getObjects() {
+    public List<Item> getItems() {
         return items;
     }
 
-    public void setObjects(List<Item> items) {
+    public void setItems(List<Item> items) {
         this.items = items;
     }
 }

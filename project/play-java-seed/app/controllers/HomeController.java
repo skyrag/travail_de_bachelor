@@ -2,10 +2,15 @@ package controllers;
 
 import model.actor.BridgeActor;
 import model.actor.ConnexionActor;
+import model.actor.GameActor;
 import model.form.UserLoginForm;
 import model.form.UserRegisterForm;
+import model.monitor.ConnexionMonitor;
+import model.repositories.GameRepository;
 import model.repositories.LoginRepository;
 import model.service.HashService;
+import model.service.MatchmakingService;
+import model.service.SeedMakerService;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.javadsl.Adapter;
@@ -25,15 +30,9 @@ import model.groupConstraints.RegisterCheck;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static play.libs.Scala.asScala;
 
@@ -46,24 +45,47 @@ public class HomeController extends Controller {
 
     private final FormFactory formFactory;
     private final MessagesApi messagesApi;
-    private final LoginRepository loginRepo;
-    private final HashService hashService;
     private final ActorSystem actorSystem;
     private final Materializer materializer;
 
-    private final ConcurrentHashMap<String, ActorRef<ConnexionActor.Message>> connexions = new ConcurrentHashMap<>();
+
+    private final LoginRepository loginRepo;
+    private final GameRepository gameRepo;
+
+    private final HashService hashService;
+    private final SeedMakerService seedGenerator;
+    private final MatchmakingService matchmakingService;
+
+    private final ConnexionMonitor connexions;
+
+
+    private final Object lock = new Object();
+
 
     private final Logger logger = LoggerFactory.getLogger(getClass()) ;
 
 
     @Inject
-    public HomeController(FormFactory formFactory, MessagesApi messagesApi, LoginRepository loginRepository, HashService hashService, ActorSystem actorSystem, Materializer materializer) {
+    public HomeController(FormFactory formFactory,
+                          MessagesApi messagesApi,
+                          LoginRepository loginRepository,
+                          GameRepository gameRepo,
+                          HashService hashService,
+                          ActorSystem actorSystem,
+                          Materializer materializer,
+                          SeedMakerService seedGenerator,
+                          ConnexionMonitor connexions,
+                          MatchmakingService matchmakingService) {
         this.formFactory = formFactory;
         this.messagesApi = messagesApi;
         this.loginRepo = loginRepository;
         this.hashService = hashService;
         this.actorSystem = actorSystem;
         this.materializer = materializer;
+        this.seedGenerator = seedGenerator;
+        this.gameRepo = gameRepo;
+        this.connexions = connexions;
+        this.matchmakingService = matchmakingService;
     }
 
     /**
@@ -93,11 +115,21 @@ public class HomeController extends Controller {
         return ok(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class), request, messagesApi.preferred(request)));
     }
 
-    public Result game(Http.Request request) {
+    public CompletionStage<Result> game(Http.Request request) {
         String userId = request.session().get("userId")
                 .orElseThrow(() -> new RuntimeException("Unauthorized"));
-
-        return ok(views.html.game.render(request));
+        CompletionStage<ActorRef<GameActor.Message>> gameActor;
+        synchronized (lock) {
+            gameActor = matchmakingService.addPlayer(userId);
+        }
+        return gameActor.thenApply(actor -> {
+           if (actor == null) {
+               return ok(views.html.index.render());
+           }
+           //TODO c'est ici qu'on peut faire quelque chose avec ce gameActor si besoin
+            // TODO replace with the game screen because the game is OOOOOONNNNN!!!
+            return ok(views.html.game.render(request));
+        });
     }
 
     /**
@@ -192,7 +224,7 @@ public class HomeController extends Controller {
     }
 
     private ActorRef<ConnexionActor.Message> getUserActor(String userId, org.apache.pekko.actor.ActorRef ws){
-        ActorRef<ConnexionActor.Message> user = connexions.get(userId);
+        ActorRef<ConnexionActor.Message> user = connexions.getActorFromId(userId);
 
         if (user != null){
             return user;
@@ -200,10 +232,10 @@ public class HomeController extends Controller {
 
         user = Adapter.spawn(
                 actorSystem,
-                ConnexionActor.create(ws),
+                ConnexionActor.create(ws, Long.parseLong(userId)),
                 userId
         );
-        connexions.put(userId, user);
+        connexions.addConnexion(userId, user);
         return user;
     }
 }

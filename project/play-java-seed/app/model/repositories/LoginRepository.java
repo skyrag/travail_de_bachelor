@@ -1,6 +1,5 @@
 package model.repositories;
 
-import jakarta.persistence.EntityManager;
 import model.DatabaseExecutionContext;
 import model.entities.User;
 import play.db.jpa.JPAApi;
@@ -8,7 +7,6 @@ import play.db.jpa.JPAApi;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
@@ -23,37 +21,30 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
  * Each operation is executed within its own transaction through
  * JPAApi#withTransaction(Function)
  */
-public class LoginRepository implements UserRepo{
-
-    private final JPAApi jpaApi;
-    private final DatabaseExecutionContext executionContext;
+public class LoginRepository extends BasicRepository{
 
     @Inject
     public LoginRepository(JPAApi jpaApi, DatabaseExecutionContext executionContext) {
-        this.jpaApi = jpaApi;
-        this.executionContext = executionContext;
+        super(jpaApi, executionContext);
     }
 
-    @Override
-    public CompletionStage<User> add(User user) {
-        return supplyAsync(() -> wrap(em -> insert(em, user)), executionContext);
-    }
-
-    @Override
-    public CompletionStage<List<User>> getAll() {
+    /**
+     * Get all the Users from the DB
+     *
+     * @return a CompletionStage containing the list of users
+     */
+    public CompletionStage<List<User>> getAllUsers() {
         return supplyAsync(() -> wrap(em ->
                 em.createQuery("select u from User u", User.class).getResultList()
         ), executionContext);
     }
 
-    @Override
-    public CompletionStage<User> get(User user) {
-        return supplyAsync(() -> wrap(em ->
-                em.find(User.class, user.getId())
-        ), executionContext);
-    }
-
-    @Override
+    /**
+     * Get a user from the DB based on his email
+     *
+     * @param email the email to check
+     * @return a CompletionStage containing the user
+     */
     public CompletionStage<User> getByEmail(String email) {
         return supplyAsync(() -> wrap(em -> {
             List<User> list = em.createQuery(
@@ -65,7 +56,12 @@ public class LoginRepository implements UserRepo{
         ), executionContext);
     }
 
-    @Override
+    /**
+     * Get a user from the DB based on his username
+     *
+     * @param username the username to check
+     * @return a CompletionStage containing the user
+     */
     public CompletionStage<User> getByUsername(String username) {
         return supplyAsync(() -> wrap(em -> {
             List<User> list = em.createQuery(
@@ -75,48 +71,5 @@ public class LoginRepository implements UserRepo{
             return list.isEmpty()? null : list.getFirst();
         }
         ), executionContext);
-    }
-
-    @Override
-    public CompletionStage<User> remove(User user) {
-        return supplyAsync(() -> wrap(em -> remove(em, user)));
-    }
-
-    /**
-     * Executes the provided function inside a JPA transaction.
-     *
-     * @param function the operation to execute
-     * @param <T>      the type returned by the operation
-     * @return the result of the operation
-     */
-    private <T> T wrap(Function<EntityManager, T> function) {
-        return jpaApi.withTransaction(function);
-    }
-
-    /**
-     * Persists a user entity.
-     *
-     * @param em   the active entity manager
-     * @param user the user to persist
-     * @return the persisted user
-     */
-    private User insert(EntityManager em, User user) {
-        em.persist(user);
-        return user;
-    }
-
-    /**
-     * Removes a user entity from the database.
-     * <p>
-     * The user is first merged into the current persistence context
-     * to ensure that detached entities can be removed safely.
-     *
-     * @param em   the active entity manager
-     * @param user the user to remove
-     * @return the removed user
-     */
-    private User remove(EntityManager em, User user) {
-        em.remove(em.merge(user));
-        return user;
     }
 }

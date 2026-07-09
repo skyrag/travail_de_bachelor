@@ -40,10 +40,9 @@ public class Pool {
 
     }
 
-    public Pool(Game game, Rarity rarity, List<PoolEntry> entries){
+    public Pool(Game game, Rarity rarity){
         this.game = game;
         this.poolsRarity = rarity;
-        this.entries = entries;
     }
 
 
@@ -64,5 +63,9 @@ public class Pool {
 
     public List<PoolEntry> getEntries() {
         return entries;
+    }
+
+    public void addEntries(PoolEntry entrie) {
+        this.entries.add(entrie);
     }
 }

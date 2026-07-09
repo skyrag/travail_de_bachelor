@@ -171,7 +171,7 @@ public class TestLoginRepositories {
         repo.add(bob).toCompletableFuture().join();
         repo.add(alice).toCompletableFuture().join();
 
-        List<User> list = repo.getAll()
+        List<User> list = repo.getAllUsers()
                 .toCompletableFuture()
                 .join();
 

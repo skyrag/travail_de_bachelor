@@ -6,14 +6,14 @@ CREATE TYPE stat AS ENUM ('HEALTH', 'MANA', 'ATTACKDAMAGE', 'ABILITYPOWER', 'ARM
 CREATE TYPE tuple AS (x INTEGER, y INTEGER);
 
 CREATE TABLE shop_level (
-                            lvl int NOT NULL,
+                            lvl int NOT NULL ,
                             patch_version VARCHAR(20) NOT NULL,
                             common_chances int NOT NULL,
                             uncommon_chances int NOT NULL,
                             rare_chance int NOT NULL,
                             epic_chance int NOT NULL,
                             legendary_chances int NOT NULL,
-                            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                            nextlvl int NOT NULL,
                             PRIMARY KEY (lvl, patch_version)
 );
 
@@ -103,9 +103,10 @@ CREATE TABLE team (
     user_id BIGINT NOT NULL,
     game_id BIGINT NOT NULL,
     rank int NOT NULL,
-    winstreak int NOT NULL,
+    streak double NOT NULL,
     health int NOT NULL,
     lvl int NOT NULL,
+    exp int NOT NULL,
     gold int NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_team_user_game UNIQUE (user_id, game_id),

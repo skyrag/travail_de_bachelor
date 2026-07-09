@@ -44,6 +44,13 @@ public class PoolEntry {
         this.number = number;
     }
 
+    public void increment(){
+        number++;
+    }
+
+    public void decrement(){
+        number--;
+    }
 
     //getter/setter
     public Unit getUnit() {
@@ -52,10 +59,6 @@ public class PoolEntry {
 
     public Integer getNumber() {
         return number;
-    }
-
-    public void setNumber(Integer number) {
-        this.number = number;
     }
 
     public LocalDateTime getCreatedAt() {

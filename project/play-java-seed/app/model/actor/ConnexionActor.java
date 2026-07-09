@@ -17,6 +17,17 @@ import scala.runtime.BoxedUnit;
 
 import java.time.Duration;
 
+/**
+ * The websocket communicate using json that has this form :
+ * {
+ *   "id" : "",
+ *   "type": "",
+ *   "paylod": {
+ *     "entity1" : "",
+ *     "entity2" : ""
+ *   }
+ * }
+ */
 public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
     public interface Message{}
@@ -31,16 +42,38 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         private ConnectionClosed() {}
     }
 
-    private org.apache.pekko.actor.ActorRef ws;
-
-    public static Behavior<Message> create(org.apache.pekko.actor.ActorRef ws) {
-        return Behaviors.setup(ctx -> new ConnexionActor(ctx, ws));
+    public static final class SendFight implements Message {
+        public JsonNode fight;
+        public SendFight(JsonNode fight){
+            this.fight = fight;
+        }
     }
 
-    private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws) {
+    public static final class FeedbackInput implements Message{
+        public JsonNode feedback;
+        public FeedbackInput(JsonNode feedback) {
+            this.feedback = feedback;
+        }
+    }
+
+    public static final class EndGame implements Message{
+        public String winner;
+        public EndGame(String winner){
+            this.winner = winner;
+        }
+    }
+
+    private org.apache.pekko.actor.ActorRef ws;
+    public long userId;
+
+    public static Behavior<Message> create(org.apache.pekko.actor.ActorRef ws, long userId) {
+        return Behaviors.setup(ctx -> new ConnexionActor(ctx, ws, userId));
+    }
+
+    private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws, long userId) {
         super(ctx);
         this.ws = ws;
-        System.out.println("banger2");
+        this.userId = userId;
     }
 
     @Override
@@ -53,6 +86,10 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
     private Behavior<Message> onIncoming(IncomingMessage msg) {
         // faire un traitement des message une fois qu'on a la game
+        switch (msg.text.get("type")){
+            default -> ws.tell(Json.newObject().put("type", "error").put("message" , "unknown type found"),
+                    org.apache.pekko.actor.ActorRef.noSender());
+        }
         return Behaviors.same();
     }
 
