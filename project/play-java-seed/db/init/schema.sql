@@ -77,7 +77,7 @@ CREATE TABLE unit (
     starting_mana int NOT NULL,
     max_mana int NOT NULL,
     base_attack int NOT NULL,
-    attack_speed float NOT NULL,
+    attack_speed double NOT NULL,
     armor int NOT NULL,
     magic_resist int NOT NULL,
     range int NOT NULL,

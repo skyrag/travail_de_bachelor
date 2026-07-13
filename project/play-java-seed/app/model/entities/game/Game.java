@@ -142,4 +142,15 @@ public class Game {
     public void setPools(List<Pool> pools) {
         this.pools = pools;
     }
+
+    public Unit getUnitById(long unitId) {
+        for (Pool pool: pools){
+            for (PoolEntry entry: pool.getEntries()){
+                if (entry.getUnit().getId() == unitId){
+                    return entry.getUnit();
+                }
+            }
+        }
+        return null;
+    }
 }

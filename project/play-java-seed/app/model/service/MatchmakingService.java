@@ -8,6 +8,7 @@ import model.repositories.GameRepository;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.javadsl.Adapter;
+import org.apache.pekko.japi.Pair;
 import play.mvc.Result;
 
 import javax.inject.Inject;
@@ -20,7 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MatchmakingService {
 
-    private final Queue<ActorRef<ConnexionActor.Message>> waitingPlayers = new LinkedList<>();
+    private final Queue<Pair<ActorRef<ConnexionActor.Message>,Long>> waitingPlayers = new LinkedList<>();
     private final ActorSystem actorSystem;
     private final SeedMakerService seedGenerator;
     private final String version;
@@ -48,19 +49,19 @@ public class MatchmakingService {
     }
 
     public synchronized CompletionStage<ActorRef<GameActor.Message>> addPlayer(String userId) {
-        waitingPlayers.add(connexions.getActorFromId(userId));
+        waitingPlayers.add(new Pair<>(connexions.getActorFromId(userId), Long.valueOf(userId)));
         return tryCreateGame();
     }
 
     public synchronized CompletionStage<ActorRef<GameActor.Message>> tryCreateGame() {
         if (waitingPlayers.size() >= 8) {
 
-            List<ActorRef<ConnexionActor.Message>> players = new ArrayList<>();
+            List<Pair<ActorRef<ConnexionActor.Message>,Long>> players = new ArrayList<>();
             List<Long> playerId = new ArrayList<>();
 
             for (int i = 0; i < 8; i++) {
-                ActorRef<ConnexionActor.Message> player = waitingPlayers.poll();
-                playerId.add(Long.parseLong(connexions.getIdFromActor(player)));
+                Pair<ActorRef<ConnexionActor.Message>, Long> player = waitingPlayers.poll();
+                playerId.add(player.second());
                 players.add(player);
             }
 
