@@ -18,8 +18,8 @@ public class GameLevelService {
         // chargement au démarrage
         this.levelsData = jpaApi.withTransaction(em -> {
             return em.createQuery(
-                            "SELECT s FROM ShopLevel s WHERE s.id.patchVersion = :version", LevelData.class)
-                    .setParameter("version", config.getValue("version"))
+                            "SELECT s FROM LevelData s WHERE s.id.patchVersion = :version", LevelData.class)
+                    .setParameter("version", config.getValue("version").toString())
                     .getResultList();
         });
     }

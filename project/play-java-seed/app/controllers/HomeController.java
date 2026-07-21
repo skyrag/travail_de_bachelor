@@ -104,22 +104,19 @@ public class HomeController extends Controller {
         return ok(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class), request, messagesApi.preferred(request)));
     }
 
-    public CompletionStage<Result> game(Http.Request request) {
+    public Result game(Http.Request request) {
         String userId = request.session().get("userId")
                 .orElseThrow(() -> new RuntimeException("Unauthorized"));
         ActorRef<GameActor.Message> gameActor;
         synchronized (lock) {
             gameActor = matchmakingService.addPlayer(userId);
         }
-        return gameActor.thenApply(actor -> {
-           if (actor == null) {
-               return ok(views.html.index.render());
-           }
+        //return gameActor;
            //TODO c'est ici qu'on peut faire quelque chose avec ce gameActor si besoin
             // TODO replace with the game screen because the game is OOOOOONNNNN!!!
-            return ok(views.html.game.render(request));
-        });
+        return ok(views.html.game.render(request));
     }
+
 
     /**
      * This is the function that is called when we Post /register

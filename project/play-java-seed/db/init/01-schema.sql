@@ -103,7 +103,7 @@ CREATE TABLE team (
     user_id BIGINT NOT NULL,
     game_id BIGINT NOT NULL,
     rank int NOT NULL,
-    streak double NOT NULL,
+    streak double precision NOT NULL,
     health int NOT NULL,
     lvl int NOT NULL,
     exp int NOT NULL,
