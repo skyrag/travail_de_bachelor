@@ -2,6 +2,11 @@ package model.entities.unit.strategie;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import model.service.fightingService.ComponentUnit;
+import model.service.fightingService.FightingContext;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A strategie that extends Strategie.
@@ -34,6 +39,28 @@ public class AoeAroundTargetStrategie extends Strategie{
         this.size = size;
     }
 
+    @Override
+    public List<ComponentUnit> findTarget(ComponentUnit caster, FightingContext context){
+        ComponentUnit center;
+        if(isCenterYou) {
+            center = caster;
+        } else {
+            if (isTargetEnnemy){
+                center = context.getCurrentTarget(caster);
+            } else {
+                center = context.getClosestAlly(caster);
+            }
+        }
+
+        List<ComponentUnit> targets = new ArrayList<>();
+        if (!isCenterYou) targets.add(center);
+        for (ComponentUnit unit: context.getGroup(caster, isTargetEnnemy).stream().filter(ComponentUnit::isAlive).toList()){
+            if (center.getCurrentPosition().distanceFrom(unit.getCurrentPosition()) < size * Math.sqrt(2)){
+                targets.add(unit);
+            }
+        }
+        return targets;
+    }
 
     //getter/setter
     public boolean isTargetEnnemy() {

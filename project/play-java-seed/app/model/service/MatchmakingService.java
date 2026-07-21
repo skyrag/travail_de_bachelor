@@ -2,58 +2,40 @@ package model.service;
 
 import model.actor.ConnexionActor;
 import model.actor.GameActor;
-import model.monitor.ConnexionMonitor;
+import model.monitor.ActeurMonitor;
 import model.repositories.GameCreationRepository;
 import model.repositories.GameRepository;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.javadsl.Adapter;
 import org.apache.pekko.japi.Pair;
-import play.mvc.Result;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Singleton
 public class MatchmakingService {
 
     private final Queue<Pair<ActorRef<ConnexionActor.Message>,Long>> waitingPlayers = new LinkedList<>();
-    private final ActorSystem actorSystem;
-    private final SeedMakerService seedGenerator;
     private final String version;
-    private final GameCreationRepository creationRepo;
-    private final ConnexionMonitor connexions;
-    private final GameRepository gameRepo;
-    private final GameLevelService gameLevelService;
+    private final ActeurMonitor monitor;
 
 
     @Inject
-    public MatchmakingService(ActorSystem actorSystem,
-                              SeedMakerService seedGenerator,
-                              com.typesafe.config.Config config,
-                              GameCreationRepository creationRepo,
-                              ConnexionMonitor connexions,
-                              GameRepository gameRepo,
-                              GameLevelService gameLevelService){
-        this.actorSystem = actorSystem;
-        this.seedGenerator = seedGenerator;
+    public MatchmakingService(com.typesafe.config.Config config,
+                              ActeurMonitor connexions){
+
         this.version = config.getString("version");
-        this.creationRepo = creationRepo;
-        this.connexions = connexions;
-        this.gameRepo = gameRepo;
-        this.gameLevelService = gameLevelService;
+        this.monitor = connexions;
     }
 
-    public synchronized CompletionStage<ActorRef<GameActor.Message>> addPlayer(String userId) {
-        waitingPlayers.add(new Pair<>(connexions.getActorFromId(userId), Long.valueOf(userId)));
-        return tryCreateGame();
-    }
-
-    public synchronized CompletionStage<ActorRef<GameActor.Message>> tryCreateGame() {
+    public synchronized ActorRef<GameActor.Message> addPlayer(String userId) {
+        waitingPlayers.add(new Pair<>(monitor.getActorFromId(userId), Long.valueOf(userId)));
         if (waitingPlayers.size() >= 8) {
 
             List<Pair<ActorRef<ConnexionActor.Message>,Long>> players = new ArrayList<>();
@@ -70,9 +52,7 @@ public class MatchmakingService {
                 return null;
             }
 
-            return creationRepo.createGame(version, seedGenerator.createGameSeed(), playerId).thenApply(game -> {
-                return Adapter.spawn(actorSystem, GameActor.create(players, game, gameRepo, seedGenerator, gameLevelService), "game-" + game.getId());
-            });
+            return monitor.createGame(players, version, playerId);
         }
         return null;
     }

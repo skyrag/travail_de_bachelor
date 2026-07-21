@@ -21,7 +21,6 @@ alt si un des check précédent ne passe pas
     Backend -> Alice : error
 end
 Backend -> Alice : ok
-
 == Vendre une unité ==
 
 Alice -> Backend : vendre une unité

@@ -5,6 +5,7 @@ public class JsonConstantes {
     static final String TYPE = "type";
     static final String PAYLOAD = "payload";
     static final String LOG = "log";
+    static final String TIME = "time";
 
     static final String BUY = "BuyUnit";
     static final String SELL = "SellUnit";
@@ -14,7 +15,11 @@ public class JsonConstantes {
     static final String EXP = "BuyExp";
     static final String ERROR = "error";
     static final String OK = "ok";
-    static final String LOSTFIGHT = "lostFight";
+    static final String FIGHTRESULT = "FightResult";
+    static final String GAMEOVER = "GameOver";
+    static final String GAMELOST = "GameLost";
+    static final String SETUP = "setup";
+    static final String ROUNDWINDOW = "RoundWindow";
 
     static final String ACK = "Ack";
     static final String RECO = "Reconnect";
@@ -25,6 +30,19 @@ public class JsonConstantes {
     static final String POSITION = "position";
     static final String UNIT = "unitId";
     static final String ITEM = "itemId";
+    static final String USER = "userId";
+    static final String HEALTH = "health";
+
+    static final String UNITS = "units";
+    static final String ITEMS = "items";
+    static final String TEAM = "team";
+
+    static final String TEAMA = "teamA";
+    static final String TEAMB = "teamB";
+
+    static final int INPUTBUFFER = 1000;
+
+
 
 
 }

@@ -12,11 +12,8 @@ import java.util.Random;
 public class SeedMakerService {
 
     private Random generator;
-    private HashService hashService;
 
-    @Inject
-    public SeedMakerService(HashService hashService){
-        this.hashService = hashService;
+    public SeedMakerService(){
         generator = new Random();
     }
 

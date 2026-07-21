@@ -1,46 +1,28 @@
 @startuml
 'https://plantuml.com/deployment-diagram
 
-Component actor {
-circle ActorSystem
-circle GameManagerActor
-circle MatchmakingActor
+circle ActeurMonitor
+circle Repo
+circle GameSimulation
+
+
 circle GameActor
 circle ConnexionActor
-circle ValidatorActor
-circle DBActor
-circle DBRouter
-circle SimluationRouter
-circle ValidatorRouter
-circle SimulationActor
 
-ActorSystem --> GameManagerActor : "reconnexion"
-ActorSystem -[bold]-> GameManagerActor
-ActorSystem --> MatchmakingActor : "user wants to play"
-ActorSystem -[bold]-> MatchmakingActor
-MatchmakingActor --> GameManagerActor : "create game"
-GameManagerActor -[bold]-> GameActor
-GameManagerActor --> GameActor : "reconnexion"
-GameActor -[bold]-> ConnexionActor
-GameActor --> ConnexionActor : "feedback on user input"
-GameActor --> ConnexionActor : "Changes in ennemy teams"
+ActeurMonitor --> ConnexionActor : créer et stocke un acteur par connexion utilisateur
+ActeurMonitor --> GameActor : créer et stocke un acteur par partie en cours avec des utilisateur connecté
+
+GameActor --> ConnexionActor : "retour sur les input utilisateur"
+GameActor --> ConnexionActor : "Changement des autre équipes"
 GameActor --> ConnexionActor : "Combat"
-GameActor -[bold]-> ValidatorRouter
-ValidatorRouter -[bold]-> ValidatorActor
-ConnexionActor --> ValidatorRouter : "input"
-ValidatorRouter --> ValidatorActor : "input"
-ValidatorActor --> GameActor : validInput
-GameActor --> ConnexionActor : ValidInput
-ValidatorActor --> ConnexionActor : InvalidInput
-GameManagerActor -[bold]-> SimluationRouter
-SimluationRouter -[bold]-> SimulationActor
-GameActor --> SimluationRouter : fight
-SimluationRouter --> SimulationActor : fight
-SimulationActor --> GameActor : fightResults
-GameManagerActor -[bold]-> DBRouter
-DBRouter -[bold]-> DBActor
-GameActor --> DBRouter : persist
-DBRouter --> DBActor : persist
-}
+
+GameSimulation --> GameActor : retour sur le combat
+GameSimulation --> ConnexionActor : envoie du combat
+
+GameActor --> ConnexionActor : Valid/invalidInput
+GameActor --> GameSimulation : simulate fight
+
+GameActor --> Repo : persist
+
 
 @enduml

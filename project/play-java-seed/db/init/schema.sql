@@ -77,7 +77,7 @@ CREATE TABLE unit (
     starting_mana int NOT NULL,
     max_mana int NOT NULL,
     base_attack int NOT NULL,
-    attack_speed double NOT NULL,
+    attack_speed int NOT NULL,
     armor int NOT NULL,
     magic_resist int NOT NULL,
     range int NOT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE aoe_around_target (
     is_target_ennemy bool NOT NULL,
     is_center_you bool NOT NULL,
     size int NOT NULL,
-    CONSTRAINT fk_n_closest_strategie_strategie FOREIGN KEY (id) REFERENCES strategie(id) ON DELETE CASCADE
+    CONSTRAINT fk_aoe_around_target_strategie FOREIGN KEY (id) REFERENCES strategie(id) ON DELETE CASCADE
 );
 
 CREATE TABLE ability_fragment (
@@ -556,7 +556,7 @@ BEGIN
     WHERE game_id = current_game_id;
 
     IF team_count != 8 THEN
-        RAISE EXCEPTION 'Une partie doit avoir 5 team, % trouvée(s)', team_count;
+        RAISE EXCEPTION 'Une partie doit avoir 8 team, % trouvée(s)', team_count;
     END IF;
     RETURN NEW;
 END;
@@ -576,13 +576,13 @@ CREATE CONSTRAINT TRIGGER check_unit_event_inheritance_trigger
                                   EXECUTE FUNCTION check_unit_event_inheritance();
 
 CREATE CONSTRAINT TRIGGER check_effect_inheritance_trigger
-    AFTER INSERT OR UPDATE ON unit_event
+    AFTER INSERT OR UPDATE ON effect
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE FUNCTION check_effect_inheritance();
 
 CREATE CONSTRAINT TRIGGER check_scaling_effect_inheritance_trigger
-    AFTER INSERT OR UPDATE ON unit_event
+    AFTER INSERT OR UPDATE ON scaling_effect
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE FUNCTION check_scaling_effect_inheritance();
@@ -594,43 +594,43 @@ CREATE CONSTRAINT TRIGGER check_fight_rounds_trigger
 EXECUTE PROCEDURE check_fight_rounds();
 
 CREATE CONSTRAINT TRIGGER check_unit_objects_trigger
-    AFTER INSERT ON instance_units_object
+    AFTER INSERT OR DELETE OR UPDATE ON instance_units_object
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_unit_objects();
 
 CREATE CONSTRAINT TRIGGER check_changing_unit_object_event_trigger
-    AFTER INSERT ON changing_unit_object_events_object
+    AFTER INSERT OR DELETE OR UPDATE ON changing_unit_object_events_object
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_changing_unit_object_event();
 
 CREATE CONSTRAINT TRIGGER check_team_objects_trigger
-    AFTER INSERT ON teams_object
+    AFTER INSERT OR DELETE OR UPDATE ON teams_object
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_team_objects();
 
 CREATE CONSTRAINT TRIGGER check_changing_shop_units_trigger
-    AFTER INSERT OR DELETE ON changing_shops_unit
+    AFTER INSERT OR DELETE OR UPDATE ON changing_shops_unit
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_changing_shop_units();
 
 CREATE CONSTRAINT TRIGGER check_team_shop_units_trigger
-    AFTER INSERT OR DELETE ON teams_shop
+    AFTER INSERT OR DELETE OR UPDATE ON teams_shop
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_team_shop_units();
 
 CREATE CONSTRAINT TRIGGER check_game_pool_trigger
-    AFTER INSERT OR DELETE ON pool
+    AFTER INSERT OR DELETE OR UPDATE ON pool
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_game_pool();
 
 CREATE CONSTRAINT TRIGGER check_game_team_trigger
-    AFTER INSERT OR DELETE ON team
+    AFTER INSERT OR DELETE OR UPDATE ON team
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
 EXECUTE PROCEDURE check_game_team();

@@ -1,0 +1,38 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:make ComponentUnit with data from Unit and InstanceUnit;
+:début de simulation;
+repeat :début de la boucle;
+partition "system statusSystem sur chaque unité"{
+if (est-ce que l'unité a un status?) then (oui)
+:tick le status et changer les données en foction du type de status;
+else (non)
+:passer a la prochaine unité;
+endif
+}
+partition "system actionSystem sur chaque unité"{
+if (est-ce que l'unité a son mana plein?) then (oui)
+:l'untié lance sa compétence sur sa cible;
+else (non)
+if (est-ce que l'unité est a porté de sa cible?) is (oui) then
+  :attacker l'unité et changer la data des deux unités;
+else (non)
+  :se rapprocher de l'unité;
+endif
+endif
+}
+partition "system endSystem"{
+if (est-ce que la partie est finie ?) then (oui)
+:déterminer le gagnant;
+else (non)
+:passer;
+endif
+}
+repeat while (nombre max de tours ou partie finie (endSystem)?) is (Non) not (oui)
+:déterminer les points de vie perdus;
+stop
+
+
+@enduml

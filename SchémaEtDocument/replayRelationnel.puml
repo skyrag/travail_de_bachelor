@@ -1,0 +1,42 @@
+@startchen
+'https://plantuml.com/sequence-diagram
+entity "Team" as TEAM {
+"id" as Number <<key>>
+place
+winstreak
+health
+level
+gold
+}
+relationship A_Pour_round {
+}
+entity "Round" as ROUND {
+id <<key>>
+roundNb
+}
+
+
+entity "Event" as EVENT {
+id <<key>>
+step
+}
+relationship A_Pour_événement {
+}
+
+entity "BuyingUnitEvent" as BUY {
+}
+
+entity "..." as ETC {
+}
+
+entity "SellingUnitEvent" as SELL {
+}
+EVENT ->- o { BUY, SELL, ETC }
+
+TEAM -1- A_Pour_round
+A_Pour_round -N- ROUND
+
+ROUND -1- A_Pour_événement
+A_Pour_événement -N- EVENT
+
+@endchen

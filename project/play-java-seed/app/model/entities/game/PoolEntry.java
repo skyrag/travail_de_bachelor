@@ -81,10 +81,6 @@ public class PoolEntry {
             this.unit = unit;
         }
 
-        public Long getPool() {
-            return pool;
-        }
-
         public void setPool(Long pool) {
             this.pool = pool;
         }

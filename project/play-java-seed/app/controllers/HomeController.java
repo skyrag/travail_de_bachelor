@@ -1,19 +1,15 @@
 package controllers;
 
 import model.actor.BridgeActor;
-import model.actor.ConnexionActor;
 import model.actor.GameActor;
 import model.form.UserLoginForm;
 import model.form.UserRegisterForm;
-import model.monitor.ConnexionMonitor;
-import model.repositories.GameRepository;
+import model.monitor.ActeurMonitor;
 import model.repositories.LoginRepository;
 import model.service.HashService;
 import model.service.MatchmakingService;
-import model.service.SeedMakerService;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.actor.typed.ActorRef;
-import org.apache.pekko.actor.typed.javadsl.Adapter;
 import org.apache.pekko.stream.Materializer;
 import org.apache.pekko.stream.OverflowStrategy;
 import play.libs.streams.ActorFlow;
@@ -30,7 +26,6 @@ import model.groupConstraints.RegisterCheck;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -50,13 +45,11 @@ public class HomeController extends Controller {
 
 
     private final LoginRepository loginRepo;
-    private final GameRepository gameRepo;
 
     private final HashService hashService;
-    private final SeedMakerService seedGenerator;
     private final MatchmakingService matchmakingService;
 
-    private final ConnexionMonitor connexions;
+    private final ActeurMonitor connexions;
 
 
     private final Object lock = new Object();
@@ -69,12 +62,10 @@ public class HomeController extends Controller {
     public HomeController(FormFactory formFactory,
                           MessagesApi messagesApi,
                           LoginRepository loginRepository,
-                          GameRepository gameRepo,
                           HashService hashService,
                           ActorSystem actorSystem,
                           Materializer materializer,
-                          SeedMakerService seedGenerator,
-                          ConnexionMonitor connexions,
+                          ActeurMonitor connexions,
                           MatchmakingService matchmakingService) {
         this.formFactory = formFactory;
         this.messagesApi = messagesApi;
@@ -82,8 +73,6 @@ public class HomeController extends Controller {
         this.hashService = hashService;
         this.actorSystem = actorSystem;
         this.materializer = materializer;
-        this.seedGenerator = seedGenerator;
-        this.gameRepo = gameRepo;
         this.connexions = connexions;
         this.matchmakingService = matchmakingService;
     }
@@ -118,7 +107,7 @@ public class HomeController extends Controller {
     public CompletionStage<Result> game(Http.Request request) {
         String userId = request.session().get("userId")
                 .orElseThrow(() -> new RuntimeException("Unauthorized"));
-        CompletionStage<ActorRef<GameActor.Message>> gameActor;
+        ActorRef<GameActor.Message> gameActor;
         synchronized (lock) {
             gameActor = matchmakingService.addPlayer(userId);
         }
@@ -213,29 +202,13 @@ public class HomeController extends Controller {
         return WebSocket.Json.accept(request -> {
             String userId = request.session().get("userId")
                     .orElseThrow(() -> new RuntimeException("Unauthorized"));
-            System.out.println("banger");
+
             return ActorFlow.actorRef(out ->
-                            BridgeActor.create(out, getUserActor(userId, out)),
+                            BridgeActor.create(out, connexions.getOrCreateActorFromId(userId, out)),
                     256,
                     OverflowStrategy.dropHead(),
                     actorSystem,
                     materializer);
         });
-    }
-
-    private ActorRef<ConnexionActor.Message> getUserActor(String userId, org.apache.pekko.actor.ActorRef ws){
-        ActorRef<ConnexionActor.Message> user = connexions.getActorFromId(userId);
-
-        if (user != null){
-            return user;
-        }
-
-        user = Adapter.spawn(
-                actorSystem,
-                ConnexionActor.create(ws, Long.parseLong(userId)),
-                userId
-        );
-        connexions.addConnexion(userId, user);
-        return user;
     }
 }

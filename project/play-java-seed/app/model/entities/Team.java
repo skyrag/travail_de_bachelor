@@ -1,9 +1,7 @@
 package model.entities;
 
 import jakarta.persistence.*;
-import model.entities.event.ChangingShopEvent;
-import model.entities.event.LevelingEvent;
-import model.entities.event.LosingHealthEvent;
+import model.entities.event.*;
 import model.entities.event.unit.BuyUnitEvent;
 import model.entities.event.unit.ChangingPosEvent;
 import model.entities.event.unit.ChangingUnitObjectEvent;
@@ -91,6 +89,9 @@ public class Team {
     @Transient
     private Random seed;
 
+    @Transient
+    private boolean dead;
+
     protected Team() {
 
     }
@@ -100,13 +101,9 @@ public class Team {
         this.game = game;
         this.gold = gold;
         this.rank = 1;
-        this.streak = 0;
+        this.streak = 0.0;
         this.health = 100;
         this.lvl = 1;
-    }
-
-    public void addUnit(InstanceUnit unit) {
-        units.add(unit);
     }
 
     public Tuple firstEmptySpace(){
@@ -191,14 +188,18 @@ public class Team {
         gold += WINNINGGAINS;
     }
 
-    public void endRound(){
+    public void newRound(){
+        rounds.add(new Round(rounds.getLast().getRoundNumber() + 1,this));
         gold += ENDOFROUNDGOLD;
         exp += ENDOFROUNDEXP;
-        rounds.add(new Round(rounds.getLast().getRoundNumber() + 1,this));
+
+        Round currentRound = rounds.getLast();
+        int step = currentRound.getEvents().getLast().getStep() + 1;
+        currentRound.getEvents().add(new ChangingGoldEvent(step, currentRound, ENDOFROUNDGOLD));
     }
 
     public boolean canBuyExp(int maxExp){
-        if (gold < EXPCOST){
+        if (gold < EXPCOST && lvl != 10){
             return false;
         }
         addExp(AMOUNTEXPBOUGHT, maxExp);
@@ -305,6 +306,11 @@ public class Team {
 
 
     //getter/setter
+
+    public void addUnit(InstanceUnit unit) {
+        units.add(unit);
+    }
+
     public Item getItemById (long id) {
         for (Item item: items){
             if (item.getId() == id){
@@ -322,16 +328,20 @@ public class Team {
         return null;
     }
 
+    public void die(){
+        dead = true;
+    }
+
+    public boolean isDead(){
+        return dead;
+    }
+
     public Long getId() {
         return id;
     }
 
     public User getUser() {
         return user;
-    }
-
-    public Game getGame() {
-        return game;
     }
 
     public Integer getRank() {

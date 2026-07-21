@@ -11,6 +11,7 @@ database    Database    as DB
 
 Alice -> Backend: Register
 Backend -> DB : Get les utilisateur avec le même username ou mail
+DB -> Backend
 alt si il y a une erreur dans le formulaire ou que un utilisateur avec les même identifiant existe
     Backend -> Alice : Error
 
@@ -22,20 +23,12 @@ Backend -> Alice : redirect sur la page de login
 
 Alice -> Backend: Login
 Backend -> DB : Get l'utilisateur avec le même identifiant
+DB -> Backend
 alt si le mot de passe n'est pas le même que celui hashé (argon2), ou qu'il n'y a aucun utilisateur avec cette identifiant
     Backend -> Alice : Error
 end
 Backend -> Alice : création d'une websocket
 
-
-== En cas de Déconnexion ==
-Alice ->x Backend : perte de connexion
-Backend -> Backend : set timer (2 round de jeu donc 2min30)
-alt si Alice essaye de se reconnecter
-    Alice -> Backend : reconnexion
-    Backend -> Alice : on renvoie la websocket précédemment utiliser
-end
-Backend -> Backend : kill de l'acteur avec la websocket
 
 
 

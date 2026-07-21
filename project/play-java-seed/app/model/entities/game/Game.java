@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Represents a single match/game session, tied to a specific
@@ -43,6 +44,9 @@ public class Game {
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Team> teams = new ArrayList<>();
 
+    @Transient
+    private Team lastDied;
+
     protected Game() {
 
     }
@@ -52,30 +56,10 @@ public class Game {
         this.seed = seed;
     }
 
-    public Team getTeam(long userId) {
-        for (Team team: teams){
-            if (team.getUser().getId() == userId){
-                return team;
-            }
-        }
-        return null;
-    }
-
-    public PoolEntry getPool(long unitId){
-        for(Pool pool : pools){
-            for (PoolEntry entry : pool.getEntries()){
-                if (entry.getUnit().getId() == unitId){
-                    return entry;
-                }
-            }
-        }
-        return null;
-    }
-
     public List<Team> stillAlive(){
         List<Team> res= new ArrayList<>();
         for (Team team: teams){
-            if (team.getHealth() > 0) {
+            if (team.isDead()) {
                 res.add(team);
             }
         }
@@ -83,10 +67,10 @@ public class Game {
     }
 
     public void adjustRankings(){
-        //TODO a revoir parce que la si un mec meurt après toi mais perd plus de pv alors il a une pire place
-        teams.sort(Comparator.comparingInt(Team::getHealth));
-        for (int i = 0; i < teams.size(); i++){
-            teams.get(i).setRank(i);
+        List<Team> remaining = stillAlive();
+        remaining.sort(Comparator.comparingInt(Team::getHealth));
+        for (int i = 0; i < remaining.size(); i++){
+            teams.get(i).setRank(i + 1);
         }
     }
 
@@ -110,7 +94,51 @@ public class Game {
         return true;
     }
 
+    public void died(Team team){
+        adjustRankings();
+        team.die();
+        lastDied = team;
+    }
+
+    public Unit randomUnitFromPool(Pool pool, Random rand){
+        int total = pool.getEntries().stream().mapToInt(PoolEntry::getNumber).sum();
+        int r = rand.nextInt(total);
+        int cumulative = 0;
+        for (PoolEntry entry : pool.getEntries()) {
+            cumulative += entry.getNumber();
+            if (r < cumulative) {
+                return entry.getUnit();
+            }
+        }
+        throw new IllegalStateException("problème de cohérence dans le pool :" + pool.getPoolsRarity());
+    }
+
     //getter/setter
+
+    public Team getLastDied(){
+        return lastDied;
+    }
+
+    public Team getTeam(long userId) {
+        for (Team team: teams){
+            if (team.getUser().getId() == userId){
+                return team;
+            }
+        }
+        return null;
+    }
+
+    public PoolEntry getPool(long unitId){
+        for(Pool pool : pools){
+            for (PoolEntry entry : pool.getEntries()){
+                if (entry.getUnit().getId() == unitId){
+                    return entry;
+                }
+            }
+        }
+        return null;
+    }
+
     public Long getId() {
         return id;
     }

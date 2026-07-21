@@ -63,7 +63,7 @@ public class Unit {
     private Integer baseAttack;
 
     @Column(name = "attack_speed", nullable = false)
-    private Double attackSpeed;
+    private Integer attackSpeed;
 
     @Column(nullable = false)
     private Integer armor;
@@ -94,7 +94,7 @@ public class Unit {
                 int startingMana,
                 int maxMana,
                 int baseAttack,
-                double attackSpeed,
+                int attackSpeed,
                 int armor,
                 int magicResist,
                 int range,
@@ -158,7 +158,7 @@ public class Unit {
         return baseAttack;
     }
 
-    public Double getAttackSpeed() {
+    public Integer getAttackSpeed() {
         return attackSpeed;
     }
 

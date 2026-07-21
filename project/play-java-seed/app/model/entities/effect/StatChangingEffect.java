@@ -2,6 +2,9 @@ package model.entities.effect;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import model.DTO.fighting.EffectAppliedEventDTO;
+import model.DTO.fighting.FightingEventDTO;
+import model.service.fightingService.ComponentUnit;
 
 /**
  * An effect that has a value and a typeChange that indicates
@@ -25,6 +28,13 @@ public class StatChangingEffect extends Effect{
         this.typeChange = typeChange;
         this.value = value;
     }
+
+    @Override
+    public FightingEventDTO applyTo(ComponentUnit target, ComponentUnit caster, long tick, long abilityId) {
+        target.increaseStat(typeChange, value);
+        return new EffectAppliedEventDTO(tick, abilityId, target.getId(), caster.getId(), this.getClass().getSimpleName(), value);
+    }
+
 
 
     // getter/setter

@@ -1,0 +1,31 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor       Alice       as Alice
+participant Backend as Backend
+database    Database    as DB
+
+
+== En cas de panne Serveur ==
+
+Backend -> Backend : redémarrage
+Alice -> Backend : reconnection
+Backend -> DB : rechargement de l'état
+DB -> Backend
+Backend -> Backend : reprise de la partie
+
+
+
+== En cas de Déconnexion ==
+Alice ->x Backend : perte de connexion
+Backend -> Backend : set timer (2 round de jeu donc ~5 min)
+alt si Alice essaye de se reconnecter
+    Alice -> Backend : reconnection
+    Backend -> Alice : on renvoie la websocket précédemment utiliser
+    Backend -> Alice : renvoie des messages bufferisé
+end
+Backend -> Backend : kill de l'acteur avec la websocket
+
+
+
+@enduml

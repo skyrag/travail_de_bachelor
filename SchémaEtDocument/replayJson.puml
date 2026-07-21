@@ -1,0 +1,23 @@
+@startchen
+'https://plantuml.com/sequence-diagram
+entity "Team" as TEAM {
+"id" as Number <<key>>
+place
+winstreak
+health
+level
+gold
+}
+
+entity "Event" as EVENT {
+id <<key>>
+Json <<derived>>
+}
+relationship A_Pour_événement {
+}
+
+
+TEAM -1- A_Pour_événement
+A_Pour_événement -N- EVENT
+
+@endchen

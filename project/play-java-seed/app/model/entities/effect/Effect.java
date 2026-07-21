@@ -1,7 +1,9 @@
 package model.entities.effect;
 
 import jakarta.persistence.*;
+import model.DTO.fighting.FightingEventDTO;
 import model.entities.unit.AbilityFragment;
+import model.service.fightingService.ComponentUnit;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +36,8 @@ public abstract class Effect {
     protected Effect () {
 
     }
+
+    public abstract FightingEventDTO applyTo(ComponentUnit target, ComponentUnit caster, long tick, long abilityId);
 
     // getter/setter
 

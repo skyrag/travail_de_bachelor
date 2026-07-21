@@ -17,6 +17,12 @@ playFrameworkWebSockets:
   author: Play Framework
   url: https://www.playframework.com/documentation/3.0.x/JavaWebSockets
 
+pekkoBridge:
+  type: Reference
+  title: Pekko documentation
+  author: pekko
+  url: https://pekko.apache.org/docs/pekko/1.0/typed/coexisting.html
+
 
 ## DB
 jooqPlayFramework:
@@ -92,6 +98,12 @@ engineComparison:
   title: Canvas Engines Comparison
   author: slaylines
   url: https://github.com/slaylines/canvas-engines-comparison
+
+hexagone:
+  type: Web
+  title: Hexagonal grids
+  author: Red Blob Games
+  url: https://www.redblobgames.com/grids/hexagons/
 
 
 ## CI/CD

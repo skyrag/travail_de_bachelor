@@ -1,8 +1,11 @@
 package model.entities.unit.strategie;
 
 import jakarta.persistence.*;
+import model.service.fightingService.ComponentUnit;
+import model.service.fightingService.FightingContext;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Base entity for all strategie used to apply effect.
@@ -28,6 +31,8 @@ public abstract class Strategie {
     protected Strategie() {
 
     }
+
+    public abstract List<ComponentUnit> findTarget(ComponentUnit caster, FightingContext context);
 
     //getter/setter
     public Long getId() {

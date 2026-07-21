@@ -1,4 +1,4 @@
-package model.fightingDTO;
+package model.DTO;
 
 public record UnitDTO(long id,
                       String name,
@@ -10,7 +10,9 @@ public record UnitDTO(long id,
                       int maxMana,
                       int startingMana,
                       int baseAttack,
-                      double attackSpeed,
+                      int attackDamage,
+                      int abilityPower,
+                      int attackSpeed,
                       int armor,
                       int magicResist,
                       int range) {

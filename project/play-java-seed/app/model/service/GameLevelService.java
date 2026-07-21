@@ -24,10 +24,6 @@ public class GameLevelService {
         });
     }
 
-    public LevelData getConfig(int level) {
-        return levelsData.get(level);
-    }
-
     public int getProba(int level, Rarity rarity) {
         return levelsData.get(level).getChance(rarity);
     }

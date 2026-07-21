@@ -1,6 +1,8 @@
 package model.actor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import model.monitor.ActeurMonitor;
 import model.utils.Tuple;
 import org.apache.pekko.actor.Cancellable;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -98,8 +100,8 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
     }
 
     public static abstract class OutputMessage implements Message {
-        private final JsonNode payload;
-        public OutputMessage(JsonNode payload) {
+        protected final JsonNode payload;
+        protected OutputMessage(JsonNode payload) {
             this.payload = payload;
         }
     }
@@ -107,6 +109,12 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
     public static final class SendFight extends OutputMessage {
         public SendFight(JsonNode fight){
             super(fight);
+        }
+    }
+
+    public static final class StartOfRound extends OutputMessage {
+        public StartOfRound(JsonNode payload) {
+            super(payload);
         }
     }
 
@@ -127,6 +135,10 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         }
     }
 
+    public static final class SetupMessage extends OutputMessage{
+        public SetupMessage(JsonNode payload){super(payload);}
+    }
+
     public static final class Heartbeat implements Message {
         public static final Heartbeat INSTANCE = new Heartbeat();
         private Heartbeat() {}
@@ -137,25 +149,38 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         private GracefulStop() {}
     }
 
+    public static final class StartGame implements Message{
+        public final ActorRef<GameActor.Message> game;
+        public StartGame(ActorRef<GameActor.Message> game){
+            this.game = game;
+        }
+    }
+
     private org.apache.pekko.actor.ActorRef ws;
     private ActorRef<GameActor.Message> game;
     public long userId;
 
-    private List<JsonNode> buffer = new ArrayList<>();
+    private List<JsonNode> reconnectionBuffer = new ArrayList<>();
+    private List<IncomingMessage> endOfRoundBuffer = new ArrayList<>();
 
     private Cancellable heartbeat;
     private Cancellable reconnectTimer;
     private int missedHeartbeats = 0;
     private static final int MAX_MISSED = 3;
 
-    public static Behavior<Message> create(org.apache.pekko.actor.ActorRef ws, long userId) {
-        return Behaviors.setup(ctx -> new ConnexionActor(ctx, ws, userId));
+    private final ActeurMonitor monitor;
+
+    private long endOfRoundTime = 0;
+
+    public static Behavior<Message> create(org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor) {
+        return Behaviors.setup(ctx -> new ConnexionActor(ctx, ws, userId, monitor));
     }
 
-    private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws, long userId) {
+    private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor) {
         super(ctx);
         this.ws = ws;
         this.userId = userId;
+        this.monitor = monitor;
         startHeartbeat(ctx);
     }
 
@@ -171,11 +196,18 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
                 .onMessage(FeedbackInput.class, this::onOutputMessage)
                 .onMessage(ChangesFromOtherUser.class, this::onOutputMessage)
                 .onMessage(EndGame.class, this::onOutputMessage)
+                .onMessage(SetupMessage.class, this::onOutputMessage)
+                .onMessage(StartOfRound.class, this::onStartingRound)
+                .onMessage(StartGame.class, this::onStartGame)
                 .build();
     }
 
     private Behavior<Message> onIncoming(IncomingMessage msg) {
         // faire un traitement des message une fois qu'on a la game
+        if (msg.text.get(TIME).longValue() >= endOfRoundTime){
+            endOfRoundBuffer.add(msg);
+        }
+
         switch (msg.text.get(TYPE).asText()){
             case BUY -> game.tell(new GameActor.BuyingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
             case SELL -> game.tell(new GameActor.SellingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
@@ -196,11 +228,13 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
             case EXP -> game.tell(new GameActor.BuyingExpMessage(userId, msg.text.get(ID).longValue(), getContext().getSelf()));
             case ACK -> {
                 long id = msg.text.get(ID).longValue();
-                buffer.removeIf(node -> node.get(ID).longValue() == id);
+                reconnectionBuffer.removeIf(node -> node.get(ID).longValue() == id);
             }
             case RECO -> {
-                for (JsonNode node : buffer){
-                    ws.tell(node, org.apache.pekko.actor.ActorRef.noSender());
+                if (ws != null) {
+                    for (JsonNode node : reconnectionBuffer){
+                        ws.tell(node, org.apache.pekko.actor.ActorRef.noSender());
+                    }
                 }
             }
             case PONG -> missedHeartbeats = 0;
@@ -223,9 +257,32 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+    private Behavior<Message> onStartGame(StartGame msg){
+        game = msg.game;
+        game.tell(new GameActor.ConnexionSetupMessage(this.userId, getContext().getSelf()));
+        return Behaviors.same();
+    }
+
     private Behavior<Message> onOutputMessage(OutputMessage msg) {
-        buffer.add(msg.payload);
-        ws.tell(msg.payload,  org.apache.pekko.actor.ActorRef.noSender());
+        reconnectionBuffer.add(msg.payload);
+        if (ws != null) {
+            ws.tell(msg.payload,  org.apache.pekko.actor.ActorRef.noSender());
+        }
+        return Behaviors.same();
+    }
+
+    private Behavior<Message> onStartingRound(StartOfRound msg) {
+        reconnectionBuffer.add(msg.payload);
+        if (ws != null) {
+            endOfRoundTime = msg.payload.get(PAYLOAD).longValue();
+
+            ws.tell(msg.payload,  org.apache.pekko.actor.ActorRef.noSender());
+        }
+        for (IncomingMessage bufferedMsg: endOfRoundBuffer){
+            ObjectNode json = (ObjectNode) bufferedMsg.text;
+            json.put(TIME, System.currentTimeMillis());
+            getContext().getSelf().tell(new IncomingMessage(json));
+        }
         return Behaviors.same();
     }
 
@@ -257,6 +314,7 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
     private Behavior<Message> onGracefulStop(GracefulStop msg) {
         heartbeat.cancel();
+        monitor.removeByActor(getContext().getSelf());
         return Behaviors.stopped();
     }
 

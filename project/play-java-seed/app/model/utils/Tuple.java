@@ -30,6 +30,14 @@ public record Tuple(int x, int y) {
         return "(" + x + "," + y + ")";
     }
 
+    public boolean isCloserThanFrom(Tuple dest1, Tuple dest2){
+         return this.distanceFrom(dest1) < this.distanceFrom(dest2);
+    }
+
+    public double distanceFrom(Tuple b){
+        return Math.sqrt(Math.pow(b.x - this.x, 2) + Math.pow(b.y - this.y, 2));
+    }
+
     /**
      * Hibernate custom type mapping a Tuple to/from a raw SQL
      * value of the form {@code "(x,y)"} (e.g. a Postgres point/composite

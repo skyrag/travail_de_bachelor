@@ -227,6 +227,7 @@ Toute utilisation, même partielle, de ce TB doit être faite dans le respect du
 
 #include "chapitres/cahier-des-charges.typ"
 
+#include "chapitres/presentation.typ"
 
 #outline(title: "Table des matières", depth: 2, indent: 15pt)
 
@@ -251,12 +252,13 @@ Toute utilisation, même partielle, de ce TB doit être faite dans le respect du
 */
 
 #include "chapitres/introduction.typ"
-#include "chapitres/planification.typ"
 #include "chapitres/etat-de-lart.typ"
 #include "chapitres/architecture.typ"
 #include "chapitres/Conception.typ"
+#include "chapitres/implementation.typ"
+#include "chapitres/difficulte.typ"
 #include "chapitres/conclusion.typ"
-
+#include "chapitres/journal-de-travail.typ"
 // ------------------------------------
 
 // Remove numbering after content
