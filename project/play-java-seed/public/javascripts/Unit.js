@@ -64,6 +64,7 @@ export class Unit {
         fighter.unit = this;
         fighter.on('pointerdown', fighter.dragger.onDragStart, fighter);
 
+        fighter.zIndex = 10;
         container.addChild(fighter);
         this.getParent = container;
 

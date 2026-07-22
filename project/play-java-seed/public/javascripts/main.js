@@ -12,6 +12,9 @@ import {Arena} from "./Arena.js";
     // Create a new application
     const app = new Application();
 
+    app.stage.sortableChildren = true; // à activer une fois sur le container parent
+
+
     // Initialize the application
     await app.init({ background: '#1099bb', resizeTo: window });
 
@@ -20,7 +23,7 @@ import {Arena} from "./Arena.js";
 
     // Create and add a container to the stage
     const container = new Container();
-
+    container.zIndex = 0;
     app.stage.addChild(container);
 
 
@@ -30,7 +33,6 @@ import {Arena} from "./Arena.js";
     const witcherTrait = await Assets.load("assets/images/médaillon_TheWitcher.png");
     const item = await Assets.load("assets/images/item.png");
     const buttonSprite = await Assets.load('assets/images/RerollButton.png');
-    const arenaSprite = await Assets.load('assets/images/arena.png');
 
     // setup drag and drop
     const dragger = new Dragger(app);
@@ -53,6 +55,7 @@ import {Arena} from "./Arena.js";
         .stroke({ width: 4, color: 'black' });
     container.addChild(rect);
 
+    /*
     // setup traits placeholder (red)
     const rectWidth2 = 100;
     const rectHeight2 = window.innerHeight /2;
@@ -61,6 +64,8 @@ import {Arena} from "./Arena.js";
         .fill(0xff0000)
         .stroke({ width: 4, color: 'black' });
     container.addChild(rect2);
+
+     */
 
     // setup items placeholder (blue)
     const rectWidth3 = 200;
@@ -73,9 +78,9 @@ import {Arena} from "./Arena.js";
 
     // bench placeholder (blanc)
     const rectWidth4 = window.innerWidth -700;
-    const rectHeight4 = 175;
+    const rectHeight4 = 100;
     const rect4 = new Graphics()
-        .rect(350, 4 * window.innerHeight / 6 , rectWidth4, rectHeight4)
+        .rect(350, 4 * window.innerHeight / 6 + 75 , rectWidth4, rectHeight4)
         .fill(0xffffff)
         .stroke({ width: 4, color: 'black' });
     container.addChild(rect4);
@@ -93,15 +98,13 @@ import {Arena} from "./Arena.js";
      */
 
     // creating arena
-    const arena = new Arena(app, arenaSprite);
+    const arena = new Arena(app);
     dragger.setArena(arena);
 
     // creating the team
     const team = new Team(app);
-    dragger.setBench(team);
+    dragger.setTeam(team);
 
-    // creating the shop
-    const shop = new Shop(app, team);
 
 
     // create shopUnits
@@ -109,14 +112,16 @@ import {Arena} from "./Arena.js";
     for (let i = 0; i < 5 ; i++){
         list.push(geralt.copy());
     }
+
+    // creating the shop
+    const shop = new Shop(app, team, arena, buttonSprite, list);
     console.log(list);
     shop.resetShop(list);
 
-    // rerollbutton
-    shop.createButton(buttonSprite, list);
 
 
     // Move the container to the top left
     container.x = 0;
     container.y = 0;
+
 })();

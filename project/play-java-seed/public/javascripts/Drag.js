@@ -16,8 +16,8 @@ export class Dragger {
     setArena(arena){
         this.arena = arena
     }
-    setBench(bench){
-        this.bench = bench;
+    setTeam(team){
+        this.team = team;
     }
 
     onDragMove(event) {
@@ -33,32 +33,48 @@ export class Dragger {
         console.log(this)
         this.alpha = 0.5;
         this.dragger.dragTarget = this;
+        this.dragger.lastPos = { x: this.dragger.dragTarget.x, y: this.dragger.dragTarget.y };
         this.dragger.app.stage.on('pointermove', this.dragger.onDragMove);
     }
 
     onDragEnd() {
-        if (this.dragTarget) {
-            this.app.stage.off('pointermove', this.onDragMove);
-            console.log(this.dragTarget.position);
-            let x = this.dragTarget.getGlobalPosition().x;
-            let y = this.dragTarget.getGlobalPosition().y;
+        if (!this.dragTarget) return;
 
-            if (this.arena.isInRange(x,y)) {
-                console.log("gooooo")
-                this.dragTarget.parent.removeChild(this.dragTarget)
-                this.bench.removeIfBenched(this.dragTarget.unit)
-                this.arena.container.addChild(this.dragTarget)
-                let pos = this.arena.getClosestCell(x,y)
-                this.dragTarget.position.set(pos.x, pos.y)
+        this.app.stage.off('pointermove', this.onDragMove);
+
+        const x = this.dragTarget.getGlobalPosition().x;
+        const y = this.dragTarget.getGlobalPosition().y;
+
+        const wasOnArena = this.arena.getCellOfUnit(this.dragTarget) !== null;
+
+        if (this.arena.isInRange(x, y)) {
+
+            if (wasOnArena) {
+                // Déplacement arène -> arène
+                const moved = this.arena.moveUnit(this.dragTarget, x, y);
+                if (!moved) this.dragTarget.position.set(this.lastPos.x, this.lastPos.y);
+
+            } else if (this.team.canAddOne()) {
+                // Arrivée depuis le banc -> arène
+                this.team.removeIfBenched(this.dragTarget);
+                const placed = this.arena.setToClosesCell(this.dragTarget, x, y);
+                if (!placed) this.dragTarget.position.set(this.lastPos.x, this.lastPos.y);
 
             } else {
-                if (this.bench.isInRange(x,y)) {
-                    this.dragTarget.parent.removeChild(this.dragTarget)
-                    this.bench.container.addChild(this.dragTarget)
-                }
+                this.dragTarget.position.set(this.lastPos.x, this.lastPos.y);
             }
-            this.dragTarget.alpha = 1;
-            this.dragTarget = null;
+
+        } else if (this.team.isInRange(x, y) && this.team.canAddInBench()) {
+            // Retour au banc (que ce soit depuis l'arène ou ailleurs)
+            if (wasOnArena) this.arena.removeUnit(this.dragTarget);
+            this.team.removeUnitFromEverywhere(this.dragTarget);
+            this.team.addUnitToBench(this.dragTarget);
+
+        } else {
+            this.dragTarget.position.set(this.lastPos.x, this.lastPos.y);
         }
+
+        this.dragTarget.alpha = 1;
+        this.dragTarget = null;
     }
 }
