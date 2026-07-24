@@ -6,7 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TestHexPosition {
+public class TestHexPosition {
 
     @Test
     void constructor_acceptsValidCubeCoordinates() {

@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
  * partagez la classe portant findTarget(caster, context) ainsi que la
  * classe Effect utilisee, et je completerai ces tests.
  */
-class TestActionSystem {
+public class TestActionSystem {
 
     // -----------------------------------------------------------
     // update() : dispatch

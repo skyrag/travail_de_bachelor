@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
  *   du package "pathfinding" (AStarPathfinding, Tile) si vous voulez que
  *   je complete la couverture sur cette methode.
  */
-class TestFightingContext {
+public class TestFightingContext {
 
     private MockedConstruction<HexGrid> mockedHexGrid;
     private Tile boardTile;

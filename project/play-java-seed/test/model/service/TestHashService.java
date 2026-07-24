@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
  * de mémoire) uniquement pour accélérer les tests ; ne jamais utiliser ces
  * valeurs en production.
  */
-class TestHashService {
+public class TestHashService {
 
     private HashService hashService;
 

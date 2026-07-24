@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
  * NOTE: adaptez le nom de constante Rarity.COMMON si votre enum utilise
  * d'autres libellés (ex: Rarity.COMMUN, Rarity.NORMAL, etc).
  */
-class TestGameLevelService {
+public class TestGameLevelService {
 
     private JPAApi jpaApi;
     private Config config;

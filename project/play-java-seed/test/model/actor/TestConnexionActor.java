@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
  * ERROR, PING, OK...) sont importées directement : ce fichier n'a donc pas
  * besoin de connaître leur valeur textuelle réelle.
  */
-class TestConnexionActor {
+public class TestConnexionActor {
 
     private static ActorTestKit testKit;
 

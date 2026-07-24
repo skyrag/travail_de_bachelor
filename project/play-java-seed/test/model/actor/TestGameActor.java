@@ -47,7 +47,7 @@ import static org.mockito.Mockito.*;
  * Fight / Round dont je n'ai pas les constructeurs exacts. Partage-moi ces classes
  * si tu veux que je complète la couverture sur ces branches.
  */
-class TestGameActor {
+public class TestGameActor {
 
     private static ActorTestKit testKit;
 

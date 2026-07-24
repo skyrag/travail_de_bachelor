@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
  * exécuter les tâches de façon synchrone (dans le thread de test), afin de
  * pouvoir vérifier le résultat sans dépendre d'un vrai pool de threads.
  */
-class TestSimulationService {
+public class TestSimulationService {
 
     @Test
     void simulateAsync_runsFightingServiceOnConfiguredExecutorAndReturnsResult()

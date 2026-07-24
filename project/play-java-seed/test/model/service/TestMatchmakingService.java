@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
  * être signalé à l'auteur du code comme un branch mort à supprimer,
  * plutôt que testé.
  */
-class TestMatchmakingService {
+public class TestMatchmakingService {
 
     private ActeurMonitor monitor;
     private Config config;

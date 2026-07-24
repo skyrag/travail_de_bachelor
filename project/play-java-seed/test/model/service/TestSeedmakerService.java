@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mockStatic;
 
-class TestSeedmakerService {
+public class TestSeedmakerService {
 
     @Test
     void createGameSeed_returnsNonNullLong() {

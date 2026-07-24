@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Ces tests supposent aussi que model.utils.Tuple expose des accesseurs x() et y()
  * (comme un record `Tuple(int x, int y)`) — adapte si la signature réelle diffère.
  */
-class TestHexgrid {
+public class TestHexgrid {
 
     @Test
     void constructor_createsAllTilesInBounds() {

@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * grille hexagonale "réelle" mais respectent toujours l'invariant x+y+z=0,
  * ce qui suffit pour piloter précisément l'heuristique (distance hexagonale).
  */
-class TestAStarPathfinding {
+public class TestAStarPathfinding {
 
     private static Tile tile(int x, int y, int z) {
         return new Tile(new HexPosition(x, y, z));

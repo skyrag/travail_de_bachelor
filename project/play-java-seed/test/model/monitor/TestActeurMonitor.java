@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
  * une méthode statique de Pekko qu'on ne veut pas exécuter pour de vrai
  * (elle démarrerait un véritable acteur).
  */
-class TestActeurMonitor {
+public class TestActeurMonitor {
 
     private ActorSystem actorSystem;
     private GameRepository gameRepo;

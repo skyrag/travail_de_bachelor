@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
  * arguments passes (tick, gagnant) sans dependre des accesseurs reels de
  * CombatEndDTO, que nous n'avons pas.
  */
-class TestEndSystem {
+public class TestEndSystem {
 
     private FightingContext mockContextFor(ComponentUnit firstAlive, List<ComponentUnit> allies,
                                            List<ComponentUnit> enemies, int tick) {

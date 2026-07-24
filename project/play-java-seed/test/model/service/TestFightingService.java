@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
  * (ça, c'est le rôle des tests des systèmes eux-mêmes), mais uniquement la
  * façon dont FightingService les enchaîne.
  */
-class TestFightingService {
+public class TestFightingService {
 
     private Team mockTeamWithUnits(long id, int lvl, int unitCount) {
         Team team = mock(Team.class);
