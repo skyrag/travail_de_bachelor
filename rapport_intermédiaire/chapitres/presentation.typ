@@ -25,10 +25,10 @@ Chaque joueur dispose d'une réserve d'or ainsi que l'accès à un magasin lui p
 Les joueurs possèdent également un niveau qui détermine le nombre maximal d'unités pouvant être déployées sur le terrain. Ils peuvent dépenser de l'or pour gagner de l'expérience, acheter des unités ou changer les unités présentent dans le magasin.
 #v(1em)
 
-Enfin, chaque joueur possède un inventaire contenant des objets pouvant être équipés sur les unités afin d'améliorer leurs statistiques. Chaque joueur commencerais la partie avec trois objets aléatoire et en gagnerait trois autre après cinq combats.
+Enfin, chaque joueur possède un inventaire contenant des objets pouvant être équipés sur les unités afin d'améliorer leurs statistiques. Chaque joueur commencerait la partie avec trois objets aléatoires et en gagnerait trois autres après cinq combats.
 #v(2em)
 
-Les unités sont classées selon 5 niveaux de rareté : Commune, Peu commune, Rare, Épique et Légendaire. Plus une unité est rare, plus son coût est élevé et plus le joueur avoir d'un niveau élevé pour avoir des chances de la voir apparaître dans le magasin.
+Les unités sont classées selon 5 niveaux de rareté : Commune, Peu commune, Rare, Épique et Légendaire. Plus une unité est rare, plus son coût est élevé et plus le joueur doit avoir d'un niveau élevé pour avoir des chances de la voir apparaître dans le magasin.
 #v(1em)
 
 Les unités possèdent également un niveau, où chaque passage au niveau supérieur les rend plus puissantes. Lorsqu'un joueur possède trois exemplaires d'une même unité, celles-ci fusionnent automatiquement pour former une unité de niveau supérieur.

@@ -52,14 +52,18 @@
     [06.07.2026], [21], [création du reste de entité et continuation de la DB], [4], [3],
     [07.07.2026], [21], [conception de messages et début de parti], [4], [3],
     [08.07.2026], [21], [fin création de parti et début des message], [3], [4],
-    [09.07.2026], [21], [continuation des messages], [2], [5],
-    [10.07.2026], [21], [continuation sur les acteurs], [2], [5],
+    [09.07.2026], [21], [continuation des messages], [3], [5],
+    [10.07.2026], [21], [continuation sur les acteurs], [4], [7],
     [13.07.2026], [22], [fin des acteur et début du service de simulation], [3], [5],
     [14.07.2026], [22], [continuation sur le service de simulation], [3], [5],
-    [15.07.2026], [22], [fin de la simulation], [5], [4],
-    [16.07.2026], [22], [gestion de la reconnexion et rapport], [4], [4],
+    [15.07.2026], [22], [fin de la simulation], [4], [7],
+    [16.07.2026], [22], [gestion de la reconnexion et rapport], [4], [7],
     [17.07.2026], [22], [écriture du rapport], [5], [6],
-    [20.07.2026], [22], [écriture du rapport], [4], [10],
+    [20.07.2026], [23], [écriture du rapport], [4], [10],
+    [21.07.2026], [23], [travail frontend et écriture du rapport], [3], [8],
+    [22.07.2026], [23], [travail frontend et écriture du rapport], [4], [8],
+    [23.07.2026], [23], [travail frontend et écriture du rapport], [4], [11],
+    [24.07.2026], [23], [finalisation], [10], [0],
 
 
 

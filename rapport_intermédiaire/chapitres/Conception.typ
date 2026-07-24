@@ -1,7 +1,7 @@
 = Conception <conception>
 #v(2em)
 
-Cette section présente les choix de conception réalisés lors du développement du projet. Avant d'aborder les aspects techniques liés à l'implémentation. C'est une étape primordiale afin d'avoir de bonnes bases pour le project.
+Cette section présente les choix de conception réalisés lors du développement du projet. Avant d'aborder les aspects techniques liés à l'implémentation. C'est une étape primordiale afin d'avoir de bonnes bases pour le projet.
 #v(1em)
 
 Dans un premier temps, la conception orientée objet est présentée afin de décrire les principales classes du projet, leurs responsabilités et les relations qu'elles entretiennent entre elles.

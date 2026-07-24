@@ -1,6 +1,6 @@
 = Outils utilisés <outils>
-pour ce project j'ai utilisé les LLms : claude et chatgpt
-Durant ce project voici mon utilisation des LLMs:
+pour ce projet j'ai utilisé les LLms : claude et chatgpt
+Durant ce projet voici mon utilisation des LLMs:
     - Correction de l'orthographe
     - Quelque proposition de reformulation de phrase
     - Explication de sujet théorique

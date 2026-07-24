@@ -10,7 +10,7 @@ Le projet a pour but de créer un jeu ayant un style similaire à des jeux comme
 == Technologies utilisées
 #v(2em)
 
-Pour ce projet, j'ai utilisé le framework Play pour le développer. Il a pour objectif d'être jouable sur navigateur internet. Pour le stockage des données, le project utilise le système de gestion de base de données PostgreSQL.
+Pour ce projet, j'ai utilisé le framework Play pour le développer. Il a pour objectif d'être jouable sur navigateur internet. Pour le stockage des données, le projet utilise le système de gestion de base de données PostgreSQL.
 #v(2em)
 #v(2em)
 
@@ -28,7 +28,6 @@ La conception de la base de données doit aussi permettre un système de 'replay
 == Fonctionnalités attendues
 Cette section décrit les fonctionnalités attendues à la fin du projet. Elle contient également des fonctionnalités futures souhaitées.
 
-Dans cette section, je décris les fonctionnalités qui seront attendues à la fin du projet. On listera aussi de potentielles fonctionnalités futures.
 === Fonctionnalités obligatoires
 -	Un système d'authentification
 -	Un système de stockage des données utilisateurs

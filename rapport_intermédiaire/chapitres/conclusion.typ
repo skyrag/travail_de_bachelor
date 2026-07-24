@@ -5,7 +5,8 @@
 
 Ce travail de bachelor avait pour objectif de concevoir et de développer un jeu multijoueur de type auto-battler, accessible via le web, en mettant en œuvre une architecture logicielle complète et professionnelle : interface utilisateur, logique métier, persistance des données et communication client-serveur en temps réel.
 #v(1em)
-
+Le cahier des charges définissait comme obligatoires un système de replay fonctionnel ainsi qu'une gestion complète du cycle de vie du matchmaking. Ces deux fonctionnalités ont été conçues et en grande partie implémentées côté backend, mais n'ont pas pu être finalisées dans le temps imparti : il manque notamment la partie frontend et les messages acteur nécessaires pour rendre le replay utilisable, ainsi que la gestion du retrait d'un joueur de la file d'attente avant le lancement d'une partie. Cet écart entre le périmètre initialement prévu et le périmètre effectivement livré s'explique principalement par les difficultés de conception évoquées au chapitre précédent, et constitue un axe de travail prioritaire pour la suite du projet.
+#v(1em)
 Sur le plan technique, une architecture client-serveur a été mise en place autour du Play Framework et de Pekko, avec un système d'acteurs permettant de gérer les connexions et le déroulement des parties de manière concurrente, sans race condition. La persistance des données repose sur une base relationnelle PostgreSQL, conçue pour offrir à la fois une tolérance aux pannes et un système de replay basé sur un modèle événementiel normalisé. Le système de combat s'appuie sur une architecture Entity Component System adaptée à nos besoins, combinée à un algorithme $A^*$ pour le déplacement des unités sur une grille hexagonale. Enfin, le frontend repose sur PixiJS pour l'affichage performant d'un grand nombre de sprites, et l'ensemble du projet est accompagné d'un pipeline CI/CD basé sur GitHub Actions et Docker.
 
 #v(2em)

@@ -4,12 +4,12 @@
 == Configuration du projet
 #v(2em)
 
-Avant de commencer a coder on s'est d'abord occupez de configurer le project afin de partir sur des bases de développement propres.
+Avant de commencer a coder on s'est d'abord occupez de configurer le projet afin de partir sur des bases de développement propres.
 #v(2em)
 === Répo
 #v(2em)
 
-En premier lieux, on avait le souhait de poser un cadre afin d'instaurer une certaine rigueur dans le travail et les commits. Pour cela on a fait un répository git en s'inspirant de la pratique GitFlow avec ces différentes branche mais les plus importante, une pour les realease et une pour le développement afin de séparer les versions propres des versions qui pourraient encore présenter des défauts.
+En premier lieu, on avait le souhait de poser un cadre afin d'instaurer une certaine rigueur dans le travail et les commits. Pour cela on a fait un répository git en s'inspirant de la pratique GitFlow avec ces différentes branche mais les plus importante, une pour les realease et une pour le développement afin de séparer les versions propres des versions qui pourraient encore présenter des défauts.
 #v(1em)
 
 On a aussi souhaité créer un CI a l'aide des githubs actions afin d'être sur qu'avant chaque merge de pull Request les test ainsi que le coverage soient fait automatique pour éviter des oublies. En ce qui concerne le workflow, on s'est inspiré de ce que propose github pour les application Play et on a rajouté jacoco pour le "test coverage".
@@ -17,7 +17,7 @@ On a aussi souhaité créer un CI a l'aide des githubs actions afin d'être sur 
 #v(2em)
 === docker
 #v(2em)
- On a aussi créé notre docker compose, qui contrairement à lancer séparément chaque service, docker compose nous permet d'avoir une centralisation des logs ainsi que d'avoir un environnement commun reproductible ou les service peuvent simplement discuter en localhost. Cela permet aussi d'éxécuter le project a l'aide d'une seule commande.
+ On a aussi créé notre docker compose, qui contrairement à lancer séparément chaque service, docker compose nous permet d'avoir une centralisation des logs ainsi que d'avoir un environnement commun reproductible ou les service peuvent simplement discuter en localhost. Cela permet aussi d'éxécuter le projeAuto-battler multijoueurt a l'aide d'une seule commande.
 
 #v(2em)
 === application.config
@@ -29,13 +29,13 @@ On a aussi souhaité créer un CI a l'aide des githubs actions afin d'être sur 
  Dans notre application.config on a aussi déclarer deux pool de thread. En effet, on a deux moments ou l'on souhaiterait éxécuter des tâches asynchrones sans forcément utiliser les threads principaux. Un premier pool est pour les connexions a la DB qui sont bloquante par nature et comme play est de nature très asynchrone bloquer le thread actuel pour attendre la réponse de la DB paraît insensé. Notre deuxième pool bien que plus discutable est pour la simulation des combats. Même si le système est pour l'instant pas très gourmand en ressource pour le calcul, il va très certainement dans le future prendre plus de temps et de ressource et nous n'avons pas envie que la simulation des combats impacte les performance du reste de l'application. C'est donc pour ca que l'on a ces deux thread pool plutot que de faires ces actions asynchrone sur le main pool.
 #v(1em)
 
- Par rapport aux tailles des pools nous avons consulté HikariCp qui nous disais d'utiliser deux fois le nombre de coeurs plus un lecteur, mais cela était certainement pour des machines qui ne font pas tourner d'autre services et qui recoivent/produisent beaucoup de requêtes. Notre application a pour but de faire tourner la un docker compose avec toute les images dont on a besoin, notamment la DB et le backend pour l'instant. On a donc décidé d'être économe quant a l'attribution de nos ressources et l'on a arbitrairement donné 8 thread au pool de DB (sachant que le nombre conseillé par HikariCp est 33) et 8 pour notre pool de simulation. Nous sommes contiens du choix d'être plus économe est nous observerons l'évolution du besoin en ressources de connexions afin d'adapter la configuration en conséquence.
+ Par rapport aux tailles des pools nous avons consulté HikariCp qui nous disais d'utiliser deux fois le nombre de coeurs plus un lecteur, mais cela était certainement pour des machines qui ne font pas tourner d'autre services et qui recoivent/produisent beaucoup de requêtes. Notre application a pour but de faire tourner la un docker compose avec toute les images dont on a besoin, notamment la DB et le backend pour l'instant. On a donc décidé d'être économe quant a l'attribution de nos ressources et l'on a arbitrairement donné 8 thread au pool de DB (sachant que le nombre conseillé par HikariCp est 33) et 8 pour notre pool de simulation. Nous sommes conscients du choix d'être plus économe est nous observerons l'évolution du besoin en ressources de connexions afin d'adapter la configuration en conséquence.
 
 #v(2em)
 == Authentification
 #v(2em)
 
-On a en premier lieux pour but d'utiliser openIdConnect a la place de mettre en place un système d'authentification afin de déléguer cet aspect de la sécurité qui n'est pas notre point fort. Cependant notre approche assez naive car même si le système marche bien, nous ne nous sommes pas rendu compte lors de nos recherche que cet approche demandait de faire approuver par le verificateur tiers une page pour demander les informations ainsi que le scope des informations que l'on demanderais. Comme ce genre de démarche peut prendre un certain temps et que l'on souhaitait implémenter un système d'authentification. Nous nous sommes finalement tourner vers un système d'authentification a l'aide des formulaires Play, dans lequel on recolte les informations utilisateur que l'on stocke ensuite dans la base de données.
+On a en premier lieux pour but d'utiliser openIdConnect a la place de mettre en place un système d'authentification afin de déléguer cet aspect de la sécurité qui n'est pas notre point fort. Cependant notre approche était assez naive car même si le système marche bien, nous ne nous sommes pas rendu compte lors de nos recherche que cet approche demandait de faire approuver par le verificateur tiers une page pour demander les informations ainsi que le scope des informations que l'on demanderais. Comme ce genre de démarche peut prendre un certain temps et que l'on souhaitait implémenter un système d'authentification. Nous nous sommes finalement tourner vers un système d'authentification a l'aide des formulaires Play, dans lequel on recolte les informations utilisateur que l'on stocke ensuite dans la base de données.
 
 #v(2em)
 === Hashing
@@ -97,7 +97,7 @@ Buffer de fin de round. Un second buffer (endOfRoundBuffer) conserve les message
 === Le GameActor
 #v(2em)
 Le GameActor représente une partie en cours et centralise toute la logique de validation des actions, la diffusion des changements aux autres joueurs, ainsi que le déroulement des rounds et des combats.
-Validation des actions. Pour chaque action reçue (achat, vente, déplacement d'unité, etc.), le GameActor vérifie l'état actuel de l'équipe concernée avant de l'appliquer. PRar exemple, onBuyingUnitMessage vérifie que l'équipe existe, que l'unité demandée est valide, et que l'achat est possible, avant de répondre au joueur et de propager l'information aux autres participants de la partie via tellOtherUsers.
+Validation des actions. Pour chaque action reçue (achat, vente, déplacement d'unité, etc.), le GameActor vérifie l'état actuel de l'équipe concernée avant de l'appliquer. Par exemple, onBuyingUnitMessage vérifie que l'équipe existe, que l'unité demandée est valide, et que l'achat est possible, avant de répondre au joueur et de propager l'information aux autres participants de la partie via tellOtherUsers.
 #v(1em)
 
 Diffusion aux autres joueurs. Lorsqu'une action est validée, elle n'est pas seulement confirmée à son auteur : elle est également transmise à tous les autres joueurs de la partie sous forme de ChangesFromOtherUser, ce qui permet à chaque client de maintenir une vue à jour de l'état des équipes adverses.
