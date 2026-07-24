@@ -1,14 +1,17 @@
-package model.service.fightingService;
+package model.service;
 
 import model.DTO.ComponentUnitDTO;
 import model.DTO.UnitDTOMapper;
 import model.DTO.fighting.FightingResultDTO;
 import model.entities.Team;
 import model.entities.unit.InstanceUnit;
+import model.service.fightingService.ComponentUnit;
+import model.service.fightingService.FightingContext;
+import model.service.fightingService.FightingService;
 import model.service.fightingService.system.ActionSystem;
 import model.service.fightingService.system.EndSystem;
 import model.service.fightingService.system.StatusSystem;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 
@@ -49,7 +52,7 @@ public class TestFightingService {
     }
 
     @Test
-    void constructor_createsOneComponentUnitPerUnitInBothTeamsAndInitializesCollaborators() {
+    public void constructor_createsOneComponentUnitPerUnitInBothTeamsAndInitializesCollaborators() {
         Team teamA = mockTeamWithUnits(1L, 3, 2);
         Team teamB = mockTeamWithUnits(2L, 3, 3);
 
@@ -77,7 +80,7 @@ public class TestFightingService {
     }
 
     @Test
-    void simulate_stopsAsSoonAsEndSystemIsFinished() {
+    public void simulate_stopsAsSoonAsEndSystemIsFinished() {
         Team teamA = mockTeamWithUnits(1L, 3, 1);
         Team teamB = mockTeamWithUnits(2L, 3, 1);
 
@@ -119,7 +122,7 @@ public class TestFightingService {
     }
 
     @Test
-    void simulate_stopsAtMaxTicksEvenIfEndSystemNeverFinishes() {
+    public void simulate_stopsAtMaxTicksEvenIfEndSystemNeverFinishes() {
         Team teamA = mockTeamWithUnits(1L, 3, 1);
         Team teamB = mockTeamWithUnits(2L, 3, 1);
 
@@ -161,7 +164,7 @@ public class TestFightingService {
     }
 
     @Test
-    void simulate_pvLostAreZero_whenNoAliveUnitsRemain() {
+    public void simulate_pvLostAreZero_whenNoAliveUnitsRemain() {
         Team teamA = mockTeamWithUnits(1L, 3, 1);
         Team teamB = mockTeamWithUnits(2L, 3, 1);
 
@@ -200,7 +203,7 @@ public class TestFightingService {
     }
 
     @Test
-    void simulate_aliveUnitsFromTeamA_increasePvLostTeamBWithLevelBonus() {
+    public void simulate_aliveUnitsFromTeamA_increasePvLostTeamBWithLevelBonus() {
         Team teamA = mockTeamWithUnits(1L, 3, 1);
         Team teamB = mockTeamWithUnits(2L, 3, 1);
 
@@ -240,7 +243,7 @@ public class TestFightingService {
     }
 
     @Test
-    void simulate_aliveUnitsFromTeamB_increasePvLostTeamAWithLevelBonus() {
+    public void simulate_aliveUnitsFromTeamB_increasePvLostTeamAWithLevelBonus() {
         Team teamA = mockTeamWithUnits(1L, 3, 1);
         Team teamB = mockTeamWithUnits(2L, 3, 1);
 
@@ -281,7 +284,7 @@ public class TestFightingService {
     }
 
     @Test
-    void simulate_survivorsOnBothSides_increaseBothPvLostCounters() {
+    public void simulate_survivorsOnBothSides_increaseBothPvLostCounters() {
         Team teamA = mockTeamWithUnits(1L, 2, 1);
         Team teamB = mockTeamWithUnits(2L, 2, 1);
 

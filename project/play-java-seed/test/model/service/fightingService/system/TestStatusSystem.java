@@ -3,7 +3,7 @@ package model.service.fightingService.system;
 import model.DTO.fighting.FightingEventDTO;
 import model.service.fightingService.ComponentUnit;
 import model.service.fightingService.FightingContext;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 public class TestStatusSystem {
 
     @Test
-    void update_returnsEmptyList_whenNoAliveUnits() {
+    public void update_returnsEmptyList_whenNoAliveUnits() {
         FightingContext context = mock(FightingContext.class);
         when(context.getAliveUnits()).thenReturn(List.of());
 
@@ -25,7 +25,7 @@ public class TestStatusSystem {
     }
 
     @Test
-    void update_ticksStatusesOnEveryAliveUnitAndReturnsEmptyList() {
+    public void update_ticksStatusesOnEveryAliveUnitAndReturnsEmptyList() {
         FightingContext context = mock(FightingContext.class);
         ComponentUnit unit1 = mock(ComponentUnit.class);
         ComponentUnit unit2 = mock(ComponentUnit.class);

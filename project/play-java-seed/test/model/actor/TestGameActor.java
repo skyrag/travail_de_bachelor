@@ -13,10 +13,10 @@ import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.japi.Pair;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -57,18 +57,18 @@ public class TestGameActor {
     private GameLevelService gameLevelService;
     private SimulationService simulationService;
 
-    @BeforeAll
-    static void initSystem() {
+    @BeforeClass
+    public static void initSystem() {
         testKit = ActorTestKit.create();
     }
 
-    @AfterAll
-    static void shutdownSystem() {
+    @AfterClass
+    public static void shutdownSystem() {
         testKit.shutdownTestKit();
     }
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         game = mock(Game.class);
         repo = mock(GameRepository.class);
         seedGenerator = mock(SeedMakerService.class);
@@ -97,7 +97,7 @@ public class TestGameActor {
     // ---- Construction ----
 
     @Test
-    void constructor_sendsStartGameToAllUsersAndMergesGame() {
+    public void constructor_sendsStartGameToAllUsersAndMergesGame() {
         TestProbe<ConnexionActor.Message> probe1 = testKit.createTestProbe(ConnexionActor.Message.class);
         TestProbe<ConnexionActor.Message> probe2 = testKit.createTestProbe(ConnexionActor.Message.class);
         List<Pair<ActorRef<ConnexionActor.Message>, Long>> users = List.of(
@@ -115,7 +115,7 @@ public class TestGameActor {
     // ---- onConnexionSetupMessage ----
 
     @Test
-    void onConnexionSetupMessage_teamNotFound_sendsNothing() {
+    public void onConnexionSetupMessage_teamNotFound_sendsNothing() {
         when(game.getTeam(5L)).thenReturn(null);
         ActorRef<GameActor.Message> actor = spawn(List.of());
 
@@ -126,7 +126,7 @@ public class TestGameActor {
     }
 
     @Test
-    void onConnexionSetupMessage_teamFound_sendsSetupMessage() {
+    public void onConnexionSetupMessage_teamFound_sendsSetupMessage() {
         Team team = mock(Team.class);
         when(game.getTeam(5L)).thenReturn(team);
         when(repo.getAllItems()).thenReturn(CompletableFuture.completedFuture(List.of()));
@@ -145,7 +145,7 @@ public class TestGameActor {
     // ---- onBuyingUnitMessage ----
 
     @Test
-    void onBuyingUnitMessage_teamNotFound_sendsError() {
+    public void onBuyingUnitMessage_teamNotFound_sendsError() {
         when(game.getTeam(1L)).thenReturn(null);
         ActorRef<GameActor.Message> actor = spawn(List.of());
         TestProbe<ConnexionActor.Message> respondTo = testKit.createTestProbe(ConnexionActor.Message.class);
@@ -160,7 +160,7 @@ public class TestGameActor {
     // ---- onSellUnitMessage ----
 
     @Test
-    void onSellUnitMessage_cannotSell_sendsError() {
+    public void onSellUnitMessage_cannotSell_sendsError() {
         Team team = mock(Team.class);
         when(game.getTeam(1L)).thenReturn(team);
         when(team.canSellUnit(7L)).thenReturn(false);
@@ -176,7 +176,7 @@ public class TestGameActor {
     // ---- onGivingUnitObjectMessage ----
 
     @Test
-    void onGivingUnitObjectMessage_success_mergesTeam() {
+    public void onGivingUnitObjectMessage_success_mergesTeam() {
         Team team = mock(Team.class);
         when(game.getTeam(1L)).thenReturn(team);
         when(team.canAddItemToUnit(9L, 7L)).thenReturn(true);
@@ -194,7 +194,7 @@ public class TestGameActor {
     // ---- onBuyingExpMessage ----
 
     @Test
-    void onBuyingExpMessage_cannotAfford_sendsError() {
+    public void onBuyingExpMessage_cannotAfford_sendsError() {
         Team team = mock(Team.class);
         when(game.getTeam(1L)).thenReturn(team);
         when(team.getLvl()).thenReturn(1);
@@ -210,7 +210,7 @@ public class TestGameActor {
     }
 
     @Test
-    void onBuyingExpMessage_success_confirmsAndMergesTeam() {
+    public void onBuyingExpMessage_success_confirmsAndMergesTeam() {
         Team team = mock(Team.class);
         when(game.getTeam(1L)).thenReturn(team);
         when(team.getLvl()).thenReturn(1);
@@ -230,7 +230,7 @@ public class TestGameActor {
     // ---- onStartOfRoundMessage ----
 
     @Test
-    void onStartOfRoundMessage_sendsStartOfRoundToAllUsers() {
+    public void onStartOfRoundMessage_sendsStartOfRoundToAllUsers() {
         TestProbe<ConnexionActor.Message> probe1 = testKit.createTestProbe(ConnexionActor.Message.class);
         TestProbe<ConnexionActor.Message> probe2 = testKit.createTestProbe(ConnexionActor.Message.class);
         ActorRef<GameActor.Message> actor = spawn(List.of(
@@ -249,7 +249,7 @@ public class TestGameActor {
     // ---- onEndOfGame ----
 
     @Test
-    void onEndOfGame_stopsActor() {
+    public void onEndOfGame_stopsActor() {
         ActorRef<GameActor.Message> actor = spawn(List.of());
         TestProbe<GameActor.Message> watcher = testKit.createTestProbe(GameActor.Message.class);
 

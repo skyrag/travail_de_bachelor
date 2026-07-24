@@ -6,8 +6,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import model.entities.LevelData;
 import model.entities.game.Rarity;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import play.db.jpa.JPAApi;
 
@@ -38,8 +38,8 @@ public class TestGameLevelService {
     private LevelData level1;
 
     @SuppressWarnings("unchecked")
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         jpaApi = mock(JPAApi.class);
         config = mock(Config.class);
         em = mock(EntityManager.class);
@@ -63,7 +63,7 @@ public class TestGameLevelService {
     }
 
     @Test
-    void constructor_loadsLevelsFromDatabaseUsingConfiguredVersion() {
+    public void constructor_loadsLevelsFromDatabaseUsingConfiguredVersion() {
         GameLevelService service = new GameLevelService(jpaApi, config);
 
         assertNotNull(service);
@@ -74,7 +74,7 @@ public class TestGameLevelService {
     }
 
     @Test
-    void getProba_returnsChanceForGivenLevelAndRarity() {
+    public void getProba_returnsChanceForGivenLevelAndRarity() {
         when(level0.getChance(Rarity.COMMON)).thenReturn(50);
         GameLevelService service = new GameLevelService(jpaApi, config);
 
@@ -85,7 +85,7 @@ public class TestGameLevelService {
     }
 
     @Test
-    void getExpRequired_returnsNextLvlForGivenLevel() {
+    public void getExpRequired_returnsNextLvlForGivenLevel() {
         when(level1.getNextLvl()).thenReturn(1000);
         GameLevelService service = new GameLevelService(jpaApi, config);
 
@@ -96,7 +96,7 @@ public class TestGameLevelService {
     }
 
     @Test
-    void getProba_indexOutOfBounds_throwsIndexOutOfBoundsException() {
+    public void getProba_indexOutOfBounds_throwsIndexOutOfBoundsException() {
         GameLevelService service = new GameLevelService(jpaApi, config);
 
         assertThrows(IndexOutOfBoundsException.class,
@@ -104,7 +104,7 @@ public class TestGameLevelService {
     }
 
     @Test
-    void getExpRequired_indexOutOfBounds_throwsIndexOutOfBoundsException() {
+    public void getExpRequired_indexOutOfBounds_throwsIndexOutOfBoundsException() {
         GameLevelService service = new GameLevelService(jpaApi, config);
 
         assertThrows(IndexOutOfBoundsException.class,

@@ -6,7 +6,7 @@ import model.service.fightingService.FightingService;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.dispatch.Dispatchers;
 import org.apache.pekko.dispatch.MessageDispatcher;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mockito.MockedConstruction;
 
 import java.util.concurrent.CompletionStage;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 public class TestSimulationService {
 
     @Test
-    void simulateAsync_runsFightingServiceOnConfiguredExecutorAndReturnsResult()
+    public void simulateAsync_runsFightingServiceOnConfiguredExecutorAndReturnsResult()
             throws ExecutionException, InterruptedException, TimeoutException {
 
         ActorSystem actorSystem = mock(ActorSystem.class);

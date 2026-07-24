@@ -1,7 +1,7 @@
 package model.service.fightingService.pathfinding;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,25 +9,25 @@ public class TestTile {
 
     private Tile tile;
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         tile = new Tile(new HexPosition(1, -1, 0));
     }
 
     @Test
-    void getPosition_returnsPositionPassedToConstructor() {
+    public void getPosition_returnsPositionPassedToConstructor() {
         HexPosition pos = new HexPosition(2, -2, 0);
         Tile t = new Tile(pos);
         assertEquals(pos, t.getPosition());
     }
 
     @Test
-    void adjacentTiles_startsEmpty() {
+    public void adjacentTiles_startsEmpty() {
         assertTrue(tile.getAdjacentTiles().isEmpty());
     }
 
     @Test
-    void addAdjacentTile_addsToList() {
+    public void addAdjacentTile_addsToList() {
         Tile other = new Tile(new HexPosition(0, 0, 0));
         tile.addAdjacentTile(other);
         assertEquals(1, tile.getAdjacentTiles().size());
@@ -35,12 +35,12 @@ public class TestTile {
     }
 
     @Test
-    void obstacle_defaultsToFalse() {
+    public void obstacle_defaultsToFalse() {
         assertFalse(tile.isObstacle());
     }
 
     @Test
-    void setObstacle_updatesState() {
+    public void setObstacle_updatesState() {
         tile.setObstacle(true);
         assertTrue(tile.isObstacle());
         tile.setObstacle(false);
@@ -48,20 +48,20 @@ public class TestTile {
     }
 
     @Test
-    void gAndH_defaultToZero() {
+    public void gAndH_defaultToZero() {
         assertEquals(0, tile.getG());
         assertEquals(0, tile.getH());
     }
 
     @Test
-    void getF_isSumOfGAndH() {
+    public void getF_isSumOfGAndH() {
         tile.setG(3);
         tile.setH(4);
         assertEquals(7, tile.getF());
     }
 
     @Test
-    void parent_defaultsToNullAndIsSettable() {
+    public void parent_defaultsToNullAndIsSettable() {
         assertNull(tile.getParent());
         Tile parent = new Tile(new HexPosition(-1, 1, 0));
         tile.setParent(parent);
@@ -69,7 +69,7 @@ public class TestTile {
     }
 
     @Test
-    void searchState_defaultsToUnvisitedAndIsSettable() {
+    public void searchState_defaultsToUnvisitedAndIsSettable() {
         assertEquals(Tile.SearchState.UNVISITED, tile.getSearchState());
         tile.setSearchState(Tile.SearchState.OPEN);
         assertEquals(Tile.SearchState.OPEN, tile.getSearchState());
@@ -78,7 +78,7 @@ public class TestTile {
     }
 
     @Test
-    void resetSearchState_restoresDefaults() {
+    public void resetSearchState_restoresDefaults() {
         tile.setG(5);
         tile.setH(6);
         tile.setParent(new Tile(new HexPosition(0, 0, 0)));
@@ -93,40 +93,40 @@ public class TestTile {
     }
 
     @Test
-    void equals_isTrueForSameInstance() {
+    public void equals_isTrueForSameInstance() {
         assertEquals(tile, tile);
     }
 
     @Test
-    void equals_isFalseForNull() {
+    public void equals_isFalseForNull() {
         assertNotEquals(null, tile);
     }
 
     @Test
-    void equals_isFalseForDifferentType() {
+    public void equals_isFalseForDifferentType() {
         assertNotEquals(tile, "not a tile");
     }
 
     @Test
-    void equals_isTrueForDifferentInstanceSamePosition() {
+    public void equals_isTrueForDifferentInstanceSamePosition() {
         Tile other = new Tile(new HexPosition(1, -1, 0));
         assertEquals(tile, other);
     }
 
     @Test
-    void equals_isFalseForDifferentPosition() {
+    public void equals_isFalseForDifferentPosition() {
         Tile other = new Tile(new HexPosition(0, 0, 0));
         assertNotEquals(tile, other);
     }
 
     @Test
-    void hashCode_isConsistentWithEquals() {
+    public void hashCode_isConsistentWithEquals() {
         Tile other = new Tile(new HexPosition(1, -1, 0));
         assertEquals(tile.hashCode(), other.hashCode());
     }
 
     @Test
-    void toString_containsPosition() {
+    public void toString_containsPosition() {
         assertTrue(tile.toString().contains(tile.getPosition().toString()));
     }
 }

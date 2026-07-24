@@ -1,7 +1,7 @@
 package model.service.fightingService.pathfinding;
 
 import model.utils.Tuple;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestHexgrid {
 
     @Test
-    void constructor_createsAllTilesInBounds() {
+    public void constructor_createsAllTilesInBounds() {
         HexGrid grid = new HexGrid(3, 3);
         for (int col = 0; col < 3; col++) {
             for (int row = 0; row < 3; row++) {
@@ -31,7 +31,7 @@ public class TestHexgrid {
     }
 
     @Test
-    void cubeToOffset_isInverseOfInternalOffsetToCube() {
+    public void cubeToOffset_isInverseOfInternalOffsetToCube() {
         HexGrid grid = new HexGrid(4, 4);
         for (int col = 0; col < 4; col++) {
             for (int row = 0; row < 4; row++) {
@@ -44,21 +44,21 @@ public class TestHexgrid {
     }
 
     @Test
-    void constructor_linksInteriorTileToAllSixNeighbors() {
+    public void constructor_linksInteriorTileToAllSixNeighbors() {
         HexGrid grid = new HexGrid(5, 5);
         Tile center = grid.getTile(2, 2);
         assertEquals(6, center.getAdjacentTiles().size());
     }
 
     @Test
-    void constructor_linksCornerTileToFewerThanSixNeighbors() {
+    public void constructor_linksCornerTileToFewerThanSixNeighbors() {
         HexGrid grid = new HexGrid(5, 5);
         Tile corner = grid.getTile(0, 0);
         assertTrue(corner.getAdjacentTiles().size() < 6);
     }
 
     @Test
-    void constructor_neverLinksNullNeighbors() {
+    public void constructor_neverLinksNullNeighbors() {
         HexGrid grid = new HexGrid(3, 3);
         for (int col = 0; col < 3; col++) {
             for (int row = 0; row < 3; row++) {
@@ -70,7 +70,7 @@ public class TestHexgrid {
     }
 
     @Test
-    void getTile_returnsSameInstanceOnRepeatedCalls() {
+    public void getTile_returnsSameInstanceOnRepeatedCalls() {
         HexGrid grid = new HexGrid(2, 2);
         assertSame(grid.getTile(1, 1), grid.getTile(1, 1));
     }

@@ -7,10 +7,10 @@ import model.service.MatchmakingService;
 import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe;
 import org.apache.pekko.actor.typed.ActorRef;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import play.libs.Json;
 
 import static model.actor.JsonConstantes.*;
@@ -34,18 +34,18 @@ public class TestConnexionActor {
     private ActeurMonitor monitor;
     private org.apache.pekko.actor.ActorRef ws;
 
-    @BeforeAll
-    static void initSystem() {
+    @BeforeClass
+    public static void initSystem() {
         testKit = ActorTestKit.create();
     }
 
-    @AfterAll
-    static void shutdownSystem() {
+    @AfterClass
+    public static void shutdownSystem() {
         testKit.shutdownTestKit();
     }
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         matchmakingService = mock(MatchmakingService.class);
         monitor = mock(ActeurMonitor.class);
         ws = mock(org.apache.pekko.actor.ActorRef.class);
@@ -62,7 +62,7 @@ public class TestConnexionActor {
     // ---- onStartGame ----
 
     @Test
-    void onStartGame_forwardsConnexionSetupToGameActor() {
+    public void onStartGame_forwardsConnexionSetupToGameActor() {
         TestProbe<GameActor.Message> gameProbe = testKit.createTestProbe(GameActor.Message.class);
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
 
@@ -74,7 +74,7 @@ public class TestConnexionActor {
     // ---- onIncoming : forwarding vers GameActor ----
 
     @Test
-    void onIncoming_buy_forwardsBuyingUnitMessageToGame() {
+    public void onIncoming_buy_forwardsBuyingUnitMessageToGame() {
         TestProbe<GameActor.Message> gameProbe = testKit.createTestProbe(GameActor.Message.class);
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
         actor.tell(new ConnexionActor.StartGame(gameProbe.getRef()));
@@ -88,7 +88,7 @@ public class TestConnexionActor {
     }
 
     @Test
-    void onIncoming_move_forwardsMovingUnitMessageToGame() {
+    public void onIncoming_move_forwardsMovingUnitMessageToGame() {
         TestProbe<GameActor.Message> gameProbe = testKit.createTestProbe(GameActor.Message.class);
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
         actor.tell(new ConnexionActor.StartGame(gameProbe.getRef()));
@@ -104,7 +104,7 @@ public class TestConnexionActor {
     }
 
     @Test
-    void onIncoming_give_forwardsGivingUnitObjectMessageToGame() {
+    public void onIncoming_give_forwardsGivingUnitObjectMessageToGame() {
         TestProbe<GameActor.Message> gameProbe = testKit.createTestProbe(GameActor.Message.class);
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
         actor.tell(new ConnexionActor.StartGame(gameProbe.getRef()));
@@ -118,7 +118,7 @@ public class TestConnexionActor {
     }
 
     @Test
-    void onIncoming_reroll_forwardsRerollShopMessageToGame() {
+    public void onIncoming_reroll_forwardsRerollShopMessageToGame() {
         TestProbe<GameActor.Message> gameProbe = testKit.createTestProbe(GameActor.Message.class);
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
         actor.tell(new ConnexionActor.StartGame(gameProbe.getRef()));
@@ -130,7 +130,7 @@ public class TestConnexionActor {
     }
 
     @Test
-    void onIncoming_exp_forwardsBuyingExpMessageToGame() {
+    public void onIncoming_exp_forwardsBuyingExpMessageToGame() {
         TestProbe<GameActor.Message> gameProbe = testKit.createTestProbe(GameActor.Message.class);
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
         actor.tell(new ConnexionActor.StartGame(gameProbe.getRef()));
@@ -142,7 +142,7 @@ public class TestConnexionActor {
     }
 
     @Test
-    void onIncoming_unknownType_sendsErrorToWs() {
+    public void onIncoming_unknownType_sendsErrorToWs() {
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
 
         actor.tell(new ConnexionActor.IncomingMessage(base("__not_a_real_type__", 7, 0)));
@@ -154,7 +154,7 @@ public class TestConnexionActor {
     // ---- Heartbeat ----
 
     @Test
-    void onHeartbeat_sendsPingWhileBelowMaxMissed() {
+    public void onHeartbeat_sendsPingWhileBelowMaxMissed() {
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
 
         actor.tell(ConnexionActor.Heartbeat.INSTANCE);
@@ -166,7 +166,7 @@ public class TestConnexionActor {
 
 
     @Test
-    void onReconnectMessage_replacesWsAndResumesHeartbeat() {
+    public void onReconnectMessage_replacesWsAndResumesHeartbeat() {
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
 
         actor.tell(ConnexionActor.Heartbeat.INSTANCE);
@@ -183,7 +183,7 @@ public class TestConnexionActor {
     // ---- StartOfRound ----
 
     @Test
-    void onStartingRound_sendsPayloadToWs() {
+    public void onStartingRound_sendsPayloadToWs() {
         ActorRef<ConnexionActor.Message> actor = spawnActor(42L);
 
         ObjectNode roundPayload = Json.newObject().put(PAYLOAD, 123456L).put(TYPE, "round");

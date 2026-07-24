@@ -13,8 +13,8 @@ import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.javadsl.Adapter;
 import org.apache.pekko.japi.Pair;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.MockedStatic;
 
 import java.util.List;
@@ -42,8 +42,8 @@ public class TestActeurMonitor {
 
     private ActeurMonitor monitor;
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         actorSystem = mock(ActorSystem.class);
         gameRepo = mock(GameRepository.class);
         creationRepo = mock(GameCreationRepository.class);
@@ -62,7 +62,7 @@ public class TestActeurMonitor {
     }
 
     @Test
-    void getOrCreateActorFromId_createsAndRegistersNewActorForUnknownUser() {
+    public void getOrCreateActorFromId_createsAndRegistersNewActorForUnknownUser() {
         org.apache.pekko.actor.ActorRef ws = mock(org.apache.pekko.actor.ActorRef.class);
         ActorRef<ConnexionActor.Message> spawned = mockActorRef();
 
@@ -78,7 +78,7 @@ public class TestActeurMonitor {
     }
 
     @Test
-    void getOrCreateActorFromId_returnsSameActorForKnownUserWithoutSpawningAgain() {
+    public void getOrCreateActorFromId_returnsSameActorForKnownUserWithoutSpawningAgain() {
         org.apache.pekko.actor.ActorRef ws = mock(org.apache.pekko.actor.ActorRef.class);
         ActorRef<ConnexionActor.Message> spawned = mockActorRef();
 
@@ -95,7 +95,7 @@ public class TestActeurMonitor {
     }
 
     @Test
-    void getActorFromId_returnsPreviouslyCreatedActor() {
+    public void getActorFromId_returnsPreviouslyCreatedActor() {
         org.apache.pekko.actor.ActorRef ws = mock(org.apache.pekko.actor.ActorRef.class);
         ActorRef<ConnexionActor.Message> spawned = mockActorRef();
 
@@ -111,14 +111,14 @@ public class TestActeurMonitor {
     }
 
     @Test
-    void getActorFromId_throwsForUnknownUser() {
+    public void getActorFromId_throwsForUnknownUser() {
         // Comportement actuel : aucune vérification -> indexOf renvoie -1 et
         // connexionList.get(-1) lève une IndexOutOfBoundsException.
         assertThrows(IndexOutOfBoundsException.class, () -> monitor.getActorFromId("unknown"));
     }
 
     @Test
-    void removeByActor_allowsUserToBeRecreatedAfterwards() {
+    public void removeByActor_allowsUserToBeRecreatedAfterwards() {
         org.apache.pekko.actor.ActorRef ws = mock(org.apache.pekko.actor.ActorRef.class);
         ActorRef<ConnexionActor.Message> firstActor = mockActorRef();
         ActorRef<ConnexionActor.Message> secondActor = mockActorRef();
@@ -140,7 +140,7 @@ public class TestActeurMonitor {
     }
 
     @Test
-    void removeByActor_throwsForActorThatWasNeverRegistered() {
+    public void removeByActor_throwsForActorThatWasNeverRegistered() {
         ActorRef<ConnexionActor.Message> unknownActor = mockActorRef();
 
         // Comportement actuel : indexOf renvoie -1 et idList.remove(-1)
@@ -149,7 +149,7 @@ public class TestActeurMonitor {
     }
 
     @Test
-    void createGame_callsRepositoriesAndSpawnsGameActor() {
+    public void createGame_callsRepositoriesAndSpawnsGameActor() {
         List<Pair<ActorRef<ConnexionActor.Message>, Long>> players = List.of();
         List<Long> playerIds = List.of(1L, 2L);
         String version = "1.0";

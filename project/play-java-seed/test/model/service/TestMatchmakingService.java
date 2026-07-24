@@ -5,8 +5,8 @@ import model.actor.ConnexionActor;
 import model.actor.GameActor;
 import model.monitor.ActeurMonitor;
 import org.apache.pekko.actor.typed.ActorRef;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -37,8 +37,8 @@ public class TestMatchmakingService {
     }
 
     @SuppressWarnings("unchecked")
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         monitor = mock(ActeurMonitor.class);
         config = mock(Config.class);
         when(config.getString("version")).thenReturn("1.0.0");
@@ -51,7 +51,7 @@ public class TestMatchmakingService {
     }
 
     @Test
-    void addPlayer_belowThreshold_returnsNullAndDoesNotCreateGame() {
+    public void addPlayer_belowThreshold_returnsNullAndDoesNotCreateGame() {
         for (int i = 1; i <= 7; i++) {
             ActorRef<GameActor.Message> result = matchmakingService.addPlayer(String.valueOf(i));
             assertNull(result);
@@ -62,7 +62,7 @@ public class TestMatchmakingService {
 
     @SuppressWarnings("unchecked")
     @Test
-    void addPlayer_reachingEightPlayers_createsGameWithConfiguredVersion() {
+    public void addPlayer_reachingEightPlayers_createsGameWithConfiguredVersion() {
         ActorRef<GameActor.Message> gameRef = mock(ActorRef.class);
         when(monitor.createGame(anyList(), eq("1.0.0"), anyList())).thenReturn(gameRef);
 
@@ -77,7 +77,7 @@ public class TestMatchmakingService {
 
     @SuppressWarnings("unchecked")
     @Test
-    void addPlayer_queueIsResetAfterGameCreation() {
+    public void addPlayer_queueIsResetAfterGameCreation() {
         ActorRef<GameActor.Message> gameRef = mock(ActorRef.class);
         when(monitor.createGame(anyList(), eq("1.0.0"), anyList())).thenReturn(gameRef);
 
@@ -97,7 +97,7 @@ public class TestMatchmakingService {
 
     @SuppressWarnings("unchecked")
     @Test
-    void addPlayer_passesExactPlayerIdsInOrderToCreateGame() {
+    public void addPlayer_passesExactPlayerIdsInOrderToCreateGame() {
         ActorRef<GameActor.Message> gameRef = mock(ActorRef.class);
         when(monitor.createGame(anyList(), eq("1.0.0"), anyList())).thenReturn(gameRef);
 
@@ -111,7 +111,7 @@ public class TestMatchmakingService {
 
     @SuppressWarnings("unchecked")
     @Test
-    void addPlayer_twoConsecutiveMatchesAreCreatedIndependently() {
+    public void addPlayer_twoConsecutiveMatchesAreCreatedIndependently() {
         ActorRef<GameActor.Message> gameRef1 = mock(ActorRef.class);
         ActorRef<GameActor.Message> gameRef2 = mock(ActorRef.class);
         when(monitor.createGame(anyList(), eq("1.0.0"), anyList()))

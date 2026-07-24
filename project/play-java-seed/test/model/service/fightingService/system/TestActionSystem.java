@@ -7,7 +7,7 @@ import model.DTO.fighting.MoveToDTO;
 import model.service.fightingService.ComponentUnit;
 import model.service.fightingService.FightingContext;
 import model.utils.Tuple;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mockito.MockedConstruction;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class TestActionSystem {
     // -----------------------------------------------------------
 
     @Test
-    void update_fullManaUnit_delegatesToCastAbilityAndResetsMana() {
+    public void update_fullManaUnit_delegatesToCastAbilityAndResetsMana() {
         FightingContext context = mock(FightingContext.class);
         ComponentUnit caster = mock(ComponentUnit.class);
         when(caster.isFullMana()).thenReturn(true);
@@ -60,7 +60,7 @@ public class TestActionSystem {
     }
 
     @Test
-    void update_nonFullManaUnit_delegatesToBasicAttack() {
+    public void update_nonFullManaUnit_delegatesToBasicAttack() {
         FightingContext context = mock(FightingContext.class);
         ComponentUnit attacker = mock(ComponentUnit.class);
         when(attacker.isFullMana()).thenReturn(false);
@@ -111,7 +111,7 @@ public class TestActionSystem {
     }
 
     @Test
-    void basicAttack_inRangeAndCanAttack_noCrit_enemySurvives_addsAttackEventOnly() {
+    public void basicAttack_inRangeAndCanAttack_noCrit_enemySurvives_addsAttackEventOnly() {
         FightingContext context = mock(FightingContext.class);
         Tuple attackerPos = mock(Tuple.class);
         Tuple enemyPos = mock(Tuple.class);
@@ -154,7 +154,7 @@ public class TestActionSystem {
     }
 
     @Test
-    void basicAttack_criticalHit_doublesDamageBeforeApplyingIt() {
+    public void basicAttack_criticalHit_doublesDamageBeforeApplyingIt() {
         FightingContext context = mock(FightingContext.class);
         Tuple attackerPos = mock(Tuple.class);
         Tuple enemyPos = mock(Tuple.class);
@@ -189,7 +189,7 @@ public class TestActionSystem {
     }
 
     @Test
-    void basicAttack_enemyDies_addsDeathEventInAdditionToAttackEvent() {
+    public void basicAttack_enemyDies_addsDeathEventInAdditionToAttackEvent() {
         FightingContext context = mock(FightingContext.class);
         Tuple attackerPos = mock(Tuple.class);
         Tuple enemyPos = mock(Tuple.class);
@@ -225,7 +225,7 @@ public class TestActionSystem {
     }
 
     @Test
-    void basicAttack_outOfRange_movesTowardTargetInsteadOfAttacking() {
+    public void basicAttack_outOfRange_movesTowardTargetInsteadOfAttacking() {
         FightingContext context = mock(FightingContext.class);
         Tuple attackerPos = mock(Tuple.class);
         Tuple enemyPos = mock(Tuple.class);
@@ -265,7 +265,7 @@ public class TestActionSystem {
     }
 
     @Test
-    void basicAttack_inRangeButCannotAttackYet_movesInsteadOfAttacking() {
+    public void basicAttack_inRangeButCannotAttackYet_movesInsteadOfAttacking() {
         FightingContext context = mock(FightingContext.class);
         Tuple attackerPos = mock(Tuple.class);
         Tuple enemyPos = mock(Tuple.class);

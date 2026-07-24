@@ -1,8 +1,8 @@
 package model.service;
 
 import com.typesafe.config.Config;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -17,8 +17,8 @@ public class TestHashService {
 
     private HashService hashService;
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         Config config = mock(Config.class);
         when(config.getInt("argon2.iterations")).thenReturn(1);
         when(config.getInt("argon2.memoryKb")).thenReturn(4096);
@@ -28,7 +28,7 @@ public class TestHashService {
     }
 
     @Test
-    void hash_producesNonNullArgon2idHash() {
+    public void hash_producesNonNullArgon2idHash() {
         char[] password = "SuperSecret123!".toCharArray();
 
         String hash = hashService.hash(password);
@@ -38,7 +38,7 @@ public class TestHashService {
     }
 
     @Test
-    void hash_wipesPasswordArrayAfterHashing() {
+    public void hash_wipesPasswordArrayAfterHashing() {
         char[] password = "SuperSecret123!".toCharArray();
 
         hashService.hash(password);
@@ -47,7 +47,7 @@ public class TestHashService {
     }
 
     @Test
-    void verify_correctPassword_returnsTrue() {
+    public void verify_correctPassword_returnsTrue() {
         char[] original = "SuperSecret123!".toCharArray();
         String hash = hashService.hash(original);
 
@@ -58,7 +58,7 @@ public class TestHashService {
     }
 
     @Test
-    void verify_wrongPassword_returnsFalse() {
+    public void verify_wrongPassword_returnsFalse() {
         char[] original = "SuperSecret123!".toCharArray();
         String hash = hashService.hash(original);
 
@@ -69,7 +69,7 @@ public class TestHashService {
     }
 
     @Test
-    void verify_wipesPasswordArrayAfterVerification() {
+    public void verify_wipesPasswordArrayAfterVerification() {
         char[] original = "SuperSecret123!".toCharArray();
         String hash = hashService.hash(original);
 

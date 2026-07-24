@@ -5,9 +5,9 @@ import model.service.fightingService.pathfinding.HexGrid;
 import model.service.fightingService.pathfinding.Tile;
 import model.utils.Tuple;
 import org.apache.pekko.japi.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 
@@ -41,15 +41,15 @@ public class TestFightingContext {
     private MockedConstruction<HexGrid> mockedHexGrid;
     private Tile boardTile;
 
-    @BeforeEach
-    void setUp() {
+    @Before
+    public void setUp() {
         boardTile = mock(Tile.class);
         mockedHexGrid = mockConstruction(HexGrid.class,
                 (mock, ctx) -> when(mock.getTile(anyInt(), anyInt())).thenReturn(boardTile));
     }
 
-    @AfterEach
-    void tearDown() {
+    @After
+    public void tearDown() {
         mockedHexGrid.close();
     }
 
@@ -79,7 +79,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void constructor_buildsHexGridWithExpectedDimensions() {
+    public void constructor_buildsHexGridWithExpectedDimensions() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -92,7 +92,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void constructor_marksBoardTileAsObstacleForEveryUnitOfBothTeams() {
+    public void constructor_marksBoardTileAsObstacleForEveryUnitOfBothTeams() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -110,7 +110,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void constructor_invertsPositionOfTeamBUnitsOnly() {
+    public void constructor_invertsPositionOfTeamBUnitsOnly() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -140,7 +140,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void getAliveUnits_filtersOutDeadUnits() {
+    public void getAliveUnits_filtersOutDeadUnits() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -164,7 +164,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void getEnemies_forTeamAUnit_returnsTeamBUnits() {
+    public void getEnemies_forTeamAUnit_returnsTeamBUnits() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -182,7 +182,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void getAllies_forTeamAUnit_returnsTeamAUnits() {
+    public void getAllies_forTeamAUnit_returnsTeamAUnits() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -200,7 +200,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void getEnemies_forNonTeamAUnit_returnsTeamAUnits() {
+    public void getEnemies_forNonTeamAUnit_returnsTeamAUnits() {
         // couvre la branche "else" de getGroup : toute unite dont l'id
         // d'equipe ne correspond pas a teamA.second() est traitee comme
         // appartenant a "l'autre camp" (teamB), symetriquement.
@@ -227,7 +227,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void getCurrentTarget_returnsCachedEnnemyWithoutRecomputing_whenAlreadySet() {
+    public void getCurrentTarget_returnsCachedEnnemyWithoutRecomputing_whenAlreadySet() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -250,7 +250,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void getCurrentTarget_computesClosestAliveEnemy_whenNoCacheYet() {
+    public void getCurrentTarget_computesClosestAliveEnemy_whenNoCacheYet() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -277,7 +277,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void getCurrentTarget_returnsNull_whenNoAliveEnemy() {
+    public void getCurrentTarget_returnsNull_whenNoAliveEnemy() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -296,7 +296,7 @@ public class TestFightingContext {
     }
 
     @Test
-    void getClosestAlly_ignoresCachedEnnemy_becauseCacheOnlyAppliesToEnemies() {
+    public void getClosestAlly_ignoresCachedEnnemy_becauseCacheOnlyAppliesToEnemies() {
         // isEnemy = false pour getClosestAlly => la condition
         // "unit.currentEnnemy != null && isEnemy" est toujours fausse ici,
         // donc le calcul est refait meme si currentEnnemy est deja renseigne.
@@ -325,7 +325,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void randomInt_delegatesToUnderlyingRandom() {
+    public void randomInt_delegatesToUnderlyingRandom() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -348,7 +348,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void getTick_startsAtZeroAndIncrementsCorrectly() {
+    public void getTick_startsAtZeroAndIncrementsCorrectly() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 
@@ -370,7 +370,7 @@ public class TestFightingContext {
     // ---------------------------------------------------------------
 
     @Test
-    void move_freesOldTileAndOccupiesNewTile() {
+    public void move_freesOldTileAndOccupiesNewTile() {
         Team teamA = mockTeam(1L);
         Team teamB = mockTeam(2L);
 

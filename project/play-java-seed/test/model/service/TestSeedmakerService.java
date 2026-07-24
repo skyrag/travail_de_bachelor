@@ -1,6 +1,6 @@
 package model.service;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mockito.MockedStatic;
 
 import java.security.MessageDigest;
@@ -12,7 +12,7 @@ import static org.mockito.Mockito.mockStatic;
 public class TestSeedmakerService {
 
     @Test
-    void createGameSeed_returnsNonNullLong() {
+    public void createGameSeed_returnsNonNullLong() {
         SeedMakerService service = new SeedMakerService();
 
         Long seed = service.createGameSeed();
@@ -21,7 +21,7 @@ public class TestSeedmakerService {
     }
 
     @Test
-    void createGameSeed_returnsDifferentValuesAcrossCalls() {
+    public void createGameSeed_returnsDifferentValuesAcrossCalls() {
         SeedMakerService service = new SeedMakerService();
 
         Long seed1 = service.createGameSeed();
@@ -32,7 +32,7 @@ public class TestSeedmakerService {
     }
 
     @Test
-    void createFromSeed_isDeterministicForIdenticalInputs() {
+    public void createFromSeed_isDeterministicForIdenticalInputs() {
         SeedMakerService service = new SeedMakerService();
 
         Long result1 = service.createFromSeed(42L, "context");
@@ -42,7 +42,7 @@ public class TestSeedmakerService {
     }
 
     @Test
-    void createFromSeed_differsWhenContextDiffers() {
+    public void createFromSeed_differsWhenContextDiffers() {
         SeedMakerService service = new SeedMakerService();
 
         Long result1 = service.createFromSeed(42L, "contextA");
@@ -52,7 +52,7 @@ public class TestSeedmakerService {
     }
 
     @Test
-    void createFromSeed_differsWhenBaseSeedDiffers() {
+    public void createFromSeed_differsWhenBaseSeedDiffers() {
         SeedMakerService service = new SeedMakerService();
 
         Long result1 = service.createFromSeed(1L, "context");
@@ -62,7 +62,7 @@ public class TestSeedmakerService {
     }
 
     @Test
-    void createFromSeed_returnsNonNullValueEvenForEmptyContext() {
+    public void createFromSeed_returnsNonNullValueEvenForEmptyContext() {
         SeedMakerService service = new SeedMakerService();
 
         assertNotNull(service.createFromSeed(0L, ""));
@@ -77,7 +77,7 @@ public class TestSeedmakerService {
      * mockito-core >= 5 qui l'active par défaut).
      */
     @Test
-    void createFromSeed_wrapsNoSuchAlgorithmExceptionInRuntimeException() {
+    public void createFromSeed_wrapsNoSuchAlgorithmExceptionInRuntimeException() {
         SeedMakerService service = new SeedMakerService();
 
         try (MockedStatic<MessageDigest> mocked = mockStatic(MessageDigest.class)) {

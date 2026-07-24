@@ -1,6 +1,6 @@
 package model.service.fightingService.pathfinding;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void findPath_returnsSingleTileWhenStartEqualsEnd() {
+    public void findPath_returnsSingleTileWhenStartEqualsEnd() {
         Tile start = tile(0, 0, 0);
 
         List<Tile> path = AStarPathfinding.findPath(start, start);
@@ -35,7 +35,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void findPath_findsPathOnSimpleChain() {
+    public void findPath_findsPathOnSimpleChain() {
         Tile s = tile(0, 0, 0);
         Tile m = tile(1, -1, 0);
         Tile e = tile(2, -2, 0);
@@ -48,7 +48,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void findPath_skipsObstaclesAndUsesDetour() {
+    public void findPath_skipsObstaclesAndUsesDetour() {
         Tile s = tile(0, 0, 0);
         Tile obstacle = tile(1, -1, 0);
         Tile detour = tile(0, -1, 1);
@@ -68,7 +68,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void findPath_returnsEmptyListWhenNoPathExists() {
+    public void findPath_returnsEmptyListWhenNoPathExists() {
         Tile s = tile(0, 0, 0);
         Tile deadEnd = tile(1, -1, 0);
         Tile e = tile(5, -5, 0); // jamais connectée au reste du graphe
@@ -81,7 +81,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void findPath_resetsSearchStateOfTouchedTilesAfterSearch() {
+    public void findPath_resetsSearchStateOfTouchedTilesAfterSearch() {
         Tile s = tile(0, 0, 0);
         Tile m = tile(1, -1, 0);
         Tile e = tile(2, -2, 0);
@@ -99,7 +99,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void findPath_consecutiveCallsDoNotPolluteEachOther() {
+    public void findPath_consecutiveCallsDoNotPolluteEachOther() {
         Tile s = tile(0, 0, 0);
         Tile m = tile(1, -1, 0);
         Tile e = tile(2, -2, 0);
@@ -119,7 +119,7 @@ public class TestAStarPathfinding {
      * doit retirer X de la file, mettre à jour son g/parent, et le ré-insérer.
      */
     @Test
-    void findPath_updatesOpenTileWhenCheaperPathIsFound() {
+    public void findPath_updatesOpenTileWhenCheaperPathIsFound() {
         Tile s  = tile(0, 0, 0);
         Tile p  = tile(70, -70, 0);
         Tile q  = tile(50, -50, 0);
@@ -146,7 +146,7 @@ public class TestAStarPathfinding {
      * ils sont déjà fermés.
      */
     @Test
-    void findPath_skipsClosedTilesAndDoesNotWorsenOpenTiles() {
+    public void findPath_skipsClosedTilesAndDoesNotWorsenOpenTiles() {
         Tile s = tile(0, 0, 0);
         Tile a = tile(90, -90, 0);
         Tile d = tile(95, -95, 0);
@@ -169,7 +169,7 @@ public class TestAStarPathfinding {
     }
 
     @Test
-    void getEstimatedPathCost_delegatesToHexDistance() {
+    public void getEstimatedPathCost_delegatesToHexDistance() {
         HexPosition a = new HexPosition(0, 0, 0);
         HexPosition b = new HexPosition(2, -3, 1);
 

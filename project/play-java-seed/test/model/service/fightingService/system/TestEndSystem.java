@@ -5,7 +5,7 @@ import model.DTO.fighting.FightingEventDTO;
 import model.entities.Team;
 import model.service.fightingService.ComponentUnit;
 import model.service.fightingService.FightingContext;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.mockito.MockedConstruction;
 
 import java.util.ArrayList;
@@ -41,13 +41,13 @@ public class TestEndSystem {
     }
 
     @Test
-    void isFinished_isFalseByDefault_beforeAnyUpdate() {
+    public void isFinished_isFalseByDefault_beforeAnyUpdate() {
         EndSystem system = new EndSystem();
         assertFalse(system.isFinished());
     }
 
     @Test
-    void update_bothTeamsHaveNoAliveUnitsLeft_declaresDrawAndFinishesCombat() {
+    public void update_bothTeamsHaveNoAliveUnitsLeft_declaresDrawAndFinishesCombat() {
         ComponentUnit lastUnit = mock(ComponentUnit.class);
         ComponentUnit deadAlly = mock(ComponentUnit.class);
         when(deadAlly.isAlive()).thenReturn(false);
@@ -73,7 +73,7 @@ public class TestEndSystem {
     }
 
     @Test
-    void update_teamAEmpty_teamBWins() {
+    public void update_teamAEmpty_teamBWins() {
         Team teamB = mock(Team.class);
         when(teamB.getId()).thenReturn(2L);
 
@@ -100,7 +100,7 @@ public class TestEndSystem {
     }
 
     @Test
-    void update_teamBEmpty_teamAWins() {
+    public void update_teamBEmpty_teamAWins() {
         Team teamA = mock(Team.class);
         when(teamA.getId()).thenReturn(1L);
 
@@ -127,7 +127,7 @@ public class TestEndSystem {
     }
 
     @Test
-    void update_bothTeamsStillHaveAliveUnits_combatContinuesAndStaysUnfinished() {
+    public void update_bothTeamsStillHaveAliveUnits_combatContinuesAndStaysUnfinished() {
         Team teamA = mock(Team.class);
         Team teamB = mock(Team.class);
 
@@ -145,7 +145,7 @@ public class TestEndSystem {
     }
 
     @Test
-    void update_throwsWhenThereAreNoAliveUnitsAtAll() {
+    public void update_throwsWhenThereAreNoAliveUnitsAtAll() {
         // context.getAliveUnits().getFirst() leve NoSuchElementException si la liste est vide
         FightingContext context = mock(FightingContext.class);
         when(context.getAliveUnits()).thenReturn(List.of());
