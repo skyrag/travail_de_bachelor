@@ -93,7 +93,6 @@ public class BasicRepository {
     }
 
     protected <T> T merge(EntityManager em, T persistable) {
-        em.merge(persistable);
-        return persistable;
+        return em.merge(persistable);
     }
 }

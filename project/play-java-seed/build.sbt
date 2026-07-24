@@ -20,6 +20,7 @@ lazy val root = (project in file("."))
       "org.testcontainers" % "postgresql" % "1.21.4" % "test",
       "org.junit.jupiter" % "junit-jupiter" % "5.10.2" % "test",
       javaWs % "test",
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % "1.0.3" % Test,
       "org.awaitility" % "awaitility" % "4.3.0" % "test",
       "org.assertj" % "assertj-core" % "3.27.3" % "test",
       "org.mockito" % "mockito-core" % "5.18.0" % "test",

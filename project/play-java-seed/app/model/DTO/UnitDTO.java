@@ -1,6 +1,7 @@
 package model.DTO;
 
 public record UnitDTO(long id,
+                      String sprite,
                       String name,
                       int cost,
                       String rarity,

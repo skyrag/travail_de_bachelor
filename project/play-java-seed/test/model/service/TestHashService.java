@@ -1,34 +1,81 @@
 package model.service;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
- * This class of test tests the fonctionnalities of our hashservice that
- * gives us a way to hash password and verify
- * if a password is the one that is hashed (argon2)
+ * Ces tests appellent la véritable librairie Argon2 (native, via JNI).
+ * On utilise des paramètres volontairement faibles (peu d'itérations, peu
+ * de mémoire) uniquement pour accélérer les tests ; ne jamais utiliser ces
+ * valeurs en production.
  */
-public class TestHashService {
+class TestHashService {
+
+    private HashService hashService;
+
+    @BeforeEach
+    void setUp() {
+        Config config = mock(Config.class);
+        when(config.getInt("argon2.iterations")).thenReturn(1);
+        when(config.getInt("argon2.memoryKb")).thenReturn(4096);
+        when(config.getInt("argon2.parallelism")).thenReturn(1);
+
+        hashService = new HashService(config);
+    }
 
     @Test
-    public void testBasicHash () {
+    void hash_producesNonNullArgon2idHash() {
+        char[] password = "SuperSecret123!".toCharArray();
 
-        Config config = ConfigFactory.parseString("""
-            argon2.iterations = 2
-            argon2.memoryKb = 19456
-            argon2.parallelism = 1
-        """);
-
-        HashService service = new HashService(config);
-
-
-        String hash = service.hash("password".toCharArray());
+        String hash = hashService.hash(password);
 
         assertNotNull(hash);
-        assertTrue(service.verify(hash, "password".toCharArray()));
+        assertTrue(hash.startsWith("$argon2id$"));
+    }
+
+    @Test
+    void hash_wipesPasswordArrayAfterHashing() {
+        char[] password = "SuperSecret123!".toCharArray();
+
+        hashService.hash(password);
+
+        assertArrayEquals(new char[password.length], password);
+    }
+
+    @Test
+    void verify_correctPassword_returnsTrue() {
+        char[] original = "SuperSecret123!".toCharArray();
+        String hash = hashService.hash(original);
+
+        char[] toVerify = "SuperSecret123!".toCharArray();
+        boolean result = hashService.verify(hash, toVerify);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void verify_wrongPassword_returnsFalse() {
+        char[] original = "SuperSecret123!".toCharArray();
+        String hash = hashService.hash(original);
+
+        char[] wrong = "WrongPassword!".toCharArray();
+        boolean result = hashService.verify(hash, wrong);
+
+        assertFalse(result);
+    }
+
+    @Test
+    void verify_wipesPasswordArrayAfterVerification() {
+        char[] original = "SuperSecret123!".toCharArray();
+        String hash = hashService.hash(original);
+
+        char[] toVerify = "SuperSecret123!".toCharArray();
+        hashService.verify(hash, toVerify);
+
+        assertArrayEquals(new char[toVerify.length], toVerify);
     }
 }

@@ -17,6 +17,7 @@ import static model.entities.effect.StatType.*;
 public class ComponentUnit {
 
     private final long id;
+    private final String name;
     private int maxHealth;
     private int currentHealth;
     private int currentMana;
@@ -43,6 +44,7 @@ public class ComponentUnit {
 
     public ComponentUnit(InstanceUnit unit) {
         id = unit.getId();
+        name = unit.getUnit().getName();
         maxHealth = Math.toIntExact(Math.round(unit.getUnit().getMaxHealth() * Math.pow(1.8, unit.getLvl() - 1)));
         currentHealth = maxHealth;
         currentMana = unit.getUnit().getStartingMana();
@@ -230,5 +232,9 @@ public class ComponentUnit {
         int mitigatedDamage = Math.toIntExact(Math.round(trueDamage * (100.0 / (100 + armor))));
         damage(mitigatedDamage);
         return mitigatedDamage;
+    }
+
+    public String getName() {
+        return name;
     }
 }

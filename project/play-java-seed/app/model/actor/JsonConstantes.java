@@ -20,6 +20,10 @@ public class JsonConstantes {
     static final String GAMELOST = "GameLost";
     static final String SETUP = "setup";
     static final String ROUNDWINDOW = "RoundWindow";
+    static final String HISTORIQUE = "Historique";
+    static final String JOUER = "Jouer";
+
+    static final String MATCHES = "matches";
 
     static final String ACK = "Ack";
     static final String RECO = "Reconnect";

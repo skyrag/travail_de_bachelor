@@ -3,8 +3,11 @@ package controllers;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import model.entities.User;
+import model.monitor.ActeurMonitor;
 import model.repositories.LoginRepository;
+import model.service.GameLevelService;
 import model.service.HashService;
+import model.service.MatchmakingService;
 import org.junit.Test;
 import play.Application;
 import play.api.test.CSRFTokenHelper;
@@ -35,6 +38,9 @@ public class TestHomeController extends WithApplication {
 
     private LoginRepository repo;
     private HashService hashService;
+    private GameLevelService gameLevelService;
+    private ActeurMonitor acteurMonitor;
+    private MatchmakingService matchmakingService;
 
     @Override
     protected Application provideApplication() {
@@ -45,6 +51,9 @@ public class TestHomeController extends WithApplication {
 
         repo = mock(LoginRepository.class);
         hashService = mock(HashService.class);
+        gameLevelService = mock(GameLevelService.class);
+        acteurMonitor = mock(ActeurMonitor.class);
+        matchmakingService = mock(MatchmakingService.class);
 
         when(repo.getByUsername(any()))
                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -62,6 +71,9 @@ public class TestHomeController extends WithApplication {
                     protected void configure() {
                         bind(LoginRepository.class).toInstance(repo);
                         bind(HashService.class).toInstance(hashService);
+                        bind(GameLevelService.class).toInstance(gameLevelService);
+                        bind(ActeurMonitor.class).toInstance(acteurMonitor);
+                        bind(MatchmakingService.class).toInstance(matchmakingService);
                     }
                 })
                 .build();
@@ -175,7 +187,7 @@ public class TestHomeController extends WithApplication {
 
         request = CSRFTokenHelper.addCSRFToken(request);
         Result result = route(app, request);
-        assertEquals(SEE_OTHER, result.status());
+        assertEquals(OK, result.status());
     }
 
     @Test
@@ -197,7 +209,7 @@ public class TestHomeController extends WithApplication {
 
         request = CSRFTokenHelper.addCSRFToken(request);
         Result result = route(app, request);
-        assertEquals(SEE_OTHER, result.status());
+        assertEquals(OK, result.status());
     }
 
     @Test

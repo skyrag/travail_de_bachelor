@@ -71,10 +71,7 @@ Ainsi, le recours à une solution d'authentification déléguée permettrait de 
 #v(2em)
 
 Le serveur backend doit établir des connexions avec les utilisateurs afin de pouvoir échanger des messages avec ces derniers. C'est grâce à ces connexions que la communication entre le client et le serveur est assurée. Il doit également assurer le maintien de ces connexions, et être capable de les rétablir en cas d'interruption.
-#v(2em)
-
-== Connexions bidirectionnelles
-#v(2em)
+#v(1em)
 
 Compte tenu du volume et de la fréquence des échanges, un canal de communication bidirectionnel persistant, tel que les WebSockets, constitue une solution plus adaptée que des approches traditionnelles comme le polling HTTP @ablyLongPolling, utilisé avant l'apparition des WebSockets et impliquant des requêtes répétées du client vers le serveur, ce qui engendre une surcharge inutile.
 #v(1em)
@@ -94,22 +91,22 @@ Le choix s'oriente vers l'approche basée sur le modèle d'acteurs, particulièr
 Pour assurer le maintien des connexions, il sera nécessaire de mettre en place un système de heartbeat, ainsi qu'un mécanisme de reconnexion en cas de déconnexion.
 #v(1em)
 
-Concernant le système de reconnexion, l'objectif principal est de pouvoir transmettre l'état actuel de la partie au moment où l'utilisateur se reconnecte. Cela nécessite de conserver un historique de l'état de la partie, cohérent entre tous les utilisateurs — il s'agit d'un problème classique de concurrence en environnement distribué.
+Concernant le système de reconnexion, l'objectif principal est de pouvoir transmettre l'état actuel de la partie au moment où l'utilisateur se reconnecte. Cela nécessite de conserver un historique de l'état de la partie, cohérent entre tous les utilisateurs. Il s'agit d'un problème classique de concurrence en environnement distribué.
 #v(1em)
 
-Plusieurs questions restent néanmoins à trancher, notamment la taille de l'historique à conserver, ainsi que la manière dont la reconnexion sera présentée à l'utilisateur : les combats manqués doivent-ils être rejoués séquentiellement, ou seul le résultat final doit-il être affiché, ou encore est-ce que l'utilisateur ne reçoit-il aucune indication des événements survenus durant son absence ?
+Certains aspect restent sujet à débat, notamment la taille de l'historique à conserver, ainsi que la manière dont la reconnexion sera présentée à l'utilisateur : les combats manqués doivent-ils être rejoués séquentiellement, ou seul le résultat final doit-il être affiché, ou encore est-ce que l'utilisateur doit recevoir le détails des événements survenus durant sa déconnexion ?
 #v(2em)
 
 == Lien entre la base de données et le backend
 #v(2em)
 
-L'application devra stocker des données relatives aux utilisateurs, qu'il faudra créer, modifier, etc. Des requêtes adaptées seront donc nécessaires pour accéder à ces données et faire le lien entre le backend Play et la base de données PostgreSQL. Plusieurs solutions sont envisageables pour cela : l'écriture de SQL pur, l'utilisation de JOOQ @jooqPlayFramework, ou encore le recours à un ORM(Object-Relational Mapping).
+L'application devra stocker des données relatives aux utilisateurs, qu'il faudra créer, modifier ou les utiliser. Des requêtes adaptées seront donc nécessaires pour accéder à ces données et faire le lien entre le backend Play et la base de données PostgreSQL. Plusieurs solutions sont envisageables pour cela : l'écriture de SQL pur, l'utilisation de JOOQ @jooqPlayFramework, ou encore le recours à un ORM(Object-Relational Mapping).
 #v(1em)
 
 Le premier problème rencontré est celui de l'impedance mismatch, c'est-à-dire la dissonance entre le modèle orienté objet utilisé dans le backend et le modèle relationnel de la base de données : le premier repose sur des notions telles que l'héritage ou les références directes entre objets, quand le second ne connaît que des tables plates reliées par des clés étrangères. Pour résoudre ce problème, la solution la plus simple et la plus économique consiste à utiliser un ORM, dont le rôle principal est justement de gérer cette différence. Play propose d'ailleurs des tutoriels d'intégration pour des ORM tels qu'Hibernate @playFrameworkDatabaseDocs, largement utilisé dans l'industrie.
 #v(1em)
 
-L'abstraction proposée par les ORM s'avère cependant souvent imparfaite (on parle d'abstraction leaky, c'est-à-dire laissant transparaître les détails du fonctionnement sous-jacent) : ces outils ne constituent donc pas une solution à l'ensemble des problèmes rencontrés. Leur utilisation nécessite une attention particulière afin de préciser au mieux les intentions du développeur ; sans cela, l'ORM peut générer des structures inefficaces, telles que des tables inutiles, ou entraîner des problèmes de performance dans les requêtes générées.
+L'abstraction proposée par les ORM s'avère cependant souvent imparfaite (on parle d'abstraction "leaky", c'est-à-dire laissant transparaître les détails du fonctionnement sous-jacent) : ces outils ne constituent donc pas une solution à l'ensemble des problèmes rencontrés. Leur utilisation nécessite une attention particulière afin de préciser au mieux les intentions du développeur ; sans cela, l'ORM peut générer des structures inefficaces, telles que des tables inutiles, ou entraîner des problèmes de performance dans les requêtes générées.
 #v(1em)
 
 Les ORM restent néanmoins une bonne solution pour la plupart des requêtes liées à un utilisateur particulier. En revanche, dans le cas d'un système de classement (leaderboard) ou de statistiques portant sur l'ensemble des personnages, des requêtes plus complexes seront nécessaires. Dans ce type de situation, l'écriture de SQL pur ou l'utilisation de JOOQ pourrait s'avérer plus appropriée.
@@ -121,7 +118,7 @@ Les ORM restent néanmoins une bonne solution pour la plupart des requêtes lié
 Ce projet ayant pour objectif la mise en place d'un pipeline CI/CD, cette section s'intéresse aux différentes solutions disponibles.
 #v(1em)
 
-Afin de garantir un environnement standardisé pour les différents builds tout au long du projet, Docker et son système d'images seront utilisés.
+Afin de garantir un environnement standardisé pour les différents builds tout au long du projet, Docker et son système d'images ont été utilisés.
 #v(1em)
 
 L'étude des outils employés par différents acteurs du domaine montre que Jenkins constitue une solution populaire, en raison de sa flexibilité et de son caractère open source. Il permet de ne pas tout reconstruire soi-même, grâce à l'utilisation de plugins créés et maintenus par une large communauté. Son utilisation demande cependant un investissement en temps conséquent, et nécessiterait la mise en place d'un serveur dédié pour l'exécuter. Les retours de développeurs l'ayant utilisé indiquent en outre que la maintenance des pipelines peut devenir chronophage, notamment en raison de problèmes de compatibilité entre certains plugins.
@@ -130,4 +127,4 @@ L'étude des outils employés par différents acteurs du domaine montre que Jenk
 Une alternative plus simple à mettre en œuvre est GitHub Actions. Cette solution est particulièrement pratique, puisque le versionnement du projet a pour objectif d'être réalisé sur GitHub ; elle permet une intégration rapide et ne nécessite pas de serveur supplémentaire pour exécuter les pipelines, sauf en cas d'utilisation de runners auto-hébergés.
 #v(1em)
 
-Bien qu'il existe des tutoriels réalisés par Riot Games (développeurs de Teamfight Tactics) présentant une intégration basée sur Jenkins et Docker @riotContainerArticle, nous avons choisi d'utiliser GitHub Actions afin de gagner du temps et de simplifier la mise en place du pipeline. Seule une partie de Delivery Continue sera mise en place dans un premier temps, la création et la publication de l'image Docker étant automatisées.
+Bien qu'il existe des tutoriels réalisés par Riot Games (développeurs de Teamfight Tactics) présentant une intégration basée sur Jenkins et Docker @riotContainerArticle, nous avons choisi d'utiliser GitHub Actions afin de gagner du temps et de simplifier la mise en place du pipeline. Seule une partie de Livraison continue sera mise en place dans un premier temps.

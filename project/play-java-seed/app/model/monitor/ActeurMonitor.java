@@ -6,6 +6,7 @@ import model.entities.game.Game;
 import model.repositories.GameCreationRepository;
 import model.repositories.GameRepository;
 import model.service.GameLevelService;
+import model.service.MatchmakingService;
 import model.service.SeedMakerService;
 import model.service.SimulationService;
 import org.apache.pekko.actor.ActorSystem;
@@ -24,6 +25,7 @@ public class ActeurMonitor {
     private final ActorSystem actorSystem;
     private final GameRepository gameRepo;
     private final GameCreationRepository creationRepo;
+    private final MatchmakingService matchmakingService;
     private final SeedMakerService seedGenerator;
     private final GameLevelService gameLevelService;
     private final SimulationService simulationService;
@@ -39,13 +41,15 @@ public class ActeurMonitor {
                          SeedMakerService seedGenerator,
                          GameCreationRepository creationRepo,
                          GameLevelService gameLevelService,
-                         SimulationService simulationService) {
+                         SimulationService simulationService,
+                         MatchmakingService matchmakingService) {
         this.actorSystem = actorSystem;
         this.gameRepo = gameRepository;
         this.seedGenerator = seedGenerator;
         this.creationRepo = creationRepo;
         this.gameLevelService = gameLevelService;
         this.simulationService = simulationService;
+        this.matchmakingService = matchmakingService;
 
     }
 
@@ -54,7 +58,7 @@ public class ActeurMonitor {
         if (index == -1){
             ActorRef<ConnexionActor.Message> actor = Adapter.spawn(
                     actorSystem,
-                    ConnexionActor.create(ws, Long.parseLong(userId), this),
+                    ConnexionActor.create(ws, Long.parseLong(userId), this, matchmakingService),
                     userId
             );
             idList.add(userId);

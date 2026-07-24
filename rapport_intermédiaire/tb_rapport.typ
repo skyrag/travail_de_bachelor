@@ -213,6 +213,8 @@ Toute utilisation, même partielle, de ce TB doit être faite dans le respect du
 ])
 #pagebreak(weak: true)
 
+#outline(title: "Table des matières", depth: 2, indent: 15pt)
+
 
 /*
 
@@ -229,7 +231,6 @@ Toute utilisation, même partielle, de ce TB doit être faite dans le respect du
 
 #include "chapitres/presentation.typ"
 
-#outline(title: "Table des matières", depth: 2, indent: 15pt)
 
 /*
 

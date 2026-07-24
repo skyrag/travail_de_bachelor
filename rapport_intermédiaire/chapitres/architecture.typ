@@ -34,9 +34,9 @@ Le backend est développé en Java. Il exécute l'ensemble de la logique métier
 
 === Play
 #v(2em)
-Le Play Framework est un framework web open source conçu pour le développement d'applications web en Java et Scala. Il repose sur une architecture moderne basée sur le modèle MVC (Model-View-Controller), ce qui permet de structurer clairement le code et d'en faciliter la maintenance.
+Le framework Play est un framework web open source conçu pour le développement d'applications web en Java et Scala. Il repose sur une architecture moderne basée sur le modèle MVC (Model-View-Controller), ce qui permet de structurer clairement le code et d'en faciliter la maintenance.
 Play se distingue par son approche réactive et non bloquante, qui lui permet de gérer efficacement un grand nombre de requêtes simultanées. Il est également fortement intégré à l'écosystème Java, ce qui le rend compatible avec de nombreuses bibliothèques et outils utilisés en entreprise.
-Dans le cadre de ce projet, le Play Framework est utilisé pour implémenter la partie backend de l'application, notamment la gestion des connexions à l'aide du pattern acteur et de Pekko Streams, permettant de gérer la concurrence de manière fiable.
+Dans le cadre de ce projet, le framework Play est utilisé pour implémenter la partie backend de l'application, notamment la gestion des connexions à l'aide du pattern acteur et de Pekko Streams, permettant de gérer la concurrence de manière fiable.
 #v(2em)
 
 === OAuth2 / OpenID Connect
@@ -62,7 +62,7 @@ Dans le cadre de ce projet, PostgreSQL est utilisé comme base de données princ
 == Pipeline CI/CD
 #v(2em)
 
-L'objectif du pipeline CI/CD mis en place est d'automatiser les étapes de construction (build) et de test de chaque nouvelle sortie (release), tout en garantissant l'absence de mauvaises surprises grâce à l'exécution des tests dans un environnement identique à celui utilisé en production. Seule une démarche de Continuous Delivery est mise en place à ce stade — le déploiement, lui, reste manuel.
+L'objectif du pipeline CI/CD mis en place est d'automatiser les étapes de construction (build) et de test de chaque nouvelle sortie (release), tout en garantissant l'absence de mauvaises surprises grâce à l'exécution des tests dans un environnement identique à celui utilisé en production. Seule une démarche d'Integration continue est mise en place à ce stade, le déploiement, lui, reste manuel.
 #v(2em)
 
 == GitHub Actions
@@ -80,41 +80,3 @@ Docker est une plateforme open source permettant de créer, déployer et exécut
 Grâce à cette approche, Docker simplifie la gestion des environnements de développement, de test et de production, en réduisant les problèmes liés aux différences de configuration entre machines. Les conteneurs sont légers, rapides à démarrer, et plus efficaces en ressources que les machines virtuelles traditionnelles.
 Dans le cadre de ce projet, Docker est utilisé afin de standardiser les environnements d'exécution et de faciliter le déploiement des différentes parties de l'application, notamment le backend et les services associés.
 #v(2em)
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
-Schéma 

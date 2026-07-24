@@ -9,7 +9,7 @@ Ce projet de bachelor s'inscrit dans la volonté de réaliser un travail à la f
 
 == Description du sujet
 #v(2em)
-Ce travail de bachelor consiste en la conception et le développement d'un jeu multijoueur accessible via le web, s'inscrivant dans le genre dit *auto-battler*. Ce type de jeu oppose plusieurs joueurs (généralement huit) au sein d'une même partie, chacun devant constituer et faire évoluer une équipe d'unités sur un plateau de jeu qui lui est propre. Contrairement à un jeu de stratégie traditionnel, le joueur ne contrôle pas directement ses unités pendant les combats : ceux-ci se déroulent de manière automatique, une fois les phases de préparation (achat, positionnement, équipement) terminées. Une partie se déroule par rounds successifs, alternant une phase de préparation et une phase de combat, durant laquelle chaque joueur affronte tour à tour différents adversaires, jusqu'à ce qu'il ne reste qu'un seul joueur en vie.
+Ce travail de bachelor consiste en la conception et le développement d'un jeu multijoueur accessible via le web, s'inscrivant dans le genre *auto-battler*. Ce type de jeu oppose plusieurs joueurs (généralement huit) au sein d'une même partie, chacun devant constituer et faire évoluer une équipe d'unités sur un plateau de jeu qui lui est propre. Contrairement à un jeu de stratégie traditionnel, le joueur ne contrôle pas directement ses unités pendant les combats : ceux-ci se déroulent de manière automatique, une fois les phases de préparation (achat, positionnement, équipement) terminées. Une partie se déroule par rounds successifs, alternant une phase de préparation et une phase de combat, durant laquelle chaque joueur affronte tour à tour différents adversaires, jusqu'à ce qu'il ne reste qu'un seul joueur en vie.
 #v(2em)
 Le projet repose sur le développement d'une application complète intégrant une interface utilisateur, une logique métier, et un système de persistance des données. Il s'inscrit dans une démarche de conception logicielle moderne, à travers une architecture distribuée permettant de séparer clairement les différentes responsabilités du système.
 #v(2em)
@@ -18,7 +18,7 @@ Au-delà de l'aspect ludique, ce projet vise à mobiliser un ensemble de compét
 #v(2em)
 == Architecture du projet
 #v(2em)
-L'objectif de ce travail est de mettre à profit l'ensemble des connaissances acquises durant le bachelor dans la réalisation d'un jeu. C'est pourquoi, avant de développer un jeu pensé spécifiquement pour le web, l'accent est mis sur le développement d'une application robuste, pouvant être exploitée dans un contexte web, ce qui implique un certain nombre de choix architecturaux détaillés ci-dessous.
+Avant de développer un jeu pensé spécifiquement pour le web, l'accent est mis sur le développement d'une application robuste, pouvant être exploitée dans un contexte web, ce qui implique un certain nombre de choix architecturaux détaillés ci-dessous.
 #v(2em)
 L'application repose sur une architecture multi-tiers, structurée en trois composants principaux : un frontend, un backend, et une base de données.
 #v(2em)
@@ -28,7 +28,7 @@ Le backend contient l'intégralité de la logique métier du jeu. Il a pour rôl
 #v(2em)
 La base de données contient l'ensemble des informations relatives aux utilisateurs et au déroulement du jeu, notamment l'historique des parties.
 #v(2em)
-Dans une optique de bonnes pratiques de développement, un pipeline d'intégration continus (CI) est également mis en place, afin d'automatiser les phases de test.
+Dans une optique de bonnes pratiques de développement, un pipeline d'intégration continue (CI) est également mis en place, afin d'automatiser les phases de test.
 #v(2em)
 #v(2em)
 

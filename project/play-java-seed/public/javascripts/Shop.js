@@ -6,132 +6,111 @@ export class Shop {
     SHOPITEMWIDTH = 250;
     SHOPITEMHIEGHT = 190;
 
-    constructor(app, team, arena, sprite, list) {
+    constructor(app, team, arena, sprite, list, ws) {
         this.app = app;
         this.team = team;
-        team.setShop(this)
+        team.setShop(this);
         this.units = [];
         this.arena = arena;
+        this.ws = ws;
         this.BUY_XP_COST = 4;
         this.BUY_XP_AMOUNT = 4;
 
-        // création du conteneur du shop
-        // Create and add a container to the stage
         const container = new Container();
         container.x = 150;
         container.y = 5 * window.innerHeight / 6 - 10;
         this.container = container;
         app.stage.addChild(container);
 
-        /*
-        const rectWidth = window.innerWidth -300;
-        const rectHeight = window.innerHeight /6;
-        const rect = new Graphics()
-            .rect(150, 5 * window.innerHeight / 6 - 10, rectWidth, rectHeight)
-            .fill(0xffd700)
-            .stroke({ width: 4, color: 'black' });
-        container.addChild(rect);
-
-         */
-
-        this.createUI(sprite, list)
+        this.createUI(sprite, list);
     }
 
-    resetShop(units){
+    resetShop(units) {
         let i = 2;
-        if (this.units.length >= 1){
-            for (let unit of this.units){
+        if (this.units.length >= 1) {
+            for (let unit of this.units) {
                 this.container.removeChild(unit.shoppingSprite);
             }
         }
-        for (let unit of units){
-            // creating the sprite for the unit
-            const currentUnit = unit.createShopping(i * this.SHOPITEMWIDTH, 0, (chosen) => this.onUnitClick(chosen), this.container, this.SHOPITEMWIDTH, this.SHOPITEMHIEGHT);
+        for (let unit of units) {
+            const currentUnit = unit.createShopping(i * this.SHOPITEMWIDTH, 0, null, this.container, this.SHOPITEMWIDTH, this.SHOPITEMHIEGHT);
             currentUnit.shoppingSprite.on('pointerdown', () => this.onUnitClick(currentUnit));
             this.units.push(currentUnit);
             i++;
         }
     }
 
-
-    onUnitClick(unit){
+    onUnitClick(unit) {
         const benchHasRoom = this.team.canAddInBench();
         const teamHasRoom = this.team.canAddOne();
 
         if (!benchHasRoom && !teamHasRoom) {
             console.log("Pas de place (banc et équipe pleins), achat annulé");
-            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
-        }
-
-        const newUnit = unit.createfighting(0, 0, this.team.container);
-        this.container.removeChild(unit.shoppingSprite);
-
-        if (this.team.addUnitToBench(newUnit.fightingSprite)) {
             return;
         }
-        if (teamHasRoom) {
-            this.arena.setToNextEmptyCell(newUnit.fightingSprite);
-            this.team.addUnit(newUnit.fightingSprite);
-            newUnit.fightingSprite.unitData = newUnit
+        if (this.team.gold < unit.cost) {
+            console.log("Pas assez d'or");
+            return;
         }
+
+        let boughtUnit = null;
+        let shopSpriteRemoved = null;
+
+        this.ws.buyUnit(unit.id, {
+            apply: () => {
+                boughtUnit = this.team.applyBuyUnit(unit);
+                this.container.removeChild(unit.shoppingSprite);
+                shopSpriteRemoved = unit.shoppingSprite;
+                this.units = this.units.filter(u => u !== unit);
+            },
+            rollback: () => {
+                if (boughtUnit) this.team.rollbackBuyUnit(boughtUnit);
+                // on ne remet pas le sprite de shop : le serveur nous dira via reroll/erreur
+                console.warn("Achat refusé par le serveur");
+            }
+        }).catch(err => console.warn("Achat échoué:", err.message));
     }
 
+    onReroll() {
+        this.ws.rerollShop().then(payload => {
+            // payload = { unit1..unit5 } avec des ids catalogue — à toi de les résoudre
+            // vers de vrais objets Unit via ta liste locale de définitions, puis:
+            // this.resetShop([unitDef1, unitDef2, ...]);
+        }).catch(err => console.warn("Reroll refusé:", err.message));
+    }
 
     createButton(sprite, list, container) {
         const reroll = new Sprite(sprite);
         reroll.x = this.SHOPITEMWIDTH;
         reroll.y = 0;
-
         reroll.scale.set(0.5);
         reroll.width = this.SHOPITEMWIDTH;
-        reroll.height = this.SHOPITEMHIEGHT/2;
-
-        // Opt-in to interactivity
+        reroll.height = this.SHOPITEMHIEGHT / 2;
         reroll.eventMode = 'static';
-
-        // Shows hand cursor
         reroll.cursor = 'pointer';
-
-        reroll.on('pointerdown', () => this.onButtonClick(list));
-
-        // add the sprite to the container
+        reroll.on('pointerdown', () => this.onReroll());
         container.addChild(reroll);
     }
 
-    onButtonClick(list) {
-        this.resetShop(list);
-    }
-
-    // --- UI ---
-
     createUI(sprite, list) {
-        const uiContainer = new Container();// au-dessus du banc, à ajuster selon ton layout
+        const uiContainer = new Container();
         this.uiContainer = uiContainer;
         this.container.addChild(uiContainer);
 
-        this.createButton(sprite, list, uiContainer)
+        this.createButton(sprite, list, uiContainer);
 
-        // Texte de l'or
-        this.goldText = new Text({
-            text: `Or : 0`,
-            style: { fill: 0xffffff, fontSize: 50, fontWeight: 'bold' }
-        });
+        this.goldText = new Text({ text: `Or : 0`, style: { fill: 0xffffff, fontSize: 50, fontWeight: 'bold' } });
         this.goldText.eventMode = 'none';
         this.goldText.x = 60 + this.SHOPITEMWIDTH;
-        this.goldText.y = this.SHOPITEMHIEGHT/2  ;
+        this.goldText.y = this.SHOPITEMHIEGHT / 2;
         uiContainer.addChild(this.goldText);
 
-        // Texte du niveau
-        this.levelText = new Text({
-            text: `Niveau 1`,
-            style: { fill: 0xffffff, fontSize: 20, fontWeight: 'bold' }
-        });
+        this.levelText = new Text({ text: `Niveau 1`, style: { fill: 0xffffff, fontSize: 20, fontWeight: 'bold' } });
         this.levelText.eventMode = 'none';
         this.levelText.x = 60;
         this.levelText.y = 30;
         uiContainer.addChild(this.levelText);
 
-        // Barre d'XP (fond)
         this.xpBarWidth = 200;
         this.xpBarHeight = 16;
 
@@ -142,12 +121,10 @@ export class Shop {
         this.xpBarBg.eventMode = 'none';
         uiContainer.addChild(this.xpBarBg);
 
-        // Barre d'XP (remplissage) — largeur ajustée dynamiquement dans updateUI
         this.xpBarFill = new Graphics();
         this.xpBarFill.eventMode = 'none';
         uiContainer.addChild(this.xpBarFill);
 
-        // Bouton "Acheter XP"
         const buyButton = new Graphics()
             .rect(60, this.levelText.y + 60, 120, 36)
             .fill(0x2ecc71)

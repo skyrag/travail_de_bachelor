@@ -24,10 +24,6 @@ User -> Event : donner un object a une unité
 Event -> Unit : l'unité gagne l'object
 Event -> Inventory : on enlève l'object de l'inventaire
 
-User -> Event : fusionner des objects
-Event -> Inventory : on enlève les deux objects
-Event -> Inventory : on rajoute le résultat de la fusion
-
 User -> Event : Reroll le shop
 Event -> Gold : on enlève les golds nécessaire au reroll
 Event -> Shop : on change le shop a disposition du user en prenant 5 unité dans le pool

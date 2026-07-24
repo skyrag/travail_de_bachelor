@@ -33,13 +33,19 @@ public class HexGrid {
     }
 
     private void linkAdjacentTiles() {
-        for (Tile[] rows: tiles){
-            for (Tile tile: rows){
+        int columns = tiles.length;
+        int rows = tiles[0].length;
+        for (Tile[] rowArr : tiles) {
+            for (Tile tile : rowArr) {
                 for (HexPosition neighbourPos : tile.getPosition().neighbors()) {
                     Tuple neighborTuple = cubeToOffset(neighbourPos);
-                    Tile neighbor = tiles[neighborTuple.x()][neighborTuple.y()];
-                    if(neighbor != null){
-                        tile.addAdjacentTile(neighbor);
+                    int col = neighborTuple.x();
+                    int row = neighborTuple.y();
+                    if (col >= 0 && col < columns && row >= 0 && row < rows) {
+                        Tile neighbor = tiles[col][row];
+                        if (neighbor != null) {
+                            tile.addAdjacentTile(neighbor);
+                        }
                     }
                 }
             }

@@ -67,9 +67,8 @@ CREATE TABLE pool (
 CREATE TABLE unit (
     id BIGSERIAL PRIMARY KEY,
     patch_version VARCHAR(20) NOT NULL,
+    sprite_key BIGINT NOT NULL,
     name VARCHAR(30) NOT NULL,
-    -- art ? TODO
-    -- icon ? TODO
     cost int NOT NULL,
     ability_name VARCHAR(30) NOT NULL,
     ability_description TEXT NOT NULL,
@@ -82,12 +81,9 @@ CREATE TABLE unit (
     magic_resist int NOT NULL,
     range int NOT NULL,
     rarity rarity NOT NULL,
-    -- TODO rajouter les traits
-    -- TODO rajouter les effect de compétence et les effets permanents.
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- TODO implement unit
 CREATE TABLE pool_entry (
     pool_id BIGINT NOT NULL,
     number int NOT NULL,
@@ -334,7 +330,6 @@ CREATE TABLE changing_unit_object_events_object (
     CONSTRAINT fk_changing_unit_object_events_object_event FOREIGN KEY (event_id) REFERENCES changing_unit_object_event(id) ON DELETE CASCADE,
     CONSTRAINT fk_changing_unit_object_events_object_object FOREIGN KEY (objects_id) REFERENCES object(id) ON DELETE CASCADE
 );
--- TODO faire les trigger pour garder la cohérence dans les choses genre le nombre de unit de changingshop ou encore le nombre d'object dans l'inventaire ou encore les héritage propre
 
 -- Fonction qui vérifie qu'un event a exactement un enfant direct
 CREATE OR REPLACE FUNCTION check_event_inheritance()

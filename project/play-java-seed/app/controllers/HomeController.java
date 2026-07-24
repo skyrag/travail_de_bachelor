@@ -188,7 +188,7 @@ public class HomeController extends Controller {
 
         return userLookup.thenApply(existingUser -> {
             if (existingUser != null && hashService.verify(existingUser.getPasswordHash(), data.getPassword().toCharArray())) {
-                return redirect(routes.HomeController.game()).addingToSession(request, "userId", existingUser.getStringId());
+                return ok(views.html.game.render(request)).addingToSession(request, "userId", existingUser.getStringId());
             }
             return badRequest(views.html.login.render(
                     loginForm.withError("login", "Invalid email or password."), request, messagesApi.preferred(request)));

@@ -125,7 +125,7 @@ public class TestLoginRepositories {
                 .toCompletableFuture()
                 .join();
 
-        User getted = repo.get(bob)
+        User getted = repo.getByUsername(bob.getUsername())
                 .toCompletableFuture()
                 .join();
 

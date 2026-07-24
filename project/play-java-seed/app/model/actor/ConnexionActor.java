@@ -3,6 +3,7 @@ package model.actor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import model.monitor.ActeurMonitor;
+import model.service.MatchmakingService;
 import model.utils.Tuple;
 import org.apache.pekko.actor.Cancellable;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -20,78 +21,44 @@ import java.util.List;
 import static model.actor.JsonConstantes.*;
 
 /**
- * The websocket communicate using json that has this form :
- On va traduire ici a quoi va ressembler un paylod généré par notre utilisateur lors des ses inputs ainsi que les différents check qu'il est nécessaire de réaliser pour s'assurer qu'aucune triche n'a lieu. Un Id sera présent dans le paylod pour que l'on puisse buffer les actions afin de revert en cas de triche.
-
- Paylod classique :
-
- ```json
- {
- "id" : "",
- "type": "",
- "paylod": {
- "entity1" : "",
- "entity2" : ""
- }
- }
- ```
-
- pour les types ils sont la pour décrire les différentes action possible de l'utilisateur voici les move où le paylod est l'unité affecter:
- - "BuyUnit"
- - "SellUnit"
- - "MoveUnit" : ici le paylod contiens en premier lieu(entity1) l'unité affecter et en deuxième lieux (entity2) la nouvelle positions (x, y)
- - "GiveToUnit" : ici le paylod contiens en premier lieu(entity1) l'unité affecter et en deuxième lieux (entity2) l'object affecté
-
- Ensuite il y a le reste des type :
- - "FuseObject" : ici le paylod contiens les deux objects a fusionner
- - "RerollShop" : ici le paylod est vide (sera ignoré)
- - "BuyExp" : ici le paylod est vide (sera ignoré)
-
- Maintenant en ce qui concerne les check a faire pour s'assurer de la non triche :
- - "BuyUnit" :
- - Frontend : check que l'on a assez d'argent pour le faire
- - Backend :
- - check si l'unité est présente dans notre shop actuellement
- - check si le user a assez d'argent pour acheté l'unité
- - check si le user a la place pour acheté l'unité
- - "SellUnit" :
- - check si le user a l'unité
- - "MoveUnit"
- - check si le déplacement est dans la partie du user de l'arène (frontend aussi)
- - check si le user a cette unité
- - check si le user peut ajouté l'unité a son équipe si elle n'en fait pas déjà parti (frontend aussi)
- - "GiveToUnit" :
- - check si l'on possède l'unité
- - check si l'on possède l'object dans l'inventaire
- - check si l'unité a pas déjà 3 objects (complété ?)
- - checker le type d'ôbject (remover change les règles a checker)
- - "FuseObject" :
- - check qu'on a bien les deux objects a disposition
- - check que c'est deux objects qui peuvent être fuse
- - "RerollShop" :
- - check que le user a bien l'argent pour roll (frontend aussi)
- - "BuyExp" :
- - check que le user a bien l'argent pour acheter de l'exp
- - check que le user n'est pas niveau maximum
-
- Enfin pour les messages serveur -> client il y aura aussi les type :
- - "Error" : qui traduit que le move "id" est illegal
- - "OK" : qui traduit que le move "id" est légal
+ * Actor representing a player's connection to the server.
+ * <p>
+ * This actor is responsible for:
+ * <ul>
+ *     <li>receiving messages from the WebSocket;</li>
+ *     <li>forwarding the player's actions to the {@link GameActor};</li>
+ *     <li>sending server messages to the client;</li>
+ *     <li>handling reconnection and message buffering;</li>
+ *     <li>monitoring connection health using a heartbeat mechanism.</li>
+ * </ul>
  */
 public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
+
+    /**
+     * Interface commune à tous les messages traités par le {@code ConnexionActor}.
+     */
     public interface Message{}
 
+    /**
+     * Message contenant une requête JSON reçue depuis le client.
+     */
     public static final class IncomingMessage implements Message {
         public final JsonNode text;
         public IncomingMessage(JsonNode text) { this.text = text; }
     }
 
+    /**
+     * Message indiquant que la connexion WebSocket a été fermée.
+     */
     public static final class ConnectionClosed implements Message {
         public static final ConnectionClosed INSTANCE = new ConnectionClosed();
         private ConnectionClosed() {}
     }
 
+    /**
+     * Message used when a client reconnects.
+     */
     public static final class ReconnectMessage implements Message {
         private org.apache.pekko.actor.ActorRef ws;
         public ReconnectMessage(org.apache.pekko.actor.ActorRef ws) {
@@ -99,6 +66,9 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         }
     }
 
+    /**
+     * Base class for messages sent from the server to the client.
+     */
     public static abstract class OutputMessage implements Message {
         protected final JsonNode payload;
         protected OutputMessage(JsonNode payload) {
@@ -106,49 +76,66 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         }
     }
 
+    /** Message containing fight information. */
     public static final class SendFight extends OutputMessage {
         public SendFight(JsonNode fight){
             super(fight);
         }
     }
 
+    /** Message announcing the start of a new round. */
     public static final class StartOfRound extends OutputMessage {
         public StartOfRound(JsonNode payload) {
             super(payload);
         }
     }
 
+    /** Message containing feedback on a player's action. */
     public static final class FeedbackInput extends OutputMessage{
         public FeedbackInput(JsonNode payload) {
             super(payload);
         }
     }
 
+    /** Message containing updates from the opponent. */
     public static final class ChangesFromOtherUser extends OutputMessage {
         public ChangesFromOtherUser(JsonNode payload) {super(payload);
         }
     }
 
+    /** Message announcing the end of the game. */
     public static final class EndGame extends OutputMessage{
         public EndGame(JsonNode winner){
             super(winner);
         }
     }
 
+    /** Message sent during game initialization. */
     public static final class SetupMessage extends OutputMessage{
         public SetupMessage(JsonNode payload){super(payload);}
     }
 
+
+    /**
+     * Internal message used to verify that the connection is still active.
+     */
     public static final class Heartbeat implements Message {
         public static final Heartbeat INSTANCE = new Heartbeat();
         private Heartbeat() {}
     }
 
+    /**
+     * Message requesting the actor to stop cleanly after the reconnection timeout expires.
+     */
     public static final class GracefulStop implements Message {
         public static final GracefulStop INSTANCE = new GracefulStop();
         private GracefulStop() {}
     }
 
+
+    /**
+     * Message indicating which {@link GameActor} this connection is associated with.
+     */
     public static final class StartGame implements Message{
         public final ActorRef<GameActor.Message> game;
         public StartGame(ActorRef<GameActor.Message> game){
@@ -158,6 +145,7 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
     private org.apache.pekko.actor.ActorRef ws;
     private ActorRef<GameActor.Message> game;
+    private final MatchmakingService matchmakingService;
     public long userId;
 
     private List<JsonNode> reconnectionBuffer = new ArrayList<>();
@@ -172,18 +160,37 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
     private long endOfRoundTime = 0;
 
-    public static Behavior<Message> create(org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor) {
-        return Behaviors.setup(ctx -> new ConnexionActor(ctx, ws, userId, monitor));
+
+    /**
+     * Creates a new {@code ConnexionActor}.
+     *
+     * @param ws WebSocket associated with the player
+     * @param userId player identifier
+     * @param monitor actor monitor
+     * @param matchmakingService matchmaking service
+     * @return the actor's initial behavior
+     */
+    public static Behavior<Message> create(org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor, MatchmakingService matchmakingService) {
+        return Behaviors.setup(ctx -> new ConnexionActor(ctx, ws, userId, monitor, matchmakingService));
     }
 
-    private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor) {
+    /**
+     * Initializes a connection actor.
+     */
+    private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor, MatchmakingService matchmakingService) {
         super(ctx);
         this.ws = ws;
         this.userId = userId;
         this.monitor = monitor;
+        this.matchmakingService = matchmakingService;
         startHeartbeat(ctx);
     }
 
+    /**
+     * Defines the messages handled by the actor.
+     *
+     * @return the receive behavior for messages
+     */
     @Override
     public Receive<Message> createReceive() {
         return newReceiveBuilder()
@@ -202,19 +209,33 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
                 .build();
     }
 
+    /**
+     * Handles a message received from the client and routes it to the
+     * appropriate component (matchmaking, game, reconnection...).
+     *
+     * @param msg received message
+     * @return the next behavior
+     */
     private Behavior<Message> onIncoming(IncomingMessage msg) {
-        // faire un traitement des message une fois qu'on a la game
+        // process messages once the game is available
         if (msg.text.get(TIME).longValue() >= endOfRoundTime){
             endOfRoundBuffer.add(msg);
         }
 
         switch (msg.text.get(TYPE).asText()){
+            case HISTORIQUE -> {
+                //TODO
+            }
+            case JOUER -> {
+                long messageId = msg.text.get(ID).longValue();
+                matchmakingService.addPlayer(String.valueOf(userId));
+            }
             case BUY -> game.tell(new GameActor.BuyingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
             case SELL -> game.tell(new GameActor.SellingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
             case MOVE -> {
                 int x = msg.text.get(PAYLOAD).get(POSITION).get("x").intValue();
                 int y = msg.text.get(PAYLOAD).get(POSITION).get("y").intValue();
-                long unitId = msg.text.get(PAYLOAD).get(POSITION).longValue();
+                long unitId = msg.text.get(PAYLOAD).get(UNIT).longValue();
                 long messageId = msg.text.get(ID).longValue();
                 game.tell(new GameActor.MovingUnitMessage(userId, messageId, unitId, new Tuple(x,y), getContext().getSelf() ));
             }
@@ -244,6 +265,13 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles the closing of the WebSocket connection.
+     * Starts a grace period allowing for reconnection.
+     *
+     * @param msg close notification
+     * @return the next behavior
+     */
     private Behavior<Message> onConnectionClosed(ConnectionClosed msg) {
         this.ws = null;
         heartbeat.cancel();
@@ -257,12 +285,24 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Associates this actor with the {@link GameActor} managing the game.
+     *
+     * @param msg message containing the game actor
+     * @return the next behavior
+     */
     private Behavior<Message> onStartGame(StartGame msg){
         game = msg.game;
         game.tell(new GameActor.ConnexionSetupMessage(this.userId, getContext().getSelf()));
         return Behaviors.same();
     }
 
+    /**
+     * Sends a message to the client and stores it in the reconnection buffer.
+     *
+     * @param msg message to send
+     * @return the next behavior
+     */
     private Behavior<Message> onOutputMessage(OutputMessage msg) {
         reconnectionBuffer.add(msg.payload);
         if (ws != null) {
@@ -271,6 +311,14 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+
+    /**
+     * Handles the start of a new round and replays any actions
+     * buffered during the transition.
+     *
+     * @param msg start-of-round message
+     * @return the next behavior
+     */
     private Behavior<Message> onStartingRound(StartOfRound msg) {
         reconnectionBuffer.add(msg.payload);
         if (ws != null) {
@@ -286,6 +334,15 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+
+    /**
+     * Periodically checks that the client still responds.
+     * Disconnects the player automatically after several
+     * heartbeats without response.
+     *
+     * @param msg heartbeat message
+     * @return the next behavior
+     */
     private Behavior<Message> onHeartbeat(Heartbeat msg) {
         if (ws == null) return Behaviors.same();
 
@@ -299,6 +356,12 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Restores the WebSocket connection after a reconnection.
+     *
+     * @param msg reconnection information
+     * @return the next behavior
+     */
     private Behavior<Message> onReconnectMessage(ReconnectMessage msg) {
         this.ws = msg.ws;
         missedHeartbeats = 0;
@@ -312,12 +375,23 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Stops the actor gracefully following a reconnection timeout.
+     *
+     * @param msg graceful stop request
+     * @return the next behavior
+     */
     private Behavior<Message> onGracefulStop(GracefulStop msg) {
         heartbeat.cancel();
         monitor.removeByActor(getContext().getSelf());
         return Behaviors.stopped();
     }
 
+    /**
+     * Starts the periodic heartbeat task.
+     *
+     * @param ctx actor context
+     */
     private void startHeartbeat(ActorContext<Message> ctx) {
         heartbeat = ctx.getSystem().scheduler().scheduleWithFixedDelay(
                 Duration.ofSeconds(30),

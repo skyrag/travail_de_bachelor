@@ -5,8 +5,9 @@ import model.service.fightingService.ComponentUnit;
 
 public class UnitDTOMapper {
 
-    public static UnitDTO unitToDTO (Unit unit){
+    public static UnitDTO unitToDTO (Unit unit, String sprite){
         return new UnitDTO(unit.getId(),
+                sprite,
                 unit.getName(),
                 unit.getCost(),
                 unit.getRarity().toString(),
@@ -26,6 +27,8 @@ public class UnitDTOMapper {
 
     public static ComponentUnitDTO componentToDTO (ComponentUnit unit){
         return new ComponentUnitDTO(unit.getId(),
+                unit.getTeam().getId(),
+                unit.getName(),
                 unit.getMaxHealth(),
                 unit.getMaxMana(),
                 unit.getCurrentMana(),
@@ -35,6 +38,8 @@ public class UnitDTOMapper {
                 unit.getAttackSpeed(),
                 unit.getArmor(),
                 unit.getMagicResist(),
-                unit.getRange());
+                unit.getRange(),
+                unit.getCurrentPosition().x(),
+                unit.getCurrentPosition().y());
     }
 }

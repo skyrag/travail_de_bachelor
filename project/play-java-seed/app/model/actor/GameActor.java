@@ -2,7 +2,7 @@ package model.actor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import model.DTO.TeamDTO;
+import model.DTO.*;
 import model.DTO.fighting.FightingResultDTO;
 import model.entities.Fight;
 import model.entities.Round;
@@ -13,14 +13,12 @@ import model.entities.game.PoolEntry;
 import model.entities.unit.InstanceUnit;
 import model.entities.unit.Item;
 import model.entities.unit.Unit;
-import model.DTO.UnitDTO;
 import model.repositories.GameRepository;
 import model.service.GameLevelService;
 import model.service.SeedMakerService;
-import model.DTO.ItemDTOMapper;
-import model.DTO.UnitDTOMapper;
 import model.service.SimulationService;
 import model.service.fightingService.FightingService;
+import model.utils.SpriteMap;
 import model.utils.Tuple;
 import org.apache.pekko.actor.Cancellable;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -46,11 +44,31 @@ import java.util.concurrent.CompletionStage;
 
 import static model.actor.JsonConstantes.*;
 import static model.utils.Constante.*;
+import static model.utils.SpriteMap.getSingleton;
 
+/**
+ * Actor responsible for running a game.
+ * <p>
+ * It centralizes all game business logic: player action handling, round
+ * progression, combat execution, synchronization with connection actors,
+ * and data persistence.
+ * <p>
+ * All state changes are processed through this actor to ensure sequential
+ * execution.
+ */
 public class GameActor extends AbstractBehavior<GameActor.Message> {
 
+    /**
+     * Common interface for all messages handled by {@code GameActor}.
+     */
     public interface Message {}
 
+    /**
+     * Base class for messages representing a player action.
+     * <p>
+     * Each message contains the player ID, the client message ID, and the actor
+     * to which the validation result should be sent.
+     */
     public abstract static class ValidationMessage implements Message {
         protected long userId;
         protected long messageId;
@@ -62,6 +80,10 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+
+    /**
+     * Request to buy a unit.
+     */
     public static final class BuyingUnitMessage extends ValidationMessage {
         private long unitId;
         public BuyingUnitMessage(long userId, long unitId, long messageId, ActorRef<ConnexionActor.Message> respondTo) {
@@ -70,6 +92,9 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Request to sell a unit.
+     */
     public static final class SellingUnitMessage extends ValidationMessage {
         private long unitId;
         public SellingUnitMessage(long userId, long unitId, long messageId, ActorRef<ConnexionActor.Message> respondTo){
@@ -78,6 +103,9 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Request to move a unit.
+     */
     public static final class MovingUnitMessage extends ValidationMessage {
         private long unitId;
         private Tuple newPosition;
@@ -88,6 +116,9 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Request to assign an item to a unit.
+     */
     public static final class GivingUnitObjectMessage extends ValidationMessage {
         private long unitId;
         private long itemId;
@@ -98,27 +129,42 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Request to reroll the shop.
+     */
     public static final class RerollShopMessage extends ValidationMessage {
         public RerollShopMessage(long userId, long messageId, ActorRef<ConnexionActor.Message> respondTo) {
             super(userId, messageId, respondTo);
         }
     }
 
+    /**
+     * Request to buy experience.
+     */
     public static final class BuyingExpMessage extends ValidationMessage {
         public BuyingExpMessage(long userId, long messageId, ActorRef<ConnexionActor.Message> respondTo) {
             super(userId, messageId, respondTo);
         }
     }
 
+    /**
+     * Message that triggers the start of a new round.
+     */
     public static final class StartOfRoundMessage implements Message{
         public static final StartOfRoundMessage INSTANCE = new StartOfRoundMessage();
         public StartOfRoundMessage() {}
     }
 
+    /**
+     * Message indicating the end of the preparation phase.
+     */
     public static final class EndOfRoundMessage implements Message {
         public EndOfRoundMessage() {}
     }
 
+    /**
+     * Message containing the result of a simulated fight.
+     */
     public static final class EndOfFightMessage implements Message {
         private FightingResultDTO results;
         public EndOfFightMessage(FightingResultDTO results) {
@@ -126,11 +172,19 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Message that initiates game setup.
+     */
     public static final class SetupMessage implements Message {
         public static final SetupMessage INSTANCE = new SetupMessage();
         public SetupMessage() {}
     }
 
+
+    /**
+     * Message sent by a {@link ConnexionActor} to request the information
+     * needed to initialize the client.
+     */
     public static final class ConnexionSetupMessage implements Message {
         private long userId;
         private ActorRef<ConnexionActor.Message> respondTo;
@@ -140,16 +194,13 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+
+    /**
+     * Message requesting the game to end permanently.
+     */
     public static final class EndOfGame implements Message {
         public static final EndOfGame INSTANCE = new EndOfGame();
         public EndOfGame() {}
-    }
-
-    public static final class FailedCombatMessage implements Message {
-        public final String throwable;
-        public FailedCombatMessage(Throwable throwable) {
-            this.throwable = throwable.getMessage();
-        }
     }
 
     private Cancellable deathTimer;
@@ -170,15 +221,34 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private boolean gameOver;
     private long UUID = 500000L;
     private final Random rand;
+    private final SpriteMap spriteMap;
 
     private final int ROUNDTIMEMS = 90000;
     private static final String ROUND_TIMER_KEY = "round-timer";
 
 
+    /**
+     * Creates the initial behavior of a {@code GameActor}.
+     *
+     * @param users players participating in the game
+     * @param game game being managed
+     * @param repo repository used for persistence
+     * @param seedGenerator random seed generator
+     * @param gameLevelService service managing player levels
+     * @param simulationService combat simulation service
+     * @return the actor's initial behavior
+     */
     public static Behavior<Message> create(List<Pair<ActorRef<ConnexionActor.Message>, Long>> users, Game game, GameRepository repo, SeedMakerService seedGenerator, GameLevelService gameLevelService, SimulationService simulationService) {
         return Behaviors.withTimers(timers -> Behaviors.setup(ctx -> new GameActor(ctx, timers, users, game, repo, seedGenerator, gameLevelService, simulationService)));
     }
 
+    /**
+     * Initializes a new actor representing a game.
+     * <p>
+     * Players are associated with the game, setup is scheduled, and each
+     * {@link ConnexionActor} is informed of the game actor to which it should
+     * forward player actions.
+     */
     private GameActor(ActorContext<Message> context, TimerScheduler<Message> timers, List<Pair<ActorRef<ConnexionActor.Message>, Long>> users, Game game, GameRepository repo, SeedMakerService seedGenerator, GameLevelService gameLevelService, SimulationService simulationService) {
         super(context);
         this.timers = timers;
@@ -193,6 +263,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         this.nbFight = 0;
         this.gameOver = false;
         this.rand = new Random(game.getSeed());
+        this.spriteMap = getSingleton();
         getContext().getSelf().tell(new SetupMessage());
 
         for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users){
@@ -200,6 +271,11 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Defines the messages handled by {@code GameActor}.
+     *
+     * @return the receive behavior for messages
+     */
     @Override
     public Receive<Message> createReceive() {
         return newReceiveBuilder()
@@ -218,6 +294,13 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                 .build();
     }
 
+    /**
+     * Initializes the game by assigning each team its random generator
+     * and a starting unit.
+     *
+     * @param msg initialization message
+     * @return the next behavior
+     */
     private Behavior<Message> onSetupMessage(SetupMessage msg){
         long baseSeed = game.getSeed();
         for (Team team : teams){
@@ -231,6 +314,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles a unit purchase request.
+     * <p>
+     * The request is validated, the response is sent to the player,
+     * other players are notified, and the game state is persisted.
+     *
+     * @param msg purchase request
+     * @return the next behavior
+     */
     private Behavior<Message> onBuyingUnitMessage(BuyingUnitMessage msg){
         if (gameOver) return Behaviors.same();
         Team team = game.getTeam(msg.userId);
@@ -256,6 +348,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles a unit sale request.
+     * <p>
+     * If the action is valid, the sale is completed, other players are
+     * notified, and the changes are persisted.
+     *
+     * @param msg sale request
+     * @return the next behavior
+     */
     private Behavior<Message> onSellUnitMessage(SellingUnitMessage msg) {
         if (gameOver) return Behaviors.same();
 
@@ -276,6 +377,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles a unit move request.
+     * <p>
+     * If the action is valid, the move is performed, other players are
+     * notified, and the changes are persisted.
+     *
+     * @param msg move request
+     * @return the next behavior
+     */
     private Behavior<Message> onMovingUnitMessage(MovingUnitMessage msg){
         if (gameOver) return Behaviors.same();
 
@@ -302,6 +412,12 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles a request to assign an item to a unit.
+     *
+     * @param msg item assignment request
+     * @return the next behavior
+     */
     private Behavior<Message> onGivingUnitObjectMessage(GivingUnitObjectMessage msg) {
         if (gameOver) return Behaviors.same();
 
@@ -322,6 +438,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles a shop reroll request.
+     * <p>
+     * New units are generated according to the probabilities based on
+     * the player's level and sent to the client.
+     *
+     * @param msg reroll request
+     * @return the next behavior
+     */
     private Behavior<Message> onRerollShopMessage(RerollShopMessage msg){
         if (gameOver) return Behaviors.same();
 
@@ -332,9 +457,13 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
 
         List<Unit> shop = new ArrayList<>();
+        List<InstanceUnit> shopInstance = new ArrayList<>();
         for (int i = 0; i < MAXNBSHOPUNIT; i++){
             Unit unit = game.randomUnitFromPool(randomRarityFromPools(team),team.getSeed());
             shop.add(unit);
+            InstanceUnit instanceUnit = new InstanceUnit(1, new Tuple(100,100), unit, team);
+            shopInstance.add(instanceUnit);
+            team.addUnit(instanceUnit);
         }
 
         if (!team.canReroll(shop)){
@@ -342,21 +471,22 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
             return Behaviors.same();
         }
 
-        JsonNode payload = Json.newObject().put("unit1", shop.get(0).getId())
-                .put("unit2", shop.get(1).getId())
-                .put("unit3", shop.get(2).getId())
-                .put("unit4", shop.get(3).getId())
-                .put("unit5", shop.get(4).getId());
+        repo.merge(team).thenApply(team1 -> {
+            List<TeamsUnitDTO> units = shopInstance.stream().map(unit -> new TeamsUnitDTO(unit.getId(), unit.getUnit().getId())).toList();
 
-        msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, OK).set(PAYLOAD, payload)));
+            msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, OK).set(PAYLOAD, Json.toJson(units))));
 
-        repo.merge(team).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge team: {} from message {}", err.getMessage(), msg);
-            return null;
+            return team1;
         });
         return Behaviors.same();
     }
 
+    /**
+     * Handles an experience purchase request.
+     *
+     * @param msg exp purchase request
+     * @return the next behavior
+     */
     private Behavior<Message> onBuyingExpMessage(BuyingExpMessage msg) {
         if (gameOver) return Behaviors.same();
 
@@ -375,6 +505,16 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Starts a new round.
+     * <p>
+     * All teams are prepared for the next round, a preparation window
+     * is opened on the client, and a timer is started to automatically
+     * trigger the combat phase.
+     *
+     * @param msg start-of-round message
+     * @return the next behavior
+     */
     private Behavior<Message> onStartOfRoundMessage(StartOfRoundMessage msg) {
 
         for (Team team: teams){
@@ -393,6 +533,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Triggers end-of-round fights.
+     * <p>
+     * Remaining teams are paired and an asynchronous simulation is started
+     * for each matchup.
+     *
+     * @param msg end-of-round message
+     * @return the next behavior
+     */
     private Behavior<Message> onEndOfRoundMessage(EndOfRoundMessage msg) {
         if (gameOver) return Behaviors.same();
 
@@ -438,6 +587,16 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
+    /**
+     * Handles the result of a fight.
+     * <p>
+     * Team health is updated, rankings are recalculated, clients are
+     * informed of the results, and a new round is started when all fights
+     * are finished.
+     *
+     * @param msg fight result
+     * @return the next behavior
+     */
     private Behavior<Message> onEndOfFightMessage(EndOfFightMessage msg) {
         if (gameOver) return Behaviors.same();
 
@@ -507,10 +666,26 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         });        return Behaviors.same();
     }
 
+    /**
+     * Permanently stops the actor representing the game.
+     *
+     * @param msg game end request
+     * @return a stopped behavior
+     */
     private Behavior<Message> onEndOfGame (EndOfGame msg){
         return Behaviors.stopped();
     }
 
+
+    /**
+     * Sends a player all the information necessary to initialize their client.
+     * <p>
+     * Units, items, teams, and other game data are converted to DTOs and
+     * forwarded to the {@link ConnexionActor}.
+     *
+     * @param msg connection setup request
+     * @return the next behavior
+     */
     private Behavior<Message> onConnexionSetupMessage (ConnexionSetupMessage msg) {
         Team team = game.getTeam(msg.userId);
         if (team == null) {
@@ -520,27 +695,32 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         List<UnitDTO> unitDTOS = new ArrayList<>();
         for (Pool pool : game.getPools()){
             for (PoolEntry entry: pool.getEntries()){
-                unitDTOS.add(UnitDTOMapper.unitToDTO(entry.getUnit()));
+                unitDTOS.add(UnitDTOMapper.unitToDTO(entry.getUnit(), spriteMap.getSprite(entry.getUnit().getSpriteKey())));
             }
         }
 
-        List<Long> units = team.getUnits().stream().map(InstanceUnit::getId).toList();
-        List<Long> items = team.getItems().stream().map(Item::getId).toList();
-        List<Long> shop = team.getShop().stream().map(Unit::getId).toList();
-        TeamDTO teamDTO = new TeamDTO(team.getStreak(),
-                team.getHealth(),
-                team.getLvl(),
-                team.getExp(),
-                team.getGold(),
-                shop,
-                items,
-                units);
+        List<TeamDTO> teamDTOS = new ArrayList<>();
+        for (Team currentTeam: teams){
+            List<TeamsUnitDTO> units = currentTeam.getUnits().stream().map(unit -> new TeamsUnitDTO(unit.getId(), unit.getUnit().getId())).toList();
+            List<Long> items = currentTeam.getItems().stream().map(Item::getId).toList();
+            List<Long> shop = currentTeam.getShop().stream().map(Unit::getId).toList();
+
+            teamDTOS.add(new TeamDTO(currentTeam.getId(),
+                    currentTeam.getStreak(),
+                    currentTeam.getHealth(),
+                    currentTeam.getLvl(),
+                    currentTeam.getExp(),
+                    currentTeam.getGold(),
+                    shop,
+                    items,
+                    units));
+        }
 
         repo.getAllItems().thenApply(listItems -> {
 
             ObjectNode response = Json.newObject().put(ID , getUUID()).put(TYPE, SETUP).set(UNITS, Json.toJson(unitDTOS));
             response.set(ITEMS, Json.toJson(listItems.stream().map(ItemDTOMapper::itemToDTO)));
-            response.set(TEAM, Json.toJson(teamDTO));
+            response.set(TEAM, Json.toJson(teamDTOS));
 
             msg.respondTo.tell(new ConnexionActor.SetupMessage(response));
             return listItems;
@@ -550,11 +730,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         return Behaviors.same();
     }
 
-    private Behavior<Message> onFailedCombatMessage (FailedCombatMessage msg) {
-        getContext().getLog().error("Failed to simulate combat: {}",msg.throwable);
-        return Behaviors.same();
-    }
-
+    /**
+     * Sends a message to all game players except the one with the provided ID.
+     * <p>
+     * This method is used to propagate a player's actions to the other clients.
+     *
+     * @param payload message to forward
+     * @param userId ID of the player to exclude, or {@code null}
+     *               to send the message to all players
+     */
     private void tellOtherUsers(JsonNode payload, Long userId){
         for (Pair<ActorRef<ConnexionActor.Message>,Long> actor : users){
             if (!Objects.equals(actor.second(), userId)){
@@ -563,6 +747,13 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Selects a unit pool according to the probabilities associated with the team's level.
+     *
+     * @param team the team in question
+     * @return the pool matching the selected rarity
+     * @throws IllegalStateException if no pool matches the defined probabilities
+     */
     private Pool randomRarityFromPools(Team team) {
         int r = team.getSeed().nextInt(100);
         int cumulative = 0;
@@ -575,6 +766,12 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         throw new IllegalStateException("problème de cohérence avec les proba des rareté de pool");
     }
 
+    /**
+     * Sends an end-of-game message to a given player.
+     *
+     * @param payload content of the message sent to the client
+     * @param userId ID of the player concerned
+     */
     private void gameOver(JsonNode payload, Long userId) {
         for (Pair<ActorRef<ConnexionActor.Message>,Long> actor : users){
             if (Objects.equals(actor.second(), userId)){
@@ -583,10 +780,25 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
     }
 
+    /**
+     * Generates a unique identifier for messages produced by the server.
+     *
+     * @return a new unique identifier
+     */
     private long getUUID (){
         return UUID++;
     }
 
+    /**
+     * Checks whether a team has been eliminated.
+     * <p>
+     * When a team has no health remaining, it is removed from the game and
+     * a defeat message is sent. If only one team remains alive, the game is
+     * declared over, all players are notified, and the {@code GameActor} is
+     * scheduled to stop.
+     *
+     * @param team the team whose health is being checked
+     */
     private void checkHealth(Team team){
         if (team.getHealth() <= 0) {
 

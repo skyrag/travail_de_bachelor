@@ -13,7 +13,7 @@ La section s'intéresse ensuite au modèle de données, qui décrit la manière 
 Enfin, les principaux mécanismes de l'application sont détaillés, notamment l'architecture client-serveur et le fonctionnement du système de combat.
 
 #v(2em)
-== Conception Orienté Objet
+== Conception Orientée Objet
 #v(2em)
 
 === Controller
@@ -35,7 +35,7 @@ Ce contrôleur a pour objectif de gérer toute la partie liée à l'authentifica
 L'*ActorMonitor* est responsable de la création et de la gestion des acteurs de l'application. Son fonctionnement sera présenté plus en détail dans une section dédiée.
 #v(1em)
 
-Cette séparation permet d'isoler la gestion du cycle de vie des connexions WebSocket de la logique de matchmaking, qui pourrait évoluer indépendamment — par exemple si l'on souhaite plus tard changer l'algorithme d'appariement des joueurs sans toucher à la gestion des connexions.
+Cette séparation permet d'isoler la gestion du cycle de vie des connexions WebSocket de la logique de matchmaking, qui pourrait évoluer indépendamment: par exemple si l'on souhaite plus tard changer l'algorithme d'appariement des joueurs sans toucher à la gestion des connexions.
 #v(1em)
 
 Le *GameLevelService* est chargé de stocker les données relatives aux niveaux des joueurs. Comme expliqué précédemment, le niveau d'un joueur détermine le nombre maximal d'unités que son équipe peut posséder. Il influence également les probabilités d'obtenir des unités plus ou moins rares dans la boutique. Ce service centralise donc ces informations ainsi que l'expérience nécessaire pour atteindre le niveau suivant.
@@ -65,7 +65,7 @@ La compétence est fragmentée afin que l'on puisse avoir plusieurs type d'effec
 #v(2em)
 === Effet
 #v(2em)
-Les deux sous-classes d'effet actuels sont les *scalingEffect* et les *statChangingEffect*. Les *ScalingEffect* sont des effets possédant un puissance de base mais qui gagne en intensité en fonction d'une certaine statistique du lanceur de l'effect. La ou les *StatChangingEffect* n'ont pour but que de changer les statistiques de la cible. C'est notamment à l'aide de ces effects que les objets améliorent les unités.
+Les deux sous-classes d'effet actuelles sont les *scalingEffect* et les *statChangingEffect*. Les *ScalingEffect* sont des effets possédant un puissance de base mais qui gagne en intensité en fonction d'une certaine statistique du lanceur de l'effect. La ou les *StatChangingEffect* n'ont pour but que de changer les statistiques de la cible. C'est notamment à l'aide de ces effects que les objets améliorent les unités.
 #figure(
 image("../images/effect.png", width: 100%),
 caption: [
@@ -99,7 +99,12 @@ UML de la partie
 ]
 ) <game>
 #v(2em)
-Les *PoolEntry* sont là pour simplifier la gestion des unités. En effet sans ca on aurait une liste d'unité que l'on devrait en permanence changer. Sachant que l'on veut toujours qu'il y ait au moins un exemplaire d'une unité dans le stock on devrait alors parcourir la liste entière juste pour obtenir un compte. Avec les entrées ce problème n'existe plus.
+Les *PoolEntry* permettent de simplifier la gestion des unités. Sans eux, il faudrait manipuler directement une liste d'unités et la mettre à jour en permanence.
+
+Comme l'objectif est de conserver au moins un exemplaire de chaque unité en stock, il serait nécessaire de parcourir toute la liste à chaque fois que l'on souhaite connaître le nombre d'unités disponibles. Cette approche est peu pratique et potentiellement coûteuse.
+
+Avec les *PoolEntry*, ce problème disparaît : chaque entrée centralise les informations nécessaires, notamment la quantité disponible, ce qui permet d'obtenir rapidement un décompte sans avoir à parcourir l'ensemble des unités.
+
 
 #v(2em)
 === Team
@@ -113,19 +118,21 @@ UML de l'équipe
 ]
 ) <team>
 #v(2em)
+L'équipe stocke aussi un snapshot du dernier état du magasin connu en stockant les unités présentent dedans.
+
 L'utilisation d'*InstanceUnit* nous permet d'avoir des unités qui peuvent subir des modifications sans jamais devoir changer l'unité de base, ceci permet aussi d'éviter la duplication des statistiques lorsque l'on possède plusieurs fois la même unité.
 
 
 #v(2em)
 == Modèle des données
 #v(2em)
-Afin de pouvoir gérer et faire évoluer nos données sans complexifier excessivement le code applicatif, il nous a semblé évident de devoir stocker l'ensemble des données de notre application dans une base de données structurée. Nous y avons donc persisté nos unités, ainsi que leurs compétences et les objets.
-Nous y persistons également les parties, les équipes qui y participent, ainsi que les utilisateurs.
+Afin de pouvoir gérer et faire évoluer nos données sans complexifier excessivement le code applicatif, il a semblé évident de devoir stocker l'ensemble des données de notre application dans une base de données structurée. On y a donc persisté nos unités, ainsi que leurs compétences et les objets.
+On y persiste également les parties, les équipes qui y participent, ainsi que les utilisateurs.
 
 #v(2em)
 === Choix de persistance des événements : relationnel normalisé plutôt qu'événementiel en JSON
 #v(2em)
-L'un de nos souhaits était de permettre de rejouer les parties une fois terminé, afin de pouvoir les étudier et s'améliorer, comme c'est l'usage dans la plupart des jeux compétitifs. Une solution basée sur des événements nous a semblé naturelle, chaque partie pouvant se traduire simplement comme une suite d'actions amenant un utilisateur d'un état A à un état B.
+L'un de nos souhaits était de permettre de rejouer les parties une fois terminé, afin de pouvoir les étudier et s'améliorer, comme c'est l'usage dans la plupart des jeux compétitifs. Une solution basée sur des événements semble naturelle, chaque partie pouvant se traduire simplement comme une suite d'actions amenant un utilisateur d'un état A à un état B.
 Pour cela, deux approches étaient envisageables :
 #figure(
 image("../images/replayRelationnel.png", width: 75%),
@@ -151,7 +158,7 @@ Cette deuxième option présentait un avantage réel : une base de données plus
 Le problème de cette approche est qu'elle nous aurait fait perdre l'intégrité référentielle et la validation structurelle de nos événements, normalement garanties par le moteur de la base de données lorsqu'un schéma est explicitement défini pour chaque table. Il aurait alors fallu réaliser nous-mêmes, côté backend, la validation et le parsing de chaque événement afin de nous assurer de leur cohérence, ca aurait été un travail supplémentaire non négligeable, pour un résultat offrant moins de garanties que ce qu'un schéma relationnel strict assure nativement.
 #v(1em)
 
-Nous avons donc préféré normaliser complètement notre modèle de données plutôt que d'utiliser un champ JSON générique, afin de conserver une validation stricte du schéma de chaque type d'événement directement au niveau de la base de données, plutôt que de devoir réimplémenter cette validation côté backend.
+On a donc préféré normaliser complètement notre modèle de données plutôt que d'utiliser un champ JSON générique, afin de conserver une validation stricte du schéma de chaque type d'événement directement au niveau de la base de données, plutôt que de devoir réimplémenter cette validation côté backend.
 #v(1em)
 
 Concrètement, cela signifie que chaque type d'action possible du joueur correspond à sa propre table, héritant d'une table event commune (portant les champs partagés comme l'horodatage et le round concerné), sur le même principe d'héritage relationnel déjà présenté pour nos entités de jeu (Effect, AbilityFragment, etc.). Ne stocker que ce qui n'est pas dérivable autrement permet de garder ces tables légères : par exemple, lors de l'achat d'une unité, seul l'identifiant de l'unité achetée est conservé, son coût restant récupérable depuis la table unit au moment de rejouer l'événement.
@@ -159,7 +166,7 @@ Concrètement, cela signifie que chaque type d'action possible du joueur corresp
 #v(2em)
 === Rappel des actions possibles du joueur
 #v(2em)
-Pour mieux comprendre la nature des événements que nous devons persister, il est utile de rappeler le déroulement d'une partie et les actions qu'un joueur peut y effectuer. Une partie se compose d'une succession de rounds, chacun alternant une phase d'achat et une phase de combat. Durant la phase d'achat, le joueur peut notamment acheter, vendre ou déplacer une unité, lui attribuer un objet, fusionner deux objets, relancer son shop, ou encore acheter de l'expérience.
+Pour mieux comprendre la nature des événements que nous devons persister, il est utile de rappeler le déroulement d'une partie et les actions qu'un joueur peut y effectuer. Une partie se compose d'une succession de rounds, chacun alternant une phase d'achat et une phase de combat. Durant la phase d'achat, le joueur peut notamment acheter, vendre ou déplacer une unité, lui attribuer un objet, relancer son shop, ou encore acheter de l'expérience.
 Le diagramme de séquence suivant illustre ces différentes actions et leur enchaînement au cours d'un round :
 #figure(
 image("../images/DéroulementDeLaPartie.png", width: 100%),
@@ -174,7 +181,7 @@ C'est cette même liste d'actions qui détermine directement les types d'événe
 === Modélisation des événements
 #v(2em)
 
-Nous distinguons trois catégories d'événements, toutes héritant d'une classe commune Event.
+On distingue trois catégories d'événements, toutes héritant d'une classe commune Event.
 #v(1em)
 
 ==== Événements liés aux données de base du joueur
@@ -238,7 +245,7 @@ Lors de la connexion, le backend recherche l'utilisateur correspondant à l'iden
 #v(2em)
 === Acteurs et moniteur
 #v(2em)
-Nous devons communiquer de manière bidirectionnelle avec nos joueurs pendant le déroulement des parties. C'est pourquoi nous avons choisi d'utiliser des WebSockets, implémentées à l'aide de Pekko au sein du framework Play, ce qui nous amène naturellement à l'utilisation du pattern acteur.
+On doit communiquer de manière bidirectionnelle avec nos joueurs pendant le déroulement des parties. C'est pourquoi on a choisi d'utiliser des WebSockets, implémentées à l'aide de Pekko au sein du framework Play, ce qui amène naturellement à l'utilisation du pattern acteur.
 #figure(
 image("../images/acteur.png", width: 100%),
 caption: [
@@ -246,15 +253,15 @@ UML des acteurs
 ]
 ) <acteur>
 #v(2em)
-Nous disposons ainsi d'un ConnexionActor, chargé de gérer la connexion d'un joueur, de mettre en tampon (buffer) les messages échangés, et qui s'arrête automatiquement cinq minutes après une interruption de connexion. Nous disposons également d'un GameActor, responsable de la gestion et du déroulement d'une partie. L'utilisation d'acteurs nous permet de traiter séquentiellement les entrées des différents joueurs par le biais de messages, évitant ainsi les race conditions qui pourraient survenir dans d'autres circonstances.
+Nous disposons ainsi d'un ConnexionActor, chargé de gérer la connexion d'un joueur, de mettre en tampon (buffer) les messages échangés, et qui s'arrête automatiquement cinq minutes après une interruption de connexion. Nous disposons également d'un GameActor, responsable de la gestion et du déroulement d'une partie. L'utilisation d'acteurs permet de traiter séquentiellement les entrées des différents joueurs par le biais de messages, évitant ainsi les race conditions qui pourraient survenir dans d'autres circonstances.
 #v(1em)
 
-Afin d'éviter tout problème de concurrence lors de la création ou de la récupération de ces acteurs, nous avons également mis en place un moniteur, contenant une liste des ConnexionActor ainsi qu'une liste des GameActor. Ce moniteur est un singleton dont chacune des méthodes touchant à ces listes est synchronisée, ce qui garantit l'absence de toute race condition. Cette solution évite qu'il faille verrouiller l'accès à ces listes à chaque endroit du code où elles seraient utilisées. par exemple si plusieurs instances du HomeController tentaient d'accéder simultanément à la même liste de connexions ; à la place, tout accès passe systématiquement par ce moniteur central.
+Afin d'éviter tout problème de concurrence lors de la création ou de la récupération de ces acteurs, on a également mis en place un moniteur, contenant une liste des ConnexionActor ainsi qu'une liste des GameActor. Ce moniteur est un singleton dont chacune des méthodes touchant à ces listes est synchronisée, ce qui garantit l'absence de toute race condition. Cette solution évite qu'il faille verrouiller l'accès à ces listes à chaque endroit du code où elles seraient utilisées. par exemple si plusieurs instances du HomeController tentaient d'accéder simultanément à la même liste de connexions ; à la place, tout accès passe systématiquement par ce moniteur central.
 
 #v(2em)
 === Tolérance aux pannes
 #v(2em)
-Nous avons conçu l'application dans le but d'être aussi résistante que possible aux pannes. Pour cela, comme vu précédemment, l'état actuel de la partie est enregistré à chaque fois qu'un événement est persisté. Ainsi, en cas de panne du serveur, l'état de la partie aura déjà été sauvegardé, et il sera possible de reprendre la partie là où elle s'était arrêtée lors du redémarrage.
+On a conçu l'application dans le but d'être aussi résistante que possible aux pannes. Pour cela, comme vu précédemment, l'état actuel de la partie est enregistré à chaque fois qu'un événement est persisté. Ainsi, en cas de panne du serveur, l'état de la partie aura déjà été sauvegardé, et il sera possible de reprendre la partie là où elle s'était arrêtée lors du redémarrage.
 #figure(
 image("../images/Panne.png", width: 100%),
 caption: [
@@ -262,7 +269,7 @@ Schéma de séquence des pannes
 ]
 ) <pannes>
 #v(2em)
-Nous avons également mis en place des mécanismes de reconnexion. Durant les cinq premières minutes suivant la déconnexion d'un utilisateur, son ConnexionActor reste actif et met en tampon les différents événements de la partie, afin de pouvoir les lui retransmettre lors de sa reconnexion. Un tampon existe également côté client, afin que tout événement n'ayant pas été confirmé avant la déconnexion soit renvoyé lors de la reconnexion, en vue de sa validation. Si les cinq minutes sont dépassées, l'acteur est arrêté, et le client devra alors se reconnecter et redemander l'établissement d'une nouvelle connexion WebSocket.
+On a également mis en place des mécanismes de reconnexion. Durant les cinq premières minutes suivant la déconnexion d'un utilisateur, son ConnexionActor reste actif et met en tampon les différents événements de la partie, afin de pouvoir les lui retransmettre lors de sa reconnexion. Un tampon existe également côté client, afin que tout événement n'ayant pas été confirmé avant la déconnexion soit renvoyé lors de la reconnexion, en vue de sa validation. Si les cinq minutes sont dépassées, l'acteur est arrêté, et le client devra alors se reconnecter et redemander l'établissement d'une nouvelle connexion WebSocket.
 #v(1em)
 
 Ce délai de cinq minutes représente un compromis entre laisser suffisamment de temps à un joueur pour se reconnecter après un problème réseau temporaire, et éviter de mobiliser inutilement des ressources serveur pour un joueur qui ne reviendrait pas.
@@ -273,7 +280,7 @@ Ce délai de cinq minutes représente un compromis entre laisser suffisamment de
 Pour la simulation des combats, nous nous sommes inspirés d'une architecture couramment utilisée dans le jeu vidéo, qui offre à la fois une bonne modularité et une grande efficacité de traitement : l'Entity Component System (ECS). Le principe de cette architecture n'est pas d'avoir une représentation orientée objet réagissant à des événements, mais de distinguer trois types d'éléments : les entités, qui ne sont qu'un identifiant ; les composants, qui stockent l'ensemble des données propres à une entité ; et les systèmes, qui appliquent la logique métier. Chaque système est exécuté séquentiellement sur l'ensemble des entités, et n'effectue de changement que sur celles possédant les composants requis. Cette architecture est particulièrement adaptée lorsque le nombre d'entités et de systèmes est très élevé.
 #v(1em)
 
-Dans notre cas, le nombre d'unités en jeu reste restreint : nous avons donc choisi de fusionner les entités et les composants, cette distinction n'apportant pas de bénéfice significatif à notre échelle. Ce qui nous intéresse réellement, ce sont les systèmes et leur exécution. En effet, notre projet prévoyant d'implémenter un grand nombre d'effets différents, il nous fallait une architecture robuste, capable de traiter l'ensemble de ces effets de manière simple et compréhensible — d'où le choix d'associer un système dédié à chaque type de traitement.
+Dans notre cas, le nombre d'unités en jeu reste restreint : nous avons donc choisi de fusionner les entités et les composants, cette distinction n'apportant pas de bénéfice significatif à notre échelle. Ce qui nous intéresse réellement, ce sont les systèmes et leur exécution. En effet, notre projet prévoyant d'implémenter un grand nombre d'effets différents, il nous fallait une architecture robuste, capable de traiter l'ensemble de ces effets de manière simple et compréhensible. D'où le choix d'associer un système dédié à chaque type de traitement.
 #figure(
 image("../images/ECS.png", width: 100%),
 caption: [

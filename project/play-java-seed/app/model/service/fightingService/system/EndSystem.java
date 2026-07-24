@@ -24,7 +24,7 @@ public class EndSystem implements System{
 
         if(teamA.isEmpty() && teamB.isEmpty()){
             winner = null;
-            res.add(new CombatEndDTO(context.getTick(), winner));
+            res.add(new CombatEndDTO(context.getTick(), -1L));
             isFinished = true;
             return res;
         }

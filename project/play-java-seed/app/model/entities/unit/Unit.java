@@ -27,6 +27,9 @@ public class Unit {
     @Column(name = "patch_version", nullable = false, length = 20)
     private String patchVersion;
 
+    @Column(name = "sprite_key",nullable = false)
+    private long spriteKey;
+
     @Column(nullable = false, length = 30)
     private String name;
 
@@ -184,5 +187,9 @@ public class Unit {
 
     public Rarity getRarity() {
         return rarity;
+    }
+
+    public long getSpriteKey() {
+        return spriteKey;
     }
 }

@@ -1,20 +1,45 @@
 @import play.mvc.Http.Request
 
+@import play.mvc.Http.Request
+
 @(implicit request: Request)
 
 <!DOCTYPE html>
 <html>
+    <head>
+        <title>Mon jeu</title>
+        @Html("""
+<script type="importmap">
+{
+    "imports": {
+        "pixi.js": "https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs"
+    }
+}
+</script>
+""")
+    </head>
     <body>
-        <div id="message"></div>
 
-        <script>
-        const userId = "@request.session().get("userId").orElse("")";
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const ws = new WebSocket(protocol + "//" + window.location.host + "/ws");
+        <div id="view-lobby">
+            <div id="message"></div>
+            <button id="btn-historique">Historique</button>
+            <button id="btn-jouer">Jouer</button>
+        </div>
 
-        ws.onopen = () => {
-            document.getElementById("message").innerText = "Hello " + userId;
-        };
-    </script>
+        <div id="view-waiting" style="display:none;">
+            <p>En file d'attente...</p>
+        </div>
+
+        <div id="view-historique" style="display:none;">
+            <h2>Historique</h2>
+            <ul id="historique-list"></ul>
+            <button id="btn-retour-historique">Retour</button>
+        </div>
+
+        <div id="view-game" style="display:none;"></div>
+        <script type="module">
+                import { setupLobby } from "@routes.Assets.versioned("javascripts/lobby.js")";
+                setupLobby("@request.session().get("userId").orElse("")");
+        </script>
     </body>
 </html>
