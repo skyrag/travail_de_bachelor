@@ -11,6 +11,8 @@ export class Dragger {
         app.stage.on('pointerupoutside', this.onDragEnd);
         this.app = app;
         this.dragTarget = null
+        this.sellZone = null; // { x, y, width, height }
+
 
     }
     setArena(arena){
@@ -18,6 +20,20 @@ export class Dragger {
     }
     setTeam(team){
         this.team = team;
+    }
+
+    setSellZone(rect){
+        this.sellZone = rect;
+    }
+
+    isInSellZone(x, y){
+        if (!this.sellZone) return false;
+        return (
+            x >= this.sellZone.x &&
+            x <= this.sellZone.x + this.sellZone.width &&
+            y >= this.sellZone.y &&
+            y <= this.sellZone.y + this.sellZone.height
+        );
     }
 
     onDragMove(event) {
@@ -44,6 +60,19 @@ export class Dragger {
 
         const x = this.dragTarget.getGlobalPosition().x;
         const y = this.dragTarget.getGlobalPosition().y;
+
+
+        if (this.isInSellZone(x, y)) {
+            const wasOnArena = this.arena.getCellOfUnit(this.dragTarget) !== null;
+
+            if (wasOnArena) this.arena.removeUnit(this.dragTarget);
+            this.team.removeUnitFromEverywhere(this.dragTarget);
+
+            this.dragTarget.sell()
+            this.dragTarget.alpha = 1;
+            this.dragTarget = null;
+            return;
+        }
 
         const wasOnArena = this.arena.getCellOfUnit(this.dragTarget) !== null;
 

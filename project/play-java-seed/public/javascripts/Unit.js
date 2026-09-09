@@ -79,4 +79,8 @@ export class Unit {
         this.getParent.removeChild(sprite)
         this.getParent.detachParent(sprite);
     }
+
+    sell() {
+        this.getParent.container.removeChild(this.fightingSprite)
+    }
 }

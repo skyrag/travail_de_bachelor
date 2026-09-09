@@ -76,7 +76,8 @@ export class Team {
 
     removeUnitFromEverywhere(unit) {
         this.removeFromBench(unit);
-        this.removeUnit(unit); // celle qui gère this.units
+        this.removeUnit(unit);// celle qui gère this.units
+        this.container.removeChild(unit)
     }
 
     removeFromBench(unit) {

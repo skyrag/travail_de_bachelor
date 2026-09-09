@@ -37,6 +37,7 @@ import {Arena} from "./Arena.js";
     // setup drag and drop
     const dragger = new Dragger(app);
 
+
     // setup geralt
     const geralt = new Unit(app, "geralt", geraltFighting, geraltShop, dragger);
 
@@ -105,7 +106,7 @@ import {Arena} from "./Arena.js";
     const team = new Team(app);
     dragger.setTeam(team);
 
-
+    dragger.setSellZone({ x: 150, y: 5 * window.innerHeight / 6 - 10, width: rectWidth, height: rectHeight });
 
     // create shopUnits
     const list = [];
