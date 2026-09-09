@@ -104,6 +104,7 @@ public class Team {
         this.streak = 0.0;
         this.health = 100;
         this.lvl = 1;
+        this.exp = 0;
     }
 
     public Tuple firstEmptySpace(){

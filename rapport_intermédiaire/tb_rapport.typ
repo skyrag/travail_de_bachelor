@@ -136,7 +136,7 @@
       columns: (35%, 65%),
       [*#if config.information.author.feminine_form { "Étudiante" } else { "Étudiant" }*], [*#config.information.author.name*],
       [],[],
-      [*#if config.information.supervisor.feminine_form { "Superviseur" } else { "Superviseure" }*], [#config.information.supervisor.name],
+      [*#if config.information.supervisor.feminine_form { "Superviseure" } else { "Superviseur" }*], [#config.information.supervisor.name],
       [],[],
       [*Département*], [#config.information.departement.long],
       [*Filière*], [#config.information.filiere.long],

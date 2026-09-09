@@ -47,7 +47,8 @@ public class TestMatchmakingService {
             when(monitor.getActorFromId(String.valueOf(i))).thenReturn(mockConnexionRef());
         }
 
-        matchmakingService = new MatchmakingService(config, monitor);
+        matchmakingService = new MatchmakingService(config);
+        matchmakingService.setMonitor(monitor);
     }
 
     @Test

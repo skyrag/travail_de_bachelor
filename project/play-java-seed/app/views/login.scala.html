@@ -27,7 +27,11 @@
 
         @helper.inputPassword(form("password"))
 
-        <button type="submit">Create user</button>
+        <button type="submit"> login</button>
     }
+
+    <a href="@routes.HomeController.register()">
+        <button type="button">Créer un compte</button>
+    </a>
 
 }

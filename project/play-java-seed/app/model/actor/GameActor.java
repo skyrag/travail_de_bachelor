@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import static model.actor.JsonConstantes.*;
@@ -203,13 +204,20 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         public EndOfGame() {}
     }
 
+    public static final class InternalSetupDoneMessage implements Message {
+        public final Game game;
+        public InternalSetupDoneMessage(Game game) {
+            this.game = game;
+        }
+    }
+
     private Cancellable deathTimer;
 
     private final TimerScheduler<Message> timers;
 
 
     private final List<Pair<ActorRef<ConnexionActor.Message>, Long>> users;
-    private final Game game;
+    private Game game;
     private final List<Team> teams;
     private final List<Pool> pools;
     private final GameRepository repo;
@@ -246,7 +254,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * Initializes a new actor representing a game.
      * <p>
      * Players are associated with the game, setup is scheduled, and each
-     * {@link ConnexionActor} is informed of the game actor to which it should
+     * { ConnexionActor} is informed of the game actor to which it should
      * forward player actions.
      */
     private GameActor(ActorContext<Message> context, TimerScheduler<Message> timers, List<Pair<ActorRef<ConnexionActor.Message>, Long>> users, Game game, GameRepository repo, SeedMakerService seedGenerator, GameLevelService gameLevelService, SimulationService simulationService) {
@@ -265,10 +273,8 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         this.rand = new Random(game.getSeed());
         this.spriteMap = getSingleton();
         getContext().getSelf().tell(new SetupMessage());
+        getContext().getLog().info("setup : avant future");
 
-        for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users){
-            pair.first().tell(new ConnexionActor.StartGame(getContext().getSelf()));
-        }
     }
 
     /**
@@ -291,6 +297,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                 .onMessage(EndOfGame.class, this::onEndOfGame)
                 .onMessage(StartOfRoundMessage.class, this::onStartOfRoundMessage)
                 .onMessage(SetupMessage.class, this::onSetupMessage)
+                .onMessage(InternalSetupDoneMessage.class, this::onInternalSetupDoneMessage)
                 .build();
     }
 
@@ -303,14 +310,41 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      */
     private Behavior<Message> onSetupMessage(SetupMessage msg){
         long baseSeed = game.getSeed();
+
         for (Team team : teams){
             team.setSeed(seedGenerator.createFromSeed(baseSeed, "player:" + team.getUser().getId()));
             Unit unit = game.randomUnitFromPool(pools.getFirst(), team.getSeed());
             InstanceUnit instanceUnit = new InstanceUnit(1, new Tuple(0,0), unit, team);
-            team.addUnit(instanceUnit);
+            repo.add(instanceUnit).thenCompose( unitDB -> {
+                team.addUnit(unitDB);
+                return null;
+            });
         }
 
-        repo.merge(game);
+        System.out.println("on est la");
+
+        repo.merge(game)
+                .thenCompose(mergedGame -> repo.findById(mergedGame.getId(), Game.class))
+                .thenAccept(freshGame -> {
+                    getContext().getSelf().tell(new InternalSetupDoneMessage(freshGame));
+                })
+                .exceptionally(err -> {
+                    getContext().getLog().error("Failed to setup game: {}", err.getMessage());
+                    return null;
+                });
+
+        getContext().getLog().info("onConnexionSetupMessage : fin");
+
+        return Behaviors.same();
+    }
+
+
+    private Behavior<Message> onInternalSetupDoneMessage(InternalSetupDoneMessage msg){
+        System.out.println("on est dans setup done");
+
+        for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users){
+            pair.first().tell(new ConnexionActor.StartGame(getContext().getSelf()));
+        }
         return Behaviors.same();
     }
 
@@ -681,16 +715,25 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * Sends a player all the information necessary to initialize their client.
      * <p>
      * Units, items, teams, and other game data are converted to DTOs and
-     * forwarded to the {@link ConnexionActor}.
+     * forwarded to the { ConnexionActor}.
      *
      * @param msg connection setup request
      * @return the next behavior
      */
     private Behavior<Message> onConnexionSetupMessage (ConnexionSetupMessage msg) {
+        getContext().getLog().info("onConnexionSetupMessage");
+
+        System.out.println("on est dans le setup");
+
+
+        List<Team> teams1 = game.getTeams();
+
         Team team = game.getTeam(msg.userId);
         if (team == null) {
             return Behaviors.same();
         }
+
+
 
         List<UnitDTO> unitDTOS = new ArrayList<>();
         for (Pool pool : game.getPools()){
@@ -699,8 +742,10 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
             }
         }
 
+        getContext().getLog().info("onConnexionSetupMessage : après unit");
+
         List<TeamDTO> teamDTOS = new ArrayList<>();
-        for (Team currentTeam: teams){
+        for (Team currentTeam: teams1){
             List<TeamsUnitDTO> units = currentTeam.getUnits().stream().map(unit -> new TeamsUnitDTO(unit.getId(), unit.getUnit().getId())).toList();
             List<Long> items = currentTeam.getItems().stream().map(Item::getId).toList();
             List<Long> shop = currentTeam.getShop().stream().map(Unit::getId).toList();
@@ -716,16 +761,32 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                     units));
         }
 
+        getContext().getLog().info("onConnexionSetupMessage : après team");
+
+        System.out.println("on est avant le getrepo du setup");
+
+
         repo.getAllItems().thenApply(listItems -> {
+            getContext().getLog().info("onConnexionSetupMessage : then apply");
+
 
             ObjectNode response = Json.newObject().put(ID , getUUID()).put(TYPE, SETUP).set(UNITS, Json.toJson(unitDTOS));
             response.set(ITEMS, Json.toJson(listItems.stream().map(ItemDTOMapper::itemToDTO)));
             response.set(TEAM, Json.toJson(teamDTOS));
 
+            getContext().getLog().info("onConnexionSetupMessage : doit envoyer au front");
+            System.out.println("on est avant le frontend");
             msg.respondTo.tell(new ConnexionActor.SetupMessage(response));
             return listItems;
+        }).exceptionally(err -> {
+            getContext().getLog().error("onConnexionSetupMessage a échoué : {}", err.toString(), err);
+            System.out.println("on est dasn une erreur" + err.toString());
+            return null;
         });
 
+        System.out.println("on est a la fin du setup");
+
+        getContext().getLog().info("onConnexionSetupMessage : fin de la fonction");
 
         return Behaviors.same();
     }

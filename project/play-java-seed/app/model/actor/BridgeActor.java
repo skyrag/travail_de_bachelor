@@ -7,23 +7,23 @@ import org.apache.pekko.actor.typed.ActorRef;
 
 /**
  * Gateway actor between a standard WebSocket connection (Pekko API)
- * and a typed actor ({@link ConnexionActor}).
+ * and a typed actor ({ ConnexionActor}).
  * <p>
  * It receives JSON messages from the client, converts them into
- * {@link ConnexionActor.IncomingMessage}, and forwards them to the
+ * { ConnexionActor.IncomingMessage}, and forwards them to the
  * connection actor. When the connection is closed, it also notifies the
- * {@code ConnexionActor}.
+ * { ConnexionActor}.
  */
 public class BridgeActor extends AbstractActor {
     private final ActorRef<ConnexionActor.Message> userActor;
     private final org.apache.pekko.actor.ActorRef out;
 
     /**
-     * Creates the Props needed to instantiate a {@code BridgeActor}.
+     * Creates the Props needed to instantiate a { BridgeActor}.
      *
      * @param out actor representing the WebSocket output
      * @param actor typed actor responsible for handling connection messages
-     * @return the props for creating a {@code BridgeActor}
+     * @return the props for creating a { BridgeActor}
      */
     public static Props create(org.apache.pekko.actor.ActorRef out, ActorRef<ConnexionActor.Message> actor) {
         return Props.create(BridgeActor.class, () -> new BridgeActor(out, actor));
@@ -44,7 +44,7 @@ public class BridgeActor extends AbstractActor {
      * Defines the actor's behavior.
      * <p>
      * Each received JSON message is wrapped in a
-     * {@link ConnexionActor.IncomingMessage} and forwarded to the
+     * { ConnexionActor.IncomingMessage} and forwarded to the
      * connection actor.
      *
      * @return the receive behavior for messages

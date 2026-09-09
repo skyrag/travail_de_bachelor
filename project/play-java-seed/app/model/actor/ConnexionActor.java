@@ -26,7 +26,7 @@ import static model.actor.JsonConstantes.*;
  * This actor is responsible for:
  * <ul>
  *     <li>receiving messages from the WebSocket;</li>
- *     <li>forwarding the player's actions to the {@link GameActor};</li>
+ *     <li>forwarding the player's actions to the { GameActor};</li>
  *     <li>sending server messages to the client;</li>
  *     <li>handling reconnection and message buffering;</li>
  *     <li>monitoring connection health using a heartbeat mechanism.</li>
@@ -134,7 +134,7 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
 
     /**
-     * Message indicating which {@link GameActor} this connection is associated with.
+     * Message indicating which { GameActor} this connection is associated with.
      */
     public static final class StartGame implements Message{
         public final ActorRef<GameActor.Message> game;
@@ -162,7 +162,7 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
 
 
     /**
-     * Creates a new {@code ConnexionActor}.
+     * Creates a new { ConnexionActor}.
      *
      * @param ws WebSocket associated with the player
      * @param userId player identifier
@@ -229,6 +229,8 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
             case JOUER -> {
                 long messageId = msg.text.get(ID).longValue();
                 matchmakingService.addPlayer(String.valueOf(userId));
+                ws.tell(Json.newObject().put(ID, messageId).put(TYPE, OK),
+                        org.apache.pekko.actor.ActorRef.noSender());
             }
             case BUY -> game.tell(new GameActor.BuyingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
             case SELL -> game.tell(new GameActor.SellingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
@@ -286,12 +288,14 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
     }
 
     /**
-     * Associates this actor with the {@link GameActor} managing the game.
+     * Associates this actor with the { GameActor} managing the game.
      *
      * @param msg message containing the game actor
      * @return the next behavior
      */
     private Behavior<Message> onStartGame(StartGame msg){
+        System.out.println("on est dans startgame");
+
         game = msg.game;
         game.tell(new GameActor.ConnexionSetupMessage(this.userId, getContext().getSelf()));
         return Behaviors.same();

@@ -82,8 +82,8 @@ public class HomeController extends Controller {
      *
      * @return the html page
      */
-    public Result index() {
-        return ok(views.html.index.render());
+    public Result index(Http.Request request) {
+        return ok(views.html.login.render(formFactory.form(UserLoginForm.class, LoginCheck.class), request, messagesApi.preferred(request)));
     }
 
     /**
@@ -102,19 +102,6 @@ public class HomeController extends Controller {
      */
     public Result register(Http.Request request) {
         return ok(views.html.register.render(formFactory.form(UserRegisterForm.class, RegisterCheck.class), request, messagesApi.preferred(request)));
-    }
-
-    public Result game(Http.Request request) {
-        String userId = request.session().get("userId")
-                .orElseThrow(() -> new RuntimeException("Unauthorized"));
-        ActorRef<GameActor.Message> gameActor;
-        synchronized (lock) {
-            gameActor = matchmakingService.addPlayer(userId);
-        }
-        //return gameActor;
-           //TODO c'est ici qu'on peut faire quelque chose avec ce gameActor si besoin
-            // TODO replace with the game screen because the game is OOOOOONNNNN!!!
-        return ok(views.html.game.render(request));
     }
 
 

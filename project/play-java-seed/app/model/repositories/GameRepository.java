@@ -28,7 +28,7 @@ public class GameRepository extends BasicRepository{
      */
     public CompletionStage<List<Item>> getAllItems() {
         return supplyAsync(() -> wrap(em ->
-                em.createQuery("select u from object u", Item.class).getResultList()
+                em.createQuery("select u from Item u", Item.class).getResultList()
         ), executionContext);
     }
 }

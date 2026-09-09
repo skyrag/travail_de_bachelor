@@ -10,18 +10,18 @@ import { Arena } from "./Arena.js";
 // --- Registre local : sprite (clé technique venant du DTO) -> chemins des assets ---
 const UNIT_ASSET_PATHS = {
     geralt: {
-        fighting: 'assets/images/Geralt_sprite.png',
-        shopping: 'assets/images/Geralt_shopSprite.png',
+        fighting: '/assets/images/Geralt_sprite.png',
+        shopping: '/assets/images/Geralt_shopSprite.png',
     },
     // ex: yennefer: { fighting: '...', shopping: '...' },
 };
 
 const ITEM_ASSET_PATHS = {
-    bfSword: 'assets/images/item.png',
+    bfSword: '/assets/images/item.png',
     // ...
 };
 
-const BUTTON_ASSET_PATH = 'assets/images/RerollButton.png';
+const BUTTON_ASSET_PATH = '/assets/images/RerollButton.png';
 
 let app, dragger, arena, team, shop;
 let buttonTexture = null;

@@ -21,27 +21,32 @@ import java.util.concurrent.CompletionStage;
 @Singleton
 public class MatchmakingService {
 
+    private static final int PLAYERS_PER_GAME = 8; // ou injecté depuis application.conf
+
     private final Queue<Pair<ActorRef<ConnexionActor.Message>,Long>> waitingPlayers = new LinkedList<>();
     private final String version;
-    private final ActeurMonitor monitor;
+    private ActeurMonitor monitor;
 
 
     @Inject
-    public MatchmakingService(com.typesafe.config.Config config,
-                              ActeurMonitor connexions){
-
+    public MatchmakingService(com.typesafe.config.Config config){
         this.version = config.getString("version");
-        this.monitor = connexions;
+    }
+
+    public void setMonitor(ActeurMonitor monitor){
+        if (this.monitor == null){
+            this.monitor = monitor;
+        }
     }
 
     public synchronized ActorRef<GameActor.Message> addPlayer(String userId) {
         waitingPlayers.add(new Pair<>(monitor.getActorFromId(userId), Long.valueOf(userId)));
-        if (waitingPlayers.size() >= 8) {
+        if (waitingPlayers.size() >= PLAYERS_PER_GAME) {
 
             List<Pair<ActorRef<ConnexionActor.Message>,Long>> players = new ArrayList<>();
             List<Long> playerId = new ArrayList<>();
 
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < PLAYERS_PER_GAME; i++) {
                 Pair<ActorRef<ConnexionActor.Message>, Long> player = waitingPlayers.poll();
                 playerId.add(player.second());
                 players.add(player);

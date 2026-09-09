@@ -51,6 +51,8 @@ public class ActeurMonitor {
         this.simulationService = simulationService;
         this.matchmakingService = matchmakingService;
 
+        this.matchmakingService.setMonitor(this);
+
     }
 
     public synchronized ActorRef<ConnexionActor.Message> getOrCreateActorFromId (String userId, org.apache.pekko.actor.ActorRef ws) {

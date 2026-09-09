@@ -1,6 +1,8 @@
 package model.entities.game;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ public class Pool {
     private Game game;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "pools_rarity", nullable = false)
     private Rarity poolsRarity;
 
