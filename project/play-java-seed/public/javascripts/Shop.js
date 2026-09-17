@@ -38,12 +38,27 @@ export class Shop {
     }
 
     resetShop(units){
-        let i = 2;
+
+        if (this.team.gold < 2) {
+            console.log("Pas de gold, reroll impossible");
+            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
+        }
+
+        //TODO envoyer une message backend pour le reroll et chopper les unités
+
+        this.team.removeGold(2);
+        this.updateUI()
+
         if (this.units.length >= 1){
             for (let unit of this.units){
                 this.container.removeChild(unit.shoppingSprite);
             }
         }
+        this.createShop(units)
+    }
+
+    createShop(units){
+        let i = 2;
         for (let unit of units){
             // creating the sprite for the unit
             const currentUnit = unit.createShopping(i * this.SHOPITEMWIDTH, 0, (chosen) => this.onUnitClick(chosen), this.container, this.SHOPITEMWIDTH, this.SHOPITEMHIEGHT);
@@ -58,10 +73,21 @@ export class Shop {
         const benchHasRoom = this.team.canAddInBench();
         const teamHasRoom = this.team.canAddOne();
 
+
         if (!benchHasRoom && !teamHasRoom) {
             console.log("Pas de place (banc et équipe pleins), achat annulé");
             return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
         }
+
+        if (this.team.gold < unit.cost) {
+            console.log("Pas assez d'argent, achat annulé");
+            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
+        }
+
+        //TODO envoyer une message au backend pour lui prévenir que l'on acheté l'unité et rollback si nécessaire
+
+        this.team.removeGold(unit.cost);
+        this.updateUI()
 
         const newUnit = unit.createfighting(0, 0, this.team.container);
         this.container.removeChild(unit.shoppingSprite);
@@ -165,6 +191,8 @@ export class Shop {
         buyText.x = 64;
         buyText.y = this.levelText.y + 68;
         uiContainer.addChild(buyText);
+
+        this.createShop(list)
 
         this.updateUI();
     }

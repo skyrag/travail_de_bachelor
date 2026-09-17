@@ -3,20 +3,42 @@ import {Item} from "./Item.js";
 import {Dragger} from "./Drag.js";
 
 export class Unit {
-    constructor(app, name, fightingSprite, shoppingSprite, dragger, id = 0) {
+    constructor(app, name, fightingSprite, shoppingSprite, dragger, id = 0, maxHealth, maxMana, startingMana, basicDamage, attackSpeed, armor, magicResist, range, abilityName, abilityDescription, rarity, cost  ) {
         this.app = app;
         this.id = id;
         this.dragger = dragger;
         this.name = name;
         this.fightingSprite = fightingSprite;  // Store texture, not Sprite
         this.shoppingSprite = shoppingSprite;
-        this.item = Item[3];
+
+        //static stats
         this.trait = String[5];
+        this.maxHealth = maxHealth;
+        this.health = this.maxHealth;
+        this.maxMana = maxMana;
+        this.startingMana = startingMana;
+        this.basicDamage = basicDamage;
+        this.attackDamage = 0;
+        this.abilityPower = 0;
+        this.attackSpeed = attackSpeed;
+        this.armor = armor;
+        this.magicResist = magicResist;
+        this.range = range;
+
+        this.abilityName = abilityName
+        this.abilityDescription = abilityDescription
+
+        this.rarity = rarity;
+        this.cost = cost;
+
+
+        //changing parameters
+        this.item = Item[3];
         this.getParent = null;
     }
 
-    copy(){
-        return new Unit(this.app, this.name, this.fightingSprite, this.shoppingSprite, this.dragger, ++this.id)
+    copy(id){
+        return new Unit(this.app, this.name, this.fightingSprite, this.shoppingSprite, this.dragger, id, this.maxHealth, this.maxMana, this.startingMana, this.basicDamage, this.attackSpeed, this.armor, this.magicResist, this.range, this.abilityName, this.abilityDescription, this.rarity, this.cost)
     }
 
     createShopping(x,y, onClick, container, width, height) {
@@ -38,7 +60,8 @@ export class Unit {
         container.addChild(shop);
         this.getParent = container;
 
-        return new Unit(this.app, this.name, this.fightingSprite, shop, this.dragger, this.id);
+        return new Unit(this.app, this.name, this.fightingSprite, shop, this.dragger, this.id, this.maxHealth, this.maxMana, this.startingMana, this.basicDamage, this.attackSpeed, this.armor, this.magicResist, this.range, this.abilityName, this.abilityDescription, this.rarity, this.cost)
+
     }
 
 
@@ -68,7 +91,8 @@ export class Unit {
         container.addChild(fighter);
         this.getParent = container;
 
-        return new Unit(this.app, this.name, fighter, this.shoppingSprite, this.dragger, this.id);
+        return new Unit(this.app, this.name, fighter, this.shoppingSprite, this.dragger, this.id, this.maxHealth, this.maxMana, this.startingMana, this.basicDamage, this.attackSpeed, this.armor, this.magicResist, this.range, this.abilityName, this.abilityDescription, this.rarity, this.cost)
+
     }
 
     addItem(item){
@@ -80,7 +104,4 @@ export class Unit {
         this.getParent.detachParent(sprite);
     }
 
-    sell() {
-        this.getParent.container.removeChild(this.fightingSprite)
-    }
 }

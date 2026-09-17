@@ -38,7 +38,7 @@ export class Arena {
         this.hexGrid = []; // pour garder les centres
 
 
-        function createHexagon(radius) {
+        function createHexagon(radius, isblocked) {
             const hex = new Graphics();
 
             const points = [];
@@ -51,7 +51,9 @@ export class Arena {
                 );
             }
 
-            hex.poly(points).fill(0x7ec8e3);
+            const color = isblocked ? 0xff0000 :0x7ec8e3;
+
+            hex.poly(points).fill(color);
             hex.poly(points).stroke({ width: 2, color: 0x000000 });
 
             return hex;
@@ -68,12 +70,13 @@ export class Arena {
                 const y = OFFSET_Y
                     + row * V_SPACING;
 
-                const hex = createHexagon(RADIUS);
+                const isBlocked = col >= 4;
+                const hex = createHexagon(RADIUS, isBlocked);
                 hex.x = x;
                 hex.y = y - V_SPACING/2;
 
                 terrain.addChild(hex); // on ajoute au container
-                this.hexGrid[row][col] = { x, y, hex, unit: null};
+                this.hexGrid[row][col] = { x, y, hex, unit: null, isBlocked: isBlocked};
             }
         }
         // Ensuite, pour déplacer TOUT le terrain :
@@ -98,13 +101,13 @@ export class Arena {
                 best = cell;
             }
         }
-
+        console.log(best); // debug
         return best;
     }
 
     setToClosesCell(unit, x, y) {
         const cell = this.getClosestCell(x, y);
-        if (!cell || (cell.unit && cell.unit !== unit)) return false;
+        if (!cell || cell.isBlocked || (cell.unit && cell.unit !== unit)) return false;
 
         this.container.addChild(unit);
         cell.unit = unit;
@@ -117,7 +120,7 @@ export class Arena {
 
         for (const cell of this.hexGrid.flat()) {
             const point = { x: local.x - cell.x, y: local.y - cell.y };
-            if (cell.hex.containsPoint(point)) {
+            if (cell.hex.containsPoint(point) && !cell.isBlocked) {
                 return cell;
             }
         }
@@ -158,7 +161,7 @@ export class Arena {
 
     setToNextEmptyCell(unit){
         for (const cell of this.hexGrid.flat()) {
-            if (cell.unit == null){
+            if (cell.unit == null && !cell.isBlocked){
                 this.container.addChild(unit); // <-- ajout du fix : bon parent
                 cell.unit = unit;
                 unit.position.set(cell.x, cell.y);
@@ -187,7 +190,7 @@ export class Arena {
 
     moveUnit(unit, x, y) {
         const target = this.getClosestCell(x, y);
-        if (!target) return false;
+        if (!target || target.isBlocked) return false;
 
         // Case déjà occupée par une AUTRE unité → on refuse le déplacement
         if (target.unit && target.unit !== unit) return false;

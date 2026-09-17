@@ -112,11 +112,16 @@ export class Team {
 
     addGold(amount) {
         this.gold += amount;
-        this.updateUI();
+    }
+
+    removeGold(amount) {
+        this.gold -= amount;
     }
 
     buyExperience() {
         if (this.gold < this.shop.BUY_XP_COST) return false;
+
+        //TODO faire un message au backend pour lui demander de buy de l'exp
 
         this.gold -= this.shop.BUY_XP_COST;
         this.exp += this.shop.BUY_XP_AMOUNT;
@@ -132,5 +137,14 @@ export class Team {
             this.level += 1;
             needed = this.getExpNeeded();
         }
+    }
+
+    sell(unit) {
+
+        //TODO envoyer un message au backend pour prévenir de la vente
+
+        this.addGold(unit.unit.cost)
+        this.shop.updateUI()
+        this.removeUnitFromEverywhere(unit);
     }
 }

@@ -6,6 +6,7 @@ import {Trait} from "./Trait.js";
 import {Shop} from "./Shop.js";
 import {Team} from "./Team.js";
 import {Arena} from "./Arena.js";
+import {TextureManager} from "./TextureManager.js";
 
 
 (async () => {
@@ -26,20 +27,77 @@ import {Arena} from "./Arena.js";
     container.zIndex = 0;
     app.stage.addChild(container);
 
-
-    // Load the unit texture
-    const geraltFighting = await Assets.load('assets/images/Geralt_sprite.png');
-    const geraltShop = await Assets.load("assets/images/Geralt_shopSprite.png");
-    const witcherTrait = await Assets.load("assets/images/médaillon_TheWitcher.png");
-    const item = await Assets.load("assets/images/item.png");
-    const buttonSprite = await Assets.load('assets/images/RerollButton.png');
-
     // setup drag and drop
     const dragger = new Dragger(app);
 
+    //AssetsManager
+    const textureManager = new TextureManager();
+    await textureManager.init();
 
-    // setup geralt
-    const geralt = new Unit(app, "geralt", geraltFighting, geraltShop, dragger);
+    const basicUnits = new Map();
+
+
+    //---------------------------------reception du backend
+
+    // la liste après extraction du TDO
+    let unitsDTO = [];
+
+    //initialisation de la liste en attendant les connexions
+    //DTO pour l'instant (id, nom, maxHealth, startingMana, maxMana, basicDamage, attackSpeed, armor, magicResist, range, rarity, cost
+    const geraltDTO = {
+        id: 0,
+        name: "geralt",
+        maxHealth: 100,
+        startingMana: 10,
+        maxMana: 40,
+        basicDamage: 20,
+        attackSpeed: 0.9,
+        armor: 40,
+        magicResist: 40,
+        range: 1,
+        rarity: "COMMON",
+        cost: 1,
+    }
+
+    const geraltRangeDTO = {
+        id: 0,
+        name: "geralt",
+        maxHealth: 100,
+        startingMana: 10,
+        maxMana: 40,
+        basicDamage: 20,
+        attackSpeed: 0.9,
+        armor: 40,
+        magicResist: 40,
+        range: 2,
+        rarity: "UNCOMMON",
+        cost: 2,
+    }
+    unitsDTO.push(geraltDTO)
+    unitsDTO.push(geraltRangeDTO)
+
+    // traitement de la réception
+
+    for (const dto of unitsDTO){
+        const texture = textureManager.getUnit(dto.name)
+        const unit = new Unit(app, dto.name, (await texture).fightingSprite, (await texture).shoppingSprite, dragger, 0, dto.maxHealth, dto.maxMana, dto.startingMana, dto.basicDamage, dto.attackSpeed, dto.armor, dto.magicResist, dto.range, dto.abilityName, dto.abilityDescription, dto.rarity, dto.cost)
+        basicUnits.set(dto.name, unit);
+    }
+
+    // traitement des OBJETs TODO
+
+    // traitement de la liste des unité proposé dans le shop TODO
+
+    // create shopUnits
+    const list = [];
+    for (let i = 0; i < 5 ; i++){
+        list.push(basicUnits.get("geralt").copy(i + 1));
+    }
+    //-----------------------------------fin du traitement de la récéption
+
+    // Load the unit texture
+    const witcherTrait = await Assets.load("assets/images/médaillon_TheWitcher.png");
+    const item = await Assets.load("assets/images/item.png");
 
     // setup item
     const bfSword = new Item("bfSword", "a big sword", item);
@@ -108,16 +166,10 @@ import {Arena} from "./Arena.js";
 
     dragger.setSellZone({ x: 150, y: 5 * window.innerHeight / 6 - 10, width: rectWidth, height: rectHeight });
 
-    // create shopUnits
-    const list = [];
-    for (let i = 0; i < 5 ; i++){
-        list.push(geralt.copy());
-    }
 
     // creating the shop
-    const shop = new Shop(app, team, arena, buttonSprite, list);
+    const shop = new Shop(app, team, arena, textureManager.getButton(), list);
     console.log(list);
-    shop.resetShop(list);
 
 
 

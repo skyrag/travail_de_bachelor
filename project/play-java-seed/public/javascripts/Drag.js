@@ -66,9 +66,9 @@ export class Dragger {
             const wasOnArena = this.arena.getCellOfUnit(this.dragTarget) !== null;
 
             if (wasOnArena) this.arena.removeUnit(this.dragTarget);
-            this.team.removeUnitFromEverywhere(this.dragTarget);
 
-            this.dragTarget.sell()
+            this.team.sell(this.dragTarget)
+
             this.dragTarget.alpha = 1;
             this.dragTarget = null;
             return;
@@ -76,6 +76,7 @@ export class Dragger {
 
         const wasOnArena = this.arena.getCellOfUnit(this.dragTarget) !== null;
 
+        //TODO rajouter pour le déplacement
         if (this.arena.isInRange(x, y)) {
 
             if (wasOnArena) {
