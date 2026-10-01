@@ -3,12 +3,10 @@ package model.actor;
 import com.fasterxml.jackson.databind.JsonNode;
 import model.entities.Team;
 import model.entities.game.Game;
-import model.entities.unit.Unit;
 import model.repositories.GameRepository;
 import model.service.GameLevelService;
 import model.service.SeedMakerService;
 import model.service.SimulationService;
-import model.utils.Tuple;
 import org.apache.pekko.actor.testkit.typed.javadsl.ActorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestProbe;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -129,7 +127,7 @@ public class TestGameActor {
     public void onConnexionSetupMessage_teamFound_sendsSetupMessage() {
         Team team = mock(Team.class);
         when(game.getTeam(5L)).thenReturn(team);
-        when(repo.getAllItems()).thenReturn(CompletableFuture.completedFuture(List.of()));
+        when(repo.getAllItemsDTO()).thenReturn(CompletableFuture.completedFuture(List.of()));
 
         ActorRef<GameActor.Message> actor = spawn(List.of());
 

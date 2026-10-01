@@ -17,30 +17,25 @@ import model.repositories.GameRepository;
 import model.service.GameLevelService;
 import model.service.SeedMakerService;
 import model.service.SimulationService;
-import model.service.fightingService.FightingService;
 import model.utils.SpriteMap;
 import model.utils.Tuple;
 import org.apache.pekko.actor.Cancellable;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
-import org.apache.pekko.actor.typed.DispatcherSelector;
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.actor.typed.javadsl.Receive;
 import org.apache.pekko.japi.Pair;
-import org.apache.pekko.pattern.Patterns;
 import play.libs.Json;
 
 import org.apache.pekko.actor.typed.javadsl.TimerScheduler;
-import org.apache.pekko.actor.typed.javadsl.Behaviors;
-import java.time.Duration;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import static model.actor.JsonConstantes.*;
@@ -766,20 +761,19 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         System.out.println("on est avant le getrepo du setup");
 
 
-        repo.getAllItems().thenApply(listItems -> {
-            getContext().getLog().info("onConnexionSetupMessage : then apply");
-
+        repo.getAllItemsDTO().thenApply(listItemsDTO -> {
+            System.out.println("on est avant le frontend1");
 
             ObjectNode response = Json.newObject().put(ID , getUUID()).put(TYPE, SETUP).set(UNITS, Json.toJson(unitDTOS));
-            response.set(ITEMS, Json.toJson(listItems.stream().map(ItemDTOMapper::itemToDTO)));
+            response.set(ITEMS, Json.toJson(listItemsDTO));
             response.set(TEAM, Json.toJson(teamDTOS));
 
-            getContext().getLog().info("onConnexionSetupMessage : doit envoyer au front");
-            System.out.println("on est avant le frontend");
+            System.out.println("on est avant le frontend2");
+
             msg.respondTo.tell(new ConnexionActor.SetupMessage(response));
-            return listItems;
+
+            return null;
         }).exceptionally(err -> {
-            getContext().getLog().error("onConnexionSetupMessage a échoué : {}", err.toString(), err);
             System.out.println("on est dasn une erreur" + err.toString());
             return null;
         });

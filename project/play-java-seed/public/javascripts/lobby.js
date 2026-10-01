@@ -33,7 +33,7 @@ export function setupLobby(userId) {
     ws.on("setup", async (payload) => {
         showView("view-game");
         await initGame("view-game");
-        startGame(payload); // payload = { units, items, team }
+        startGame(payload, "skyrag"); // payload = { units, items, team }
     });
 
     function showView(id) {

@@ -1,9 +1,8 @@
 package model.repositories;
 
-import jakarta.persistence.EntityManager;
+import model.DTO.ItemDTO;
+import model.DTO.ItemDTOMapper;
 import model.DatabaseExecutionContext;
-import model.entities.User;
-import model.entities.game.Game;
 import model.entities.unit.Item;
 import play.db.jpa.JPAApi;
 
@@ -26,9 +25,12 @@ public class GameRepository extends BasicRepository{
      *
      * @return a CompletionStage containing the list of items
      */
-    public CompletionStage<List<Item>> getAllItems() {
-        return supplyAsync(() -> wrap(em ->
-                em.createQuery("select u from Item u", Item.class).getResultList()
+    public CompletionStage<List<ItemDTO>> getAllItemsDTO() {
+        return supplyAsync(() -> wrap(em -> {
+            List<Item> items = em.createQuery("select distinct i from Item i left join fetch i.effects", Item.class).getResultList();
+
+            return items.stream().map(ItemDTOMapper::itemToDTO).toList();
+        }
         ), executionContext);
     }
 }

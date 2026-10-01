@@ -21,7 +21,7 @@ import java.util.concurrent.CompletionStage;
 @Singleton
 public class MatchmakingService {
 
-    private static final int PLAYERS_PER_GAME = 8; // ou injecté depuis application.conf
+    private static final int PLAYERS_PER_GAME = 2;
 
     private final Queue<Pair<ActorRef<ConnexionActor.Message>,Long>> waitingPlayers = new LinkedList<>();
     private final String version;

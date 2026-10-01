@@ -65,9 +65,13 @@ async function preloadAssets() {
  * myUserId = id de l'utilisateur courant, pour identifier sa propre équipe parmi toutes celles reçues
  */
 export function startGame(payload, myUserId) {
+
     const container = new Container();
     container.zIndex = 0;
     app.stage.addChild(container);
+
+    console.log(myUserId)
+    console.log(payload)
 
     // 1. Registres construits à partir des DTO + assets locaux
     const unitDataByKey = buildUnitRegistry(payload.units);

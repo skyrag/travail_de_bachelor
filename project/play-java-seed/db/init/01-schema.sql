@@ -550,8 +550,8 @@ BEGIN
     FROM team
     WHERE game_id = current_game_id;
 
-    IF team_count != 8 THEN
-        RAISE EXCEPTION 'Une partie doit avoir 8 team, % trouvée(s)', team_count;
+    IF team_count != 2 THEN
+        RAISE EXCEPTION 'Une partie doit avoir 2 (à changer) team, % trouvée(s)', team_count;
     END IF;
     RETURN NEW;
 END;
