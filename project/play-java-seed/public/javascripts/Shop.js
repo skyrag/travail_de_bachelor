@@ -1,12 +1,13 @@
 import {Unit} from "./Unit.js";
 import {Container, Graphics, Sprite, Text} from "pixi.js";
+import {GAME_H} from "./Layers.js";
 
 export class Shop {
 
-    SHOPITEMWIDTH = 250;
-    SHOPITEMHIEGHT = 190;
+    SHOPITEMWIDTH = 180;
+    SHOPITEMHIEGHT = 180;
 
-    constructor(app, team, arena, sprite, list) {
+    constructor(app,layers,  team, arena, sprite, list, rect) {
         this.app = app;
         this.team = team;
         team.setShop(this)
@@ -15,24 +16,24 @@ export class Shop {
         this.BUY_XP_COST = 4;
         this.BUY_XP_AMOUNT = 4;
 
+        this.SHOPWIDTH = rect.width
+        this.SHOPHEIGHT = rect.height
+        this.x = rect.x
+        this.y = rect.y
+
+        this.SHOPITEMWIDTH = this.SHOPWIDTH / 8
+        this.SHOPITEMHIEGHT = this.SHOPHEIGHT;
+
+
         // création du conteneur du shop
         // Create and add a container to the stage
         const container = new Container();
-        container.x = 150;
-        container.y = 5 * window.innerHeight / 6 - 10;
+        container.x = this.x;
+        container.y = this.y;
         this.container = container;
-        app.stage.addChild(container);
+        layers.ui.addChild(container);   // au lieu de app.stage
 
-        /*
-        const rectWidth = window.innerWidth -300;
-        const rectHeight = window.innerHeight /6;
-        const rect = new Graphics()
-            .rect(150, 5 * window.innerHeight / 6 - 10, rectWidth, rectHeight)
-            .fill(0xffd700)
-            .stroke({ width: 4, color: 'black' });
-        container.addChild(rect);
 
-         */
 
         this.createUI(sprite, list)
     }
@@ -46,24 +47,36 @@ export class Shop {
 
         //TODO envoyer une message backend pour le reroll et chopper les unités
 
+        let list = []
+        for (const unit of units){
+            list.push(unit.copy(units.length + unit.id))
+        }
+
+
         this.team.removeGold(2);
-        this.updateUI()
 
         if (this.units.length >= 1){
             for (let unit of this.units){
-                this.container.removeChild(unit.shoppingSprite);
+                if (unit) {
+                    this.container.removeChild(unit.container);
+                    this.units[unit.id] = undefined
+                }
             }
         }
-        this.createShop(units)
+
+        this.createShop(list)
     }
 
     createShop(units){
         let i = 2;
         for (let unit of units){
             // creating the sprite for the unit
-            const currentUnit = unit.createShopping(i * this.SHOPITEMWIDTH, 0, (chosen) => this.onUnitClick(chosen), this.container, this.SHOPITEMWIDTH, this.SHOPITEMHIEGHT);
-            currentUnit.shoppingSprite.on('pointerdown', () => this.onUnitClick(currentUnit));
-            this.units.push(currentUnit);
+            unit.createShopping(i * this.SHOPITEMWIDTH + i * (this.SHOPITEMWIDTH / 6), 0, (chosen) => this.onUnitClick(chosen), this.container, this.SHOPITEMWIDTH, this.SHOPITEMHIEGHT);
+            unit.shoppingSprite.on('pointerdown', () => {
+                console.log("it has been clicked")
+                this.onUnitClick(unit)
+            });
+            this.units[unit.id] = unit;
             i++;
         }
     }
@@ -87,25 +100,27 @@ export class Shop {
         //TODO envoyer une message au backend pour lui prévenir que l'on acheté l'unité et rollback si nécessaire
 
         this.team.removeGold(unit.cost);
-        this.updateUI()
 
-        const newUnit = unit.createfighting(0, 0, this.team.container);
-        this.container.removeChild(unit.shoppingSprite);
+        unit.createfighting(0, 0, this.team.container);
+        this.container.removeChild(unit.container);
+        unit.container.removeChild(unit.shoppingSprite)
+        this.units[unit.id] = undefined
 
-        if (this.team.addUnitToBench(newUnit.fightingSprite)) {
+
+        if (this.team.addUnitToBench(unit)) {
             return;
         }
         if (teamHasRoom) {
-            this.arena.setToNextEmptyCell(newUnit.fightingSprite);
-            this.team.addUnit(newUnit.fightingSprite);
-            newUnit.fightingSprite.unitData = newUnit
+            this.arena.setToNextEmptyCell(unit);
+            this.team.addUnit(unit);
+            unit.fightingSprite.unitData = unit
         }
     }
 
 
     createButton(sprite, list, container) {
         const reroll = new Sprite(sprite);
-        reroll.x = this.SHOPITEMWIDTH;
+        reroll.x = 60 + this.SHOPITEMWIDTH;
         reroll.y = 0;
 
         reroll.scale.set(0.5);
@@ -192,21 +207,44 @@ export class Shop {
         buyText.y = this.levelText.y + 68;
         uiContainer.addChild(buyText);
 
-        this.createShop(list)
+        //TODO a enlever lorsque l'on aura les emssage
+        let list2 = []
+        for (const unit of list){
+            list2.push(unit.copy(list.length + unit.id))
+        }
+        //
 
-        this.updateUI();
+        this.createShop(list2)
+
+        this._last = { gold: null, level: null };
+        this.xpShown = 0;
+        this.xpDrawn = -1;
+        this.update(0);
     }
 
-    updateUI() {
-        this.goldText.text = `Or : ${this.team.gold}`;
-        this.levelText.text = `Niveau ${this.team.level}`;
+    update(dt) {
+        const { gold, level, exp } = this.team;
 
-        const needed = this.team.getExpNeeded();
-        const ratio = Math.min(this.team.exp / needed, 1);
+        if (gold !== this._last.gold) {
+            this.goldText.text = `Or : ${gold}`;
+            this._last.gold = gold;
+        }
 
-        this.xpBarFill.clear();
-        this.xpBarFill
-            .rect(60, this.levelText.y + 30, this.xpBarWidth * ratio, this.xpBarHeight)
-            .fill(0x3498db);
+        if (level !== this._last.level) {
+            this.levelText.text = `Niveau ${level}`;
+            this._last.level = level;
+            this.xpShown = 0;                        // snap au level up
+        }
+
+        const ratio = Math.min(exp / this.team.getExpNeeded(), 1);
+        this.xpShown += (ratio - this.xpShown) * Math.min(1, 0.15 * dt);  // lerp
+        if (Math.abs(ratio - this.xpShown) < 0.001) this.xpShown = ratio;
+
+        if (this.xpShown !== this.xpDrawn) {         // redessine seulement si ça bouge
+            this.xpBarFill.clear()
+                .rect(60, this.levelText.y + 30, this.xpBarWidth * this.xpShown, this.xpBarHeight)
+                .fill(0x3498db);
+            this.xpDrawn = this.xpShown;
+        }
     }
 }

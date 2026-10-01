@@ -2,11 +2,10 @@ import {Container, Graphics, Text} from "pixi.js";
 
 export class Team {
 
-    UNITWIDTH = 150;
-    YAXIS = 175;
-
-    constructor(app) {
+    constructor(app, rect, layers, id, name) {
         this.app = app;
+        this.id = id;
+        this.name = name;
         this.units = [];
         this.level = 1;
         this.exp = 0;
@@ -14,10 +13,12 @@ export class Team {
         this.bench = new Array(10).fill(null);
 
         // valeur du placeholder mais aussi de la détection pour le drag
-        this.x = 350;
-        this.width = window.innerWidth -700;
-        this.y = 4 * window.innerHeight / 6;
-        this.height = 175;
+        this.x = rect.x;
+        this.width = rect.width;
+        this.y = rect.y;
+        this.height = rect.height;
+
+        this.UNITWIDTH = this.width/10;
 
         // cération du conteneur du bench
         // Create and add a container to the stage
@@ -25,8 +26,7 @@ export class Team {
         container.x = this.x;
         container.y = this.y;
         this.container = container;
-        container.zIndex = 10;
-        app.stage.addChild(container);
+        layers.units.addChild(container);   // au lieu de app.stage
 
     }
 
@@ -34,13 +34,17 @@ export class Team {
         this.shop = shop
     }
 
+    setItemBox(box){
+        this.items = box
+    }
+
     addUnitToBench(unit) {
         for (let i = 0 ; i < this.bench.length; i++){
             console.log(this.bench)
             if (!this.bench[i]){
-                this.container.addChild(unit)
+                this.container.addChild(unit.container)
                 this.bench[i] = unit;
-                unit.position.set(i * this.UNITWIDTH + this.UNITWIDTH/2, this.YAXIS)
+                unit.container.position.set(i * this.UNITWIDTH + this.UNITWIDTH/2, this.height)
                 return true;
             }
         }
@@ -49,7 +53,7 @@ export class Team {
 
     addUnit(unit){
         if (this.canAddOne()){
-            this.units.push(unit)
+            this.units[unit.id] = unit
         }
     }
 
@@ -62,13 +66,13 @@ export class Team {
     }
 
     removeIfBenched(unit){
-        if(this.units.length + 1 <= this.level){
+        if(this.nbFieldedUnits()+ 1 <= this.level){
             for (let i = 0 ; i < this.bench.length ; i++){
                 if (this.bench[i] === unit){
                     console.log("found")
                     this.bench[i] = null;
-                    this.container.removeChild(unit)
-                    this.units.push(unit)
+                    this.container.removeChild(unit.container)
+                    this.units[unit.id] = unit
                 }
             }
         }
@@ -76,8 +80,8 @@ export class Team {
 
     removeUnitFromEverywhere(unit) {
         this.removeFromBench(unit);
-        this.removeUnit(unit);// celle qui gère this.units
-        this.container.removeChild(unit)
+        delete this.units[unit.id]
+        this.container.removeChild(unit.container)
     }
 
     removeFromBench(unit) {
@@ -89,17 +93,12 @@ export class Team {
         return false;
     }
 
-    removeUnit(unit){
-        const index = this.units.indexOf(unit);
-
-        if (index !== -1){
-            this.units.splice(index, 1)
-        }
-
+    nbFieldedUnits(){
+        return this.units.filter(Boolean).length;
     }
 
     canAddOne(){
-        return this.units.length + 1 <= this.level;
+        return this.nbFieldedUnits() + 1 <= this.level;
     }
 
     canAddInBench() {
@@ -126,7 +125,6 @@ export class Team {
         this.gold -= this.shop.BUY_XP_COST;
         this.exp += this.shop.BUY_XP_AMOUNT;
         this.checkLevelUp();
-        this.shop.updateUI();
         return true;
     }
 
@@ -143,8 +141,58 @@ export class Team {
 
         //TODO envoyer un message au backend pour prévenir de la vente
 
-        this.addGold(unit.unit.cost)
-        this.shop.updateUI()
+        this.addGold(unit.cost)
         this.removeUnitFromEverywhere(unit);
+
+        for (let i = 0; i < unit.items.length; i++) {
+            const item = unit.items.pop()
+            unit.container.removeChild(item.sprite)
+            this.items.addAnItem(item)
+        }
+    }
+
+    clean() {
+        this.units.forEach(unit => {
+            this.removeUnitFromEverywhere(unit.fightingSprite)
+        })
+    }
+
+    resetPositions(arena) { // en gros finir le combat attendre 10 tick puis lancer le clean et cette fonction afin que l'on ait de nouveau notre équipe
+        this.units.forEach(unit => {
+            console.log(unit)
+            if (unit.fightingSprite != null){
+                arena.setToCell(unit, unit.hex.x, unit.hex.y);
+            }
+        })
+    }
+
+    resetUnits() {
+        this.units.forEach(unit => {
+            unit.reset()
+        })
+    }
+
+    addItem(item){
+        this.items.addAnItem(item)
+    }
+
+    findBenchedUnitAt(globalX, globalY) {
+        for (const unit of this.bench) {
+            if (!unit) continue;
+            const bounds = unit.container.getBounds(); // rectangle en coordonnées globales/écran
+            console.log('test point', globalX, globalY);
+            console.log(bounds); // regarde si x/y/width/height sont cohérents
+
+            if (bounds.containsPoint(globalX, globalY)) {
+                return unit;
+            }
+        }
+        return null;
+    }
+
+    update(dt) {
+        this.units.forEach(unit => {
+            unit.update(dt)
+        })
     }
 }
