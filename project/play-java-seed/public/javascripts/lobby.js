@@ -30,7 +30,11 @@ export function setupLobby(userId) {
         showView("view-historique");
     });
 
+    let gameStarted = false;
+
     ws.on("setup", async (payload) => {
+        if (gameStarted) return;
+        gameStarted = true
         showView("view-game");
         await initGame("view-game");
         startGame(payload, "skyrag"); // payload = { units, items, team }

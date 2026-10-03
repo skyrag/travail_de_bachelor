@@ -7,14 +7,14 @@ export class TextureManager {
     }
 
     async init() {
-        this.buttonSprite = await Assets.load('assets/images/RerollButton.png');
+        this.buttonSprite = await Assets.load('/assets/images/RerollButton.png');
     }
 
 
     async getUnit(name) {
 
-        const fight = await Assets.load(`assets/images/${name}_sprite.png`);
-        const shop = await Assets.load(`assets/images/${name}_shopSprite.png`);
+        const fight = await Assets.load(`/assets/images/${name}_sprite.png`);
+        const shop = await Assets.load(`/assets/images/${name}_shopSprite.png`);
 
         return {
             fightingSprite: fight,
@@ -23,7 +23,7 @@ export class TextureManager {
     }
 
     async getItem(name) {
-        return await Assets.load(`assets/images/${name}`)
+        return await Assets.load(`/assets/images/${name}`)
     }
 
 

@@ -118,14 +118,20 @@ export class Shop {
         const reroll = new Sprite(sprite);
         reroll.x = 60 + this.SHOPITEMWIDTH;
         reroll.y = 0;
+
         reroll.scale.set(0.5);
         reroll.width = this.SHOPITEMWIDTH;
         reroll.height = this.SHOPITEMHIEGHT/2;
 
         // Opt-in to interactivity
         reroll.eventMode = 'static';
+
+        // Shows hand cursor
         reroll.cursor = 'pointer';
-        reroll.on('pointerdown', () => this.onReroll());
+
+        reroll.on('pointerdown', () => this.onButtonClick(list));
+
+        // add the sprite to the container
         container.addChild(reroll);
     }
 

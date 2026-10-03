@@ -92,7 +92,7 @@ export async function initGame(rootElementId) {
 
 }
 
-export function startGame(payload, myUserId) {
+export async function startGame(payload, myUserId) {
     //---------------------------------reception du backend
 
     // la liste après extraction du TDO
@@ -135,7 +135,7 @@ export function startGame(payload, myUserId) {
     // traitement de la réception
 
 
-    for (const dto of unitsDTO){
+    for (const dto of unitsDTO) {
         const texture = textureManager.getUnit("geralt") // Débug, it should be dto.name
         const unit = new Unit(app, layers, dto.name, (await texture).fightingSprite, (await texture).shoppingSprite, dragger, 0, dto.maxHealth, dto.maxMana, dto.startingMana, dto.basicDamage, dto.attackSpeed, dto.armor, dto.magicResist, dto.range, dto.abilityName, dto.abilityDescription, dto.rarity, dto.cost)
         basicUnits.set(dto.name, unit);
@@ -146,17 +146,17 @@ export function startGame(payload, myUserId) {
     let itemsDTO = []
 
     const bfDTO = {
-        name : "bfSword",
-        description : "a big fucking sword",
-        sprite : "item.png",
-        effect : [
+        name: "bfSword",
+        description: "a big fucking sword",
+        sprite: "item.png",
+        effect: [
             {
-                type : "ATTACKDAMAGE",
-                value : 10,
+                type: "ATTACKDAMAGE",
+                value: 10,
             },
             {
-                type : "HEALTH",
-                value : 100,
+                type: "HEALTH",
+                value: 100,
             },
         ],
     }
@@ -173,7 +173,7 @@ export function startGame(payload, myUserId) {
 
     // create shopUnits
     const list = [];
-    for (let i = 0; i < 5 ; i++){
+    for (let i = 0; i < 5; i++) {
         list.push(basicUnits.get("geralt").copy(i + 1));
     }
 
@@ -198,7 +198,7 @@ export function startGame(payload, myUserId) {
 
 
     // creating the shop
-    const shop = new Shop(app,layers, team, arena, textureManager.getButton(), list, layout.shop);
+    const shop = new Shop(app, layers, team, arena, textureManager.getButton(), list, layout.shop);
 
     // le tick
     app.ticker.add((ticker) => {
@@ -209,7 +209,7 @@ export function startGame(payload, myUserId) {
 
         fightManager.advancePlaybackTime(ticker.deltaMS)
         arena.checkDeath()
-        if (fightManager.checkEnd()){
+        if (fightManager.checkEnd()) {
             arena.clean()
             team.resetPositions(arena)
             team.resetUnits()
@@ -219,20 +219,14 @@ export function startGame(payload, myUserId) {
     });
 
 
-
-    // Move the container to the top left
-    container.x = 0;
-    container.y = 0;
-
-
     // Bouton lancer un combat (débug)
     const fightButton = new Graphics()
         .rect(-75, GAME_H / 12 + 100, 100, 100)
         .fill(0x2ecc71)
-        .stroke({ width: 2, color: 0x000000 });
+        .stroke({width: 2, color: 0x000000});
     fightButton.eventMode = 'static';
     fightButton.cursor = 'pointer';
-    fightButton.on('pointerdown', () => setupFight() );
+    fightButton.on('pointerdown', () => setupFight());
     layers.ui.addChild(fightButton);
 
 
@@ -240,10 +234,10 @@ export function startGame(payload, myUserId) {
     const itemButton = new Graphics()
         .rect(225, GAME_H / 12 + 100, 100, 100)
         .fill(0xff0000)
-        .stroke({ width: 2, color: 0x000000 });
+        .stroke({width: 2, color: 0x000000});
     itemButton.eventMode = 'static';
     itemButton.cursor = 'pointer';
-    itemButton.on('pointerdown', () => team.addItem(items.get("bfSword").create(itemDragger)) );
+    itemButton.on('pointerdown', () => team.addItem(items.get("bfSword").create(itemDragger)));
     layers.ui.addChild(itemButton);
 }
 

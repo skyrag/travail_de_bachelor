@@ -57,6 +57,13 @@ public class GameRepository extends BasicRepository{
                             "select distinct i from Item i left join fetch i.effects", Item.class)
                     .getResultList();
 
+            em.createQuery(
+                            "select distinct t from Team t " +
+                                    "join fetch t.user " +
+                                    "where t.game = :g", Team.class)
+                    .setParameter("g", merged)
+                    .getResultList();
+
             return merged;
         }), executionContext);
     }

@@ -179,6 +179,7 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
      */
     private ConnexionActor(ActorContext<Message> ctx, org.apache.pekko.actor.ActorRef ws, long userId, ActeurMonitor monitor, MatchmakingService matchmakingService) {
         super(ctx);
+        System.out.println("constructeur" + ws);
         this.ws = ws;
         this.userId = userId;
         this.monitor = monitor;
@@ -218,11 +219,22 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
      */
     private Behavior<Message> onIncoming(IncomingMessage msg) {
         // process messages once the game is available
-        if (msg.text.get(TIME).longValue() >= endOfRoundTime){
+        String type = msg.text.get(TYPE).asText();
+        boolean isGameAction = switch (type) {
+            case BUY, SELL, MOVE, GIVE, REROLL, EXP -> true;
+            default -> false;
+        };
+
+        // seules les actions de jeu arrivées après la fin du round sont retardées
+        if (isGameAction && System.currentTimeMillis() >= endOfRoundTime) {
             endOfRoundBuffer.add(msg);
+            return Behaviors.same();
+        }
+        if (isGameAction && game == null) {
+            return Behaviors.same();
         }
 
-        switch (msg.text.get(TYPE).asText()){
+        switch (type){
             case HISTORIQUE -> {
                 //TODO
             }
@@ -275,6 +287,8 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
      * @return the next behavior
      */
     private Behavior<Message> onConnectionClosed(ConnectionClosed msg) {
+        System.out.println("OnConnectionClosed " + ws);
+
         this.ws = null;
         heartbeat.cancel();
 
@@ -325,15 +339,15 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
      */
     private Behavior<Message> onStartingRound(StartOfRound msg) {
         reconnectionBuffer.add(msg.payload);
+        endOfRoundTime = msg.payload.get(PAYLOAD).longValue();
         if (ws != null) {
-            endOfRoundTime = msg.payload.get(PAYLOAD).longValue();
-
-            ws.tell(msg.payload,  org.apache.pekko.actor.ActorRef.noSender());
+            ws.tell(msg.payload, org.apache.pekko.actor.ActorRef.noSender());
         }
-        for (IncomingMessage bufferedMsg: endOfRoundBuffer){
-            ObjectNode json = (ObjectNode) bufferedMsg.text;
-            json.put(TIME, System.currentTimeMillis());
-            getContext().getSelf().tell(new IncomingMessage(json));
+
+        List<IncomingMessage> toReplay = new ArrayList<>(endOfRoundBuffer);
+        endOfRoundBuffer.clear();
+        for (IncomingMessage buffered : toReplay) {
+            getContext().getSelf().tell(buffered);
         }
         return Behaviors.same();
     }
@@ -367,6 +381,9 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
      * @return the next behavior
      */
     private Behavior<Message> onReconnectMessage(ReconnectMessage msg) {
+
+        System.out.println("onReconnect " + ws);
+
         this.ws = msg.ws;
         missedHeartbeats = 0;
 

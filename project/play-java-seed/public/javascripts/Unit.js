@@ -11,13 +11,7 @@ export class Unit {
         this.dragger = dragger;
         this.id = id;
         this.name = name;
-        this.maxHealth = maxHealth;
-        this.currentHealth = maxHealth; // <-- PV actuels, initialisés au max
-        this.maxMana = maxMana;
-        this.startingMana = startingMana;
-        this.baseAttack = baseAttack;
-        this.attackDamage = attackDamage;
-        this.abilityPower = abilityPower;
+
 
         //static stats
         this.trait = String[5];
@@ -76,10 +70,6 @@ export class Unit {
         return new Unit(this.app, this.layers, this.name, this.fightingSprite, this.shoppingSprite, this.dragger, id, this.maxHealth, this.maxMana, this.startingMana, this.basicDamage, this.attackSpeed, this.armor, this.magicResist, this.range, this.abilityName, this.abilityDescription, this.rarity, this.cost)
     }
 
-    copy(newId) {
-        return this.clone({ id: newId ?? this.id + 1 });
-    }
-
     createShopping(x, y, onClick, container, width, height) {
         const shop = new Sprite(this.shoppingSprite);
 
@@ -126,6 +116,7 @@ export class Unit {
 
         // Setup events for mouse + touch using the pointer events
         fighter.dragger = this.dragger;
+        fighter.unit = this;
         fighter.on('pointerdown', fighter.dragger.onDragStart, fighter);
 
         this.fightingSprite = fighter
