@@ -8,6 +8,8 @@ export class Team {
         this.name = name;
         this.units = [];
         this.level = 1;
+        this.MAXHEALTH = 100
+        this.health = this.MAXHEALTH;
         this.exp = 0;
         this.gold = 30;
         this.bench = new Array(10).fill(null);
@@ -27,6 +29,14 @@ export class Team {
         container.y = this.y;
         this.container = container;
         layers.units.addChild(container);   // au lieu de app.stage
+
+        // Barre de pv
+        this.healthBar = new Graphics();
+        this.healthBar.eventMode = 'none';
+        this.healthShown = 1;
+        this.healthDrawn = -1;
+        this.container.addChild(this.healthBar);
+
 
     }
 
@@ -194,5 +204,18 @@ export class Team {
         this.units.forEach(unit => {
             unit.update(dt)
         })
+
+        const ratioh = Math.min(this.health / this.MAXHEALTH, 1);
+        this.healthShown += (ratioh - this.healthShown) * Math.min(1, 0.15 * dt);  // lerp
+        if (Math.abs(ratioh - this.healthShown) < 0.001) this.healthShown = ratioh;
+
+        if (this.healthShown !== this.healthDrawn) {         // redessine seulement si ça bouge
+            this.healthBar.clear()
+                .rect(-this.x - 30, -this.y + 10, 500 * this.healthShown, 60)
+                .fill(0xff0000)
+                .stroke({width: 2, color: 0x000000});
+            this.healthDrawn = this.healthShown;
+        }
+
     }
 }

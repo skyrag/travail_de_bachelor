@@ -11,6 +11,7 @@ import { createLayers, fitToScreen, GAME_W, GAME_H } from './Layers.js';
 import {Fight} from "./Fight.js";
 import{ItemBox} from "./ItemBox.js";
 import {ItemDragger} from "./ItemDragger.js";
+import {Countdown} from "./Countdown.js";
 
 
 let app;
@@ -19,7 +20,7 @@ let dragger, itemDragger;
 let arena, ourTeam, shop, itemBox;
 let basicUnits, items, teams;
 let fightManager;
-let ISFIGHTINGPHASE;
+let ISFIGHTINGPHASE, ENDOFROUND, countdown;
 
 
 export async function initGame(rootElementId) {
@@ -89,6 +90,15 @@ export async function initGame(rootElementId) {
 
     itemDragger.setArena(arena);
     itemDragger.setItemBox(itemBox);
+
+    //coutdown
+    countdown = new Countdown(layers, 90, GAME_W / 2 + 15, 28)
+    countdown.onComplete = () => {
+        ENDOFROUND = true;
+    }
+
+    //débug
+    countdown.start(90)
 
 }
 
@@ -204,6 +214,7 @@ export async function startGame(payload, myUserId) {
     app.ticker.add((ticker) => {
         shop.update(ticker.deltaTime);
         team.update(ticker.deltaTime);
+        countdown.update(ticker.deltaMS);
 
         if (!ISFIGHTINGPHASE) return;
 
@@ -214,6 +225,7 @@ export async function startGame(payload, myUserId) {
             team.resetPositions(arena)
             team.resetUnits()
             ISFIGHTINGPHASE = false
+            countdown.start(90);
         }
 
     });
