@@ -1,6 +1,7 @@
 package model.entities.effect.scaling;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import model.DTO.fighting.EffectAppliedEventDTO;
 import model.DTO.fighting.FightingEventDTO;
 import model.entities.effect.StatType;
@@ -10,6 +11,7 @@ import model.service.fightingService.ComponentUnit;
  * An effect that extends scalingEffect and that heals the target
  */
 @Entity
+@Table(name = "healing_effect")
 public class HealingEffect extends ScalingEffect {
 
     protected HealingEffect() {

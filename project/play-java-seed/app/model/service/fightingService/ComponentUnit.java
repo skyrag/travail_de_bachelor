@@ -164,7 +164,7 @@ public class ComponentUnit {
         currentMana = 0;
     }
 
-    private void damage(int damage){
+    public void damage(int damage){
         if (!isAlive()) return;
         currentHealth -= damage;
         if (currentHealth <= 0){
@@ -227,6 +227,7 @@ public class ComponentUnit {
         damage(mitigatedDamage);
         return mitigatedDamage;
     }
+
 
     public int damagePhysic(int trueDamage){
         int mitigatedDamage = Math.toIntExact(Math.round(trueDamage * (100.0 / (100 + armor))));

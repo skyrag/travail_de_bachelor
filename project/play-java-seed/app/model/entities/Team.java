@@ -70,6 +70,7 @@ public class Team {
             joinColumns = @JoinColumn(name = "team_id"),
             inverseJoinColumns = @JoinColumn(name = "unit_id")
     )
+    @OrderColumn(name = "slot")
     private List<Unit> shop = new ArrayList<>();
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -189,14 +190,16 @@ public class Team {
         gold += WINNINGGAINS;
     }
 
-    public void newRound(){
-        rounds.add(new Round(rounds.getLast().getRoundNumber() + 1,this));
-        gold += ENDOFROUNDGOLD;
-        exp += ENDOFROUNDEXP;
 
-        Round currentRound = rounds.getLast();
-        int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new ChangingGoldEvent(step, currentRound, ENDOFROUNDGOLD));
+    public void newRound() {
+        int number = rounds.isEmpty() ? 1 : rounds.getLast().getRoundNumber() + 1;
+        Round round = new Round(number, this);
+        rounds.add(round);
+        if (number > 1) {                       // pas de gold/exp au tout premier round, si tu le souhaites
+            gold += ENDOFROUNDGOLD;
+            exp += ENDOFROUNDEXP;
+        }
+        round.getEvents().add(new ChangingGoldEvent(0, round, number > 1 ? ENDOFROUNDGOLD : 0));
     }
 
     public boolean canBuyExp(int maxExp){
@@ -295,7 +298,7 @@ public class Team {
             return false;
         }
         gold -= unit.getCost();
-        shop.remove(unit);
+        shop.set(shop.indexOf(unit), null);
         InstanceUnit instance = new InstanceUnit(1, newPos, unit, this);
         addUnit(instance);
 
@@ -320,6 +323,11 @@ public class Team {
         }
         return null;
     }
+
+    public void setItems(List<Item> items){
+        this.items = new ArrayList<>(items);
+    }
+
     public InstanceUnit getUnitById(long id){
         for (InstanceUnit unit : units){
             if (unit.getId() == id) {
@@ -411,6 +419,10 @@ public class Team {
 
     public void setSeed(long seed){
         this.seed = new Random(seed);
+    }
+
+    public void setRandom(Random seed) {
+        this.seed = seed;
     }
 
     public Random getSeed(){

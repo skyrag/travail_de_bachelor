@@ -1,8 +1,11 @@
 package model.entities.game;
 
 import jakarta.persistence.*;
+import model.DTO.ItemDTO;
+import model.DTO.ItemDTOMapper;
 import model.entities.Team;
 import model.entities.unit.InstanceUnit;
+import model.entities.unit.Item;
 import model.entities.unit.Unit;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 
@@ -46,6 +49,9 @@ public class Game {
 
     @Transient
     private Team lastDied;
+
+    @Transient
+    private List<Item> items = new ArrayList<>();
 
     protected Game() {
 
@@ -119,6 +125,8 @@ public class Game {
         return lastDied;
     }
 
+    public void setLastDied(Team team) {this.lastDied = team;}
+
     public Team getTeam(long userId) {
         for (Team team: teams){
             if (team.getUser().getId() == userId){
@@ -126,6 +134,14 @@ public class Game {
             }
         }
         return null;
+    }
+
+    public List<ItemDTO> getItemsDTO() {
+        return items.stream().map(ItemDTOMapper::itemToDTO).toList();
+    }
+
+    public List<Item> getItems() {
+        return items;
     }
 
     public PoolEntry getPool(long unitId){
@@ -169,6 +185,10 @@ public class Game {
 
     public void setPools(List<Pool> pools) {
         this.pools = pools;
+    }
+
+    public void setItems(List<Item> items) {
+        this.items = items;
     }
 
     public Unit getUnitById(long unitId) {

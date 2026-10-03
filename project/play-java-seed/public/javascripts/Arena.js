@@ -2,21 +2,9 @@ import {Container, Sprite, Graphics} from "pixi.js";
 
 export class Arena {
 
-    constructor(app) {
+    constructor(app, layers) {
         this.app = app;
-        this.units = Array.from(
-            { length: 8 },
-            () => Array(8).fill(null)
-        );
-
-        // valeur du placeholder mais aussi de la détection pour le drag
-        this.x = 300;
-        this.width = window.innerWidth -500;
-        this.y = window.innerHeight/12 - 150;
-        this.height = window.innerHeight/2 + 300;
-
-        this.generateHexGrid(650 - this.x,220 - this.y,8,8);
-
+        this.units = []
 
         //création du sprite pour l'arène
         const COLS = 8;
@@ -24,6 +12,7 @@ export class Arena {
         const RADIUS = 70;
 
         const H_SPACING = Math.sqrt(3) * RADIUS;
+        this.H_SPACING = H_SPACING
         const V_SPACING = 1.5 * RADIUS;
 
         const OFFSET_X = 80;
@@ -32,13 +21,13 @@ export class Arena {
         // Container qui va contenir tout le terrain
         const terrain = new Container();
         this.container = terrain;
-        terrain.zIndex = 0;
-        app.stage.addChild(terrain);
+        this.layers = layers;
+        layers.board.addChild(terrain);
 
         this.hexGrid = []; // pour garder les centres
 
 
-        function createHexagon(radius) {
+        function createHexagon(radius, isblocked) {
             const hex = new Graphics();
 
             const points = [];
@@ -51,7 +40,9 @@ export class Arena {
                 );
             }
 
-            hex.poly(points).fill(0x7ec8e3);
+            const color = isblocked ? 0xff0000 :0x7ec8e3;
+
+            hex.poly(points).fill(color);
             hex.poly(points).stroke({ width: 2, color: 0x000000 });
 
             return hex;
@@ -68,56 +59,71 @@ export class Arena {
                 const y = OFFSET_Y
                     + row * V_SPACING;
 
-                const hex = createHexagon(RADIUS);
+                const isBlocked = col >= 4;
+                const hex = createHexagon(RADIUS, isBlocked);
                 hex.x = x;
                 hex.y = y - V_SPACING/2;
 
                 terrain.addChild(hex); // on ajoute au container
-                this.hexGrid[row][col] = { x, y, hex, unit: null};
+                this.hexGrid[row][col] = { x, y, col, row, hex, unit: null, isBlocked: isBlocked};
             }
         }
         // Ensuite, pour déplacer TOUT le terrain :
-        terrain.x = 600;
-        terrain.y = 100;
+        terrain.x = 500;
+        terrain.y = 50;
+
     }
 
 
     getClosestCell(x, y) {
-        const local = this.container.toLocal({ x, y });
+        const local = this.container.toLocal({ x, y }, this.layers.root );
 
         let best = null;
         let bestDist = Infinity;
 
         for (const cell of this.hexGrid.flat()) {
-            const dx = local.x - cell.x;
-            const dy = local.y - cell.y;
-            const dist = dx * dx + dy * dy;
+            const dist = this.distanceFrom(local, cell)
 
             if (dist < bestDist) {
                 bestDist = dist;
                 best = cell;
             }
         }
-
+        console.log(best); // debug
         return best;
+    }
+
+    findUnitAt(globalX, globalY) {
+        for (const unit of this.units) {
+            if (!unit) continue; // this.units est indexé par id, donc peut avoir des trous
+            const bounds = unit.container.getBounds();
+            if (bounds.containsPoint(globalX, globalY)) {
+                return unit;
+            }
+        }
+        return null;
     }
 
     setToClosesCell(unit, x, y) {
         const cell = this.getClosestCell(x, y);
-        if (!cell || (cell.unit && cell.unit !== unit)) return false;
+        if (!cell || cell.isBlocked || (cell.unit && cell.unit !== unit)) return false;
 
-        this.container.addChild(unit);
+        this.container.addChild(unit.container);
+        this.units[unit.id] = unit
         cell.unit = unit;
-        unit.position.set(cell.x, cell.y);
+        unit.container.position.set(cell.x, cell.y);
+        unit.hex = {x: cell.col, y: cell.row}
+        unit.setOnArena()
+
         return true;
     }
 
     getCellAtPoint(x, y) {
-        const local = this.container.toLocal({ x, y });
+        const local = this.container.toLocal({ x, y }, this.layers.root);
 
         for (const cell of this.hexGrid.flat()) {
             const point = { x: local.x - cell.x, y: local.y - cell.y };
-            if (cell.hex.containsPoint(point)) {
+            if (cell.hex.containsPoint(point) && !cell.isBlocked) {
                 return cell;
             }
         }
@@ -129,39 +135,15 @@ export class Arena {
         return this.getCellAtPoint(x, y) !== null;
     }
 
-    generateHexGrid(startX, startY, rows, cols) {
-        const HEX_X = 160;
-        const HEX_Y = 60;
-
-        const cells = [];
-
-        for (let row = 0; row < rows; row++) {
-            cells[row] = [];
-
-            for (let col = 0; col < cols; col++) {
-                const x = startX + col * HEX_X + (row % 2) * (HEX_X / 2);
-                const y = startY + row * HEX_Y;
-
-                cells[row][col] = {
-                    row,
-                    col,
-                    x,
-                    y,
-                    unit: null
-                };
-            }
-        }
-
-        this.cells = cells;
-        console.log(this.cells)
-    }
-
     setToNextEmptyCell(unit){
         for (const cell of this.hexGrid.flat()) {
-            if (cell.unit == null){
-                this.container.addChild(unit); // <-- ajout du fix : bon parent
+            if (cell.unit == null && !cell.isBlocked){
+                this.container.addChild(unit.fightingSprite);
+                this.units[unit.id] = unit
                 cell.unit = unit;
-                unit.position.set(cell.x, cell.y);
+                unit.container.position.set(cell.x, cell.y);
+                unit.hex = {x: cell.col, y: cell.row}
+                unit.setOnArena()
                 return true;
             }
         }
@@ -175,7 +157,10 @@ export class Arena {
                 break;
             }
         }
-        this.container.removeChild(unit);
+        this.units[unit.id] = undefined
+        unit.hex = {x: -1, y: -1}
+        this.container.removeChild(unit.container);
+        unit.setOffArena()
     }
 
     getCellOfUnit(unit) {
@@ -186,18 +171,61 @@ export class Arena {
     }
 
     moveUnit(unit, x, y) {
-        const target = this.getClosestCell(x, y);
-        if (!target) return false;
+        const cell = this.getClosestCell(x, y);
+        if (!cell || cell.isBlocked) return false;
 
         // Case déjà occupée par une AUTRE unité → on refuse le déplacement
-        if (target.unit && target.unit !== unit) return false;
+        if (cell.unit && cell.unit !== unit) return false;
 
         // On libère l'ancienne case de cette unité
         const current = this.getCellOfUnit(unit);
         if (current) current.unit = null;
 
-        target.unit = unit;
-        unit.position.set(target.x, target.y);
+        cell.unit = unit;
+        unit.container.position.set(cell.x, cell.y);
+        unit.hex = {x: cell.col, y: cell.row}
+        unit.setOnArena()
+
         return true;
+    }
+
+    setToCell(unit, x, y){ //debug purposes only
+        const cell = this.hexGrid[y][x]
+
+        if (!cell || (cell.unit && cell.unit !== unit)) return;
+
+        this.container.addChild(unit.container);
+        this.units[unit.id] = unit
+        cell.unit = unit;
+        unit.container.position.set(cell.x, cell.y);
+        unit.hex = {x: cell.col, y: cell.row}
+        unit.setOnArena()
+
+    }
+
+    getCell(x,y) {
+        return this.hexGrid[y][x];
+    }
+
+    checkDeath(){
+        for (const unit of this.units){
+            if (unit.isDead()){
+                this.container.removeChild(unit.container)
+            }
+        }
+    }
+
+    clean () {
+        for (const unit of this.units) {
+            this.container.removeChild(unit.container)
+        }
+        this.units.length = 0
+    }
+
+    distanceFrom(src, dst){
+        const dx = src.x - dst.x;
+        const dy = src.y - dst.y;
+        const dist = dx * dx + dy * dy;
+        return dist
     }
 }

@@ -3,7 +3,13 @@ package model.repositories;
 import model.DTO.ItemDTO;
 import model.DTO.ItemDTOMapper;
 import model.DatabaseExecutionContext;
+import model.entities.Round;
+import model.entities.Team;
+import model.entities.game.Game;
+import model.entities.unit.AbilityFragment;
 import model.entities.unit.Item;
+import model.entities.unit.Unit;
+import org.hibernate.Hibernate;
 import play.db.jpa.JPAApi;
 
 import javax.inject.Inject;
@@ -32,5 +38,26 @@ public class GameRepository extends BasicRepository{
             return items.stream().map(ItemDTOMapper::itemToDTO).toList();
         }
         ), executionContext);
+    }
+
+    public CompletionStage<Game> persistGameSetup(Game game) {
+        return supplyAsync(() -> wrap(em -> {
+            Game merged = em.merge(game);   // insère les InstanceUnit via le cascade
+            em.flush();                     // les ids sont générés ici
+
+            em.createQuery(
+                            "select distinct u from Unit u " +
+                                    "left join fetch u.ability a " +
+                                    "left join fetch a.strategie", Unit.class)
+                    .getResultList();
+            em.createQuery(
+                            "select distinct a from AbilityFragment a left join fetch a.effects", AbilityFragment.class)
+                    .getResultList();
+            em.createQuery(
+                            "select distinct i from Item i left join fetch i.effects", Item.class)
+                    .getResultList();
+
+            return merged;
+        }), executionContext);
     }
 }

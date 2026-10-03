@@ -213,8 +213,8 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
     private final List<Pair<ActorRef<ConnexionActor.Message>, Long>> users;
     private Game game;
-    private final List<Team> teams;
-    private final List<Pool> pools;
+    private List<Team> teams;
+    private List<Pool> pools;
     private final GameRepository repo;
     private final SeedMakerService seedGenerator;
     private final GameLevelService gameLevelService;
@@ -268,7 +268,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         this.rand = new Random(game.getSeed());
         this.spriteMap = getSingleton();
         getContext().getSelf().tell(new SetupMessage());
-        getContext().getLog().info("setup : avant future");
 
     }
 
@@ -298,7 +297,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
     /**
      * Initializes the game by assigning each team its random generator
-     * and a starting unit.
+     * and a starting unit, items and shopUnits.
      *
      * @param msg initialization message
      * @return the next behavior
@@ -308,27 +307,29 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
         for (Team team : teams){
             team.setSeed(seedGenerator.createFromSeed(baseSeed, "player:" + team.getUser().getId()));
-            Unit unit = game.randomUnitFromPool(pools.getFirst(), team.getSeed());
-            InstanceUnit instanceUnit = new InstanceUnit(1, new Tuple(0,0), unit, team);
-            repo.add(instanceUnit).thenCompose( unitDB -> {
-                team.addUnit(unitDB);
-                return null;
-            });
+            team.setItems(new ArrayList<>(game.getItems()));
+
+            Unit startUnit = game.randomUnitFromPool(pools.getFirst(), team.getSeed());
+            team.addUnit(new InstanceUnit(1, new Tuple(0,0), startUnit, team));
+
+            //set shop units
+            List<Unit> shop = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                shop.add(game.randomUnitFromPool(pools.getFirst(), team.getSeed()));
+            }
+            team.setShop(shop);
+
         }
 
         System.out.println("on est la");
 
-        repo.merge(game)
-                .thenCompose(mergedGame -> repo.findById(mergedGame.getId(), Game.class))
-                .thenAccept(freshGame -> {
-                    getContext().getSelf().tell(new InternalSetupDoneMessage(freshGame));
-                })
+        repo.persistGameSetup(game)
+                .thenAccept(freshGame -> getContext().getSelf().tell(new InternalSetupDoneMessage(freshGame)))
                 .exceptionally(err -> {
-                    getContext().getLog().error("Failed to setup game: {}", err.getMessage());
+                    getContext().getLog().error("Failed to setup game: {}", err.toString());
                     return null;
                 });
 
-        getContext().getLog().info("onConnexionSetupMessage : fin");
 
         return Behaviors.same();
     }
@@ -337,9 +338,25 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onInternalSetupDoneMessage(InternalSetupDoneMessage msg){
         System.out.println("on est dans setup done");
 
+        for (Team fresh : msg.game.getTeams()) {
+            for (Team old : teams) {
+                if (Objects.equals(old.getUser().getId(),fresh.getUser().getId())) {
+                    fresh.setRandom(old.getSeed());   // à ajouter dans Team
+                }
+            }
+        }
+
+        msg.game.setItems(this.game.getItems());
+        msg.game.setLastDied(this.game.getLastDied());
+        this.game = msg.game;
+        this.teams = msg.game.getTeams();
+        this.pools = msg.game.getPools();
+
         for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users){
             pair.first().tell(new ConnexionActor.StartGame(getContext().getSelf()));
         }
+
+        getContext().getSelf().tell(new StartOfRoundMessage());
         return Behaviors.same();
     }
 
@@ -371,7 +388,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         tellOtherUsers(tell, msg.userId);
 
         repo.merge(game).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge game: {} from message {}", err.getMessage(), msg);
+            System.out.println("erreur dans merge: " + err);
             return null;
         });
         return Behaviors.same();
@@ -400,7 +417,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         tellOtherUsers(payload, msg.userId);
 
         repo.merge(game).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge game: {} from message {}", err.getMessage(), msg);
+            System.out.println("Failed to merge game: " + err.getMessage()+ " from " + msg);
             return null;
         });
         return Behaviors.same();
@@ -435,7 +452,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         tellOtherUsers(payload, msg.userId);
 
         repo.merge(team).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge team: {} from message {}", err.getMessage(), msg);
+            System.out.println("Failed to merge game: " + err.getMessage()+ " from " + msg);
             return null;
         });
         return Behaviors.same();
@@ -461,7 +478,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         tellOtherUsers(payload, msg.userId);
 
         repo.merge(team).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge team: {} from message {}", err.getMessage(), msg);
+            System.out.println("Failed to merge game: " + err.getMessage()+ " from " + msg);
             return null;
         });
         return Behaviors.same();
@@ -486,13 +503,9 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
 
         List<Unit> shop = new ArrayList<>();
-        List<InstanceUnit> shopInstance = new ArrayList<>();
         for (int i = 0; i < MAXNBSHOPUNIT; i++){
             Unit unit = game.randomUnitFromPool(randomRarityFromPools(team),team.getSeed());
             shop.add(unit);
-            InstanceUnit instanceUnit = new InstanceUnit(1, new Tuple(100,100), unit, team);
-            shopInstance.add(instanceUnit);
-            team.addUnit(instanceUnit);
         }
 
         if (!team.canReroll(shop)){
@@ -501,7 +514,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         }
 
         repo.merge(team).thenApply(team1 -> {
-            List<TeamsUnitDTO> units = shopInstance.stream().map(unit -> new TeamsUnitDTO(unit.getId(), unit.getUnit().getId())).toList();
+            ShopDTO units = ShopDTO.from(shop);
 
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, OK).set(PAYLOAD, Json.toJson(units))));
 
@@ -528,7 +541,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, OK)));
 
         repo.merge(team).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge team: {} from message {}", err.getMessage(), msg);
+            System.out.println("Failed to merge game: " + err.getMessage()+ " from " + msg);
             return null;
         });
         return Behaviors.same();
@@ -583,6 +596,8 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
             maxFights++;
             remainingTeam.add(game.getLastDied());
         }
+
+        nbFight = 0;
 
         for (int i = 0; i < maxFights; i++){
             Team teamA = remainingTeam.get(rand.nextInt(remainingTeam.size()));
@@ -690,7 +705,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
         repo.add(fight);
         repo.merge(game).exceptionally(err -> {
-            getContext().getLog().error("Failed to merge game: {} from message {}", err.getMessage(), msg);
+            System.out.println("Failed to merge game: " + err.getMessage()+ " from " + msg);
             return null;
         });        return Behaviors.same();
     }
@@ -716,7 +731,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * @return the next behavior
      */
     private Behavior<Message> onConnexionSetupMessage (ConnexionSetupMessage msg) {
-        getContext().getLog().info("onConnexionSetupMessage");
 
         System.out.println("on est dans le setup");
 
@@ -733,11 +747,10 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         List<UnitDTO> unitDTOS = new ArrayList<>();
         for (Pool pool : game.getPools()){
             for (PoolEntry entry: pool.getEntries()){
-                unitDTOS.add(UnitDTOMapper.unitToDTO(entry.getUnit(), spriteMap.getSprite(entry.getUnit().getSpriteKey())));
+                unitDTOS.add(UnitDTOMapper.unitToDTO(entry.getUnit(),entry.getUnit().getSpriteKey()));
             }
         }
 
-        getContext().getLog().info("onConnexionSetupMessage : après unit");
 
         List<TeamDTO> teamDTOS = new ArrayList<>();
         for (Team currentTeam: teams1){
@@ -746,6 +759,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
             List<Long> shop = currentTeam.getShop().stream().map(Unit::getId).toList();
 
             teamDTOS.add(new TeamDTO(currentTeam.getId(),
+                    currentTeam.getUser().getUsername(),
                     currentTeam.getStreak(),
                     currentTeam.getHealth(),
                     currentTeam.getLvl(),
@@ -756,31 +770,21 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                     units));
         }
 
-        getContext().getLog().info("onConnexionSetupMessage : après team");
 
         System.out.println("on est avant le getrepo du setup");
 
+        System.out.println("on est avant le frontend1");
 
-        repo.getAllItemsDTO().thenApply(listItemsDTO -> {
-            System.out.println("on est avant le frontend1");
+        ObjectNode response = Json.newObject().put(ID , getUUID()).put(TYPE, SETUP).set(UNITS, Json.toJson(unitDTOS));
+        response.set(ITEMS, Json.toJson(game.getItemsDTO()));
+        response.set(TEAM, Json.toJson(teamDTOS));
 
-            ObjectNode response = Json.newObject().put(ID , getUUID()).put(TYPE, SETUP).set(UNITS, Json.toJson(unitDTOS));
-            response.set(ITEMS, Json.toJson(listItemsDTO));
-            response.set(TEAM, Json.toJson(teamDTOS));
+        System.out.println("on est avant le frontend2");
 
-            System.out.println("on est avant le frontend2");
-
-            msg.respondTo.tell(new ConnexionActor.SetupMessage(response));
-
-            return null;
-        }).exceptionally(err -> {
-            System.out.println("on est dasn une erreur" + err.toString());
-            return null;
-        });
+        msg.respondTo.tell(new ConnexionActor.SetupMessage(response));
 
         System.out.println("on est a la fin du setup");
 
-        getContext().getLog().info("onConnexionSetupMessage : fin de la fonction");
 
         return Behaviors.same();
     }

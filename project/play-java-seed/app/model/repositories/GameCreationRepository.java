@@ -7,6 +7,8 @@ import model.entities.game.Game;
 import model.entities.game.Pool;
 import model.entities.game.PoolEntry;
 import model.entities.game.Rarity;
+import model.entities.unit.AbilityFragment;
+import model.entities.unit.Item;
 import model.entities.unit.Unit;
 import play.db.jpa.JPAApi;
 
@@ -30,8 +32,22 @@ public class GameCreationRepository extends BasicRepository{
         return supplyAsync(() -> wrap(em -> {
             Game game = new Game(version, seed);
 
-            List<Unit> units = em.createQuery("SELECT u FROM Unit u", Unit.class)
+            List<Unit> units = em.createQuery(
+                            "select distinct u from Unit u " +
+                                    "left join fetch u.ability a " +
+                                    "left join fetch a.strategie", Unit.class)
                     .getResultList();
+
+            //remplit a.effects pour les fragments déjà chargés
+            em.createQuery(
+                            "select distinct a from AbilityFragment a " +
+                                    "left join fetch a.effects " +
+                                    "where a.unit in :units", AbilityFragment.class)
+                    .setParameter("units", units)
+                    .getResultList();
+
+            List<Item> items = em.createQuery("select distinct i from Item i left join fetch i.effects", Item.class).getResultList();
+
 
             List<Team> teams = new ArrayList<>();
             for (long userId: usersId){
@@ -60,6 +76,8 @@ public class GameCreationRepository extends BasicRepository{
                     case LEGENDARY -> pools.get(4).addEntries(new PoolEntry(pools.get(4), unit, UNITSTARTINGPOOL));
                 }
             }
+
+            game.setItems(items);
             game.setTeams(teams);
             game.setPools(pools);
             em.persist(game);

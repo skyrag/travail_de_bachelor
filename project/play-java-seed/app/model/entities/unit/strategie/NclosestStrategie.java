@@ -2,6 +2,7 @@ package model.entities.unit.strategie;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import model.service.fightingService.ComponentUnit;
 import model.service.fightingService.FightingContext;
 
@@ -16,6 +17,7 @@ import java.util.List;
  * ennemy or ally depending on the boolean isTargetEnnemy
  */
 @Entity
+@Table(name = "n_closest_strategie")
 public class NclosestStrategie extends Strategie{
 
     @Column(name = "is_target_ennemy", nullable = false)

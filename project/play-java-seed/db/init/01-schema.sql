@@ -67,7 +67,7 @@ CREATE TABLE pool (
 CREATE TABLE unit (
     id BIGSERIAL PRIMARY KEY,
     patch_version VARCHAR(20) NOT NULL,
-    sprite_key BIGINT NOT NULL,
+    sprite_key VARCHAR(30) NOT NULL,
     name VARCHAR(30) NOT NULL,
     cost int NOT NULL,
     ability_name VARCHAR(30) NOT NULL,
@@ -113,7 +113,8 @@ CREATE TABLE team (
 CREATE TABLE teams_shop (
     unit_id BIGINT NOT NULL,
     team_id BIGINT NOT NULL,
-    PRIMARY KEY (unit_id, team_id),
+    slot INT NOT NULL,
+    PRIMARY KEY (slot, team_id),
     CONSTRAINT fk_teams_shop_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE,
     CONSTRAINT fk_teams_shop_team FOREIGN KEY (team_id) REFERENCES team(id) ON DELETE CASCADE
 );

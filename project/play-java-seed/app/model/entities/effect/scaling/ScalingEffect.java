@@ -2,6 +2,7 @@ package model.entities.effect.scaling;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import model.entities.effect.Effect;
 import model.entities.effect.StatType;
 
@@ -12,12 +13,13 @@ import model.entities.effect.StatType;
  * the effect's final value.
  */
 @Entity
+@Table(name = "scaling_effect")
 public abstract class ScalingEffect extends Effect {
 
     @Column(nullable = false)
     private Integer base;
 
-    @Column(name = "taype_scaling", nullable = false)
+    @Column(name = "type_scaling", nullable = false)
     private StatType typeScaling;
 
     @Column(name = "coef_scaling", nullable = false)

@@ -3,21 +3,14 @@ import {Item} from "./Item.js";
 import {Dragger} from "./Drag.js";
 
 export class Unit {
-    static activeUnits = []; // toutes les unités actuellement "vivantes" en jeu, pour pouvoir toutes les basculer d'un coup
 
-    constructor(app, fightingSprite, shoppingSprite, dragger, id, name, cost, rarity,
-                abilityName, abilityDescription, maxHealth, maxMana, startingMana,
-                baseAttack, attackDamage, abilityPower, attackSpeed, armor, magicResist, range) {
+    constructor(app, layers, name, fightingSprite, shoppingSprite, dragger, id = 0, maxHealth, maxMana, startingMana, basicDamage, attackSpeed, armor, magicResist, range, abilityName, abilityDescription, rarity, cost  ) {
         this.app = app;
         this.fightingSprite = fightingSprite;
         this.shoppingSprite = shoppingSprite;
         this.dragger = dragger;
         this.id = id;
         this.name = name;
-        this.cost = cost;
-        this.rarity = rarity;
-        this.abilityName = abilityName;
-        this.abilityDescription = abilityDescription;
         this.maxHealth = maxHealth;
         this.currentHealth = maxHealth; // <-- PV actuels, initialisés au max
         this.maxMana = maxMana;
@@ -25,36 +18,62 @@ export class Unit {
         this.baseAttack = baseAttack;
         this.attackDamage = attackDamage;
         this.abilityPower = abilityPower;
+
+        //static stats
+        this.trait = String[5];
+        this.maxHealth = maxHealth;
+        this.health = this.maxHealth;
+        this.maxMana = maxMana;
+        this.startingMana = startingMana;
+        this.currentMana = startingMana;
+        this.basicDamage = basicDamage;
+        this.attackDamage = 0;
+        this.abilityPower = 0;
         this.attackSpeed = attackSpeed;
         this.armor = armor;
         this.magicResist = magicResist;
         this.range = range;
 
-        this.item = [];
-        this.trait = [];
+        this.abilityName = abilityName
+        this.abilityDescription = abilityDescription
+
+        this.rarity = rarity;
+        this.cost = cost;
+
+
+        //changing parameters
+        this.items = [];
         this.getParent = null;
-        this.tooltip = null;
-        this.healthBar = null; // référence au container de la barre de vie
+
+        this.hex = {x: -1, y: -1}
+
+        const unit = new Container();
+        this.container = unit;
+        this.layers = layers;
+        layers.units.addChild(unit);
+
+        this.ISONARENA = false
+        this.ISFIGHTING = false
+
+        // Barre de pv
+        this.healthBar = new Graphics();
+        this.healthBar.eventMode = 'none';
+        this.healthShown = 1;
+        this.healthDrawn = -1;
+        // Barre de mana
+        this.manaBar = new Graphics();
+        this.manaBar.eventMode = 'none';
+        this.manaShown = this.startingMana / this.maxMana; // ou 0
+        this.manaDrawn = -1;
+
+        this.UNITWIDTH = 100
+        this.MAXITEM = 3
+
+        this.itemRect = {x: -this.UNITWIDTH / 2, y: -this.UNITWIDTH + 8, width: 15, height: 15}
     }
 
-    clone(overrides = {}) {
-        const data = {
-            app: this.app, fightingSprite: this.fightingSprite, shoppingSprite: this.shoppingSprite,
-            dragger: this.dragger, id: this.id, name: this.name, cost: this.cost, rarity: this.rarity,
-            abilityName: this.abilityName, abilityDescription: this.abilityDescription,
-            maxHealth: this.maxHealth, maxMana: this.maxMana, startingMana: this.startingMana,
-            baseAttack: this.baseAttack, attackDamage: this.attackDamage, abilityPower: this.abilityPower,
-            attackSpeed: this.attackSpeed, armor: this.armor, magicResist: this.magicResist, range: this.range,
-            ...overrides
-        };
-
-        return new Unit(
-            data.app, data.fightingSprite, data.shoppingSprite, data.dragger, data.id,
-            data.name, data.cost, data.rarity, data.abilityName, data.abilityDescription,
-            data.maxHealth, data.maxMana, data.startingMana, data.baseAttack,
-            data.attackDamage, data.abilityPower, data.attackSpeed, data.armor,
-            data.magicResist, data.range
-        );
+    copy(id){
+        return new Unit(this.app, this.layers, this.name, this.fightingSprite, this.shoppingSprite, this.dragger, id, this.maxHealth, this.maxMana, this.startingMana, this.basicDamage, this.attackSpeed, this.armor, this.magicResist, this.range, this.abilityName, this.abilityDescription, this.rarity, this.cost)
     }
 
     copy(newId) {
@@ -63,198 +82,282 @@ export class Unit {
 
     createShopping(x, y, onClick, container, width, height) {
         const shop = new Sprite(this.shoppingSprite);
-        shop.x = x;
-        shop.y = y;
+
         shop.scale.set(0.5);
         shop.width = width;
         shop.height = height;
         shop.eventMode = 'static';
         shop.cursor = 'pointer';
 
-        container.addChild(shop);
+        this.shoppingSprite = shop
+
+        // add the sprite to the container
+        container.addChild(this.container);
+        this.container.addChild(shop)
         this.getParent = container;
 
-        const newUnit = this.clone({ shoppingSprite: shop });
-        this.attachTooltipEvents(shop, newUnit);
+        this.container.position.x = x
+        this.container.position.y = y
 
-        return newUnit;
     }
 
-    createfighting(x, y, container) {
+
+    createfighting(x, y, container  , isEnnemy = false){
+
         const fighter = new Sprite(this.fightingSprite);
         fighter.y = y;
         fighter.x = x;
         fighter.scale.set(0.5);
-        fighter.width = 100;
-        fighter.height = 100;
+        fighter.width = this.UNITWIDTH;
+        fighter.height = this.UNITWIDTH;
+
+        // Enable the bunny to be interactive... this will allow it to respond to mouse and touch events
         fighter.eventMode = 'static';
         fighter.cursor = 'pointer';
         fighter.anchor.set(0.5, 1);
 
+        //we change the direction of ennemy because they should watch left
+        if(isEnnemy) {
+            fighter.scale.x *= -1;
+            this.isEnemy = true
+        } else {
+            this.isEnemy = false
+        }
+
+        // Setup events for mouse + touch using the pointer events
         fighter.dragger = this.dragger;
         fighter.on('pointerdown', fighter.dragger.onDragStart, fighter);
-        fighter.zIndex = 10;
 
-        container.addChild(fighter);
+        this.fightingSprite = fighter
+
+        container.addChild(this.container);
+        this.container.addChild(fighter)
         this.getParent = container;
-
-        const newUnit = this.clone({ fightingSprite: fighter });
-        fighter.unit = newUnit;
-        this.attachTooltipEvents(fighter, newUnit);
-        newUnit.createHealthBar(fighter, container);
-
-        return newUnit;
     }
 
-    addItem(item) {
-        this.item.push(item);
+    removeSprite() {
+        if (this.fightingSprite != null) {
+            this.getParent.container.removeChild(this.fightingSprite)
+        }
+    }
+    
+    takeDamage(damage) {
+        this.health -= damage;
     }
 
-    removeParent(sprite) {
-        this.getParent.removeChild(sprite);
+    isDead(){
+        return this.health <= 0;
     }
 
-    // --- Tooltip (inchangé) ---
-
-    attachTooltipEvents(sprite, unit) {
-        sprite.on('pointerover', () => unit.showTooltip(sprite));
-        sprite.on('pointerout', () => unit.hideTooltip());
+    cast(){
+        this.currentMana = this.startingMana
     }
 
-    showTooltip(sprite) {
-        this.hideTooltip();
+    manaUp() {
+        this.currentMana = Math.min(this.currentMana + 5, this.maxMana)
+    }
 
-        const tooltip = new Container();
-        tooltip.eventMode = 'none';
+    reset() {
+        //TODO a voir si il n'y a pas d'autre chose a reset
+        this.health = this.maxHealth
+        this.currentMana = this.startingMana
+        this.endFight()
 
-        const lines = [
-            `${this.name} (${this.rarity ?? '?'}) — ${this.cost}💰`,
-            `${this.abilityName ?? ''}`,
-            `PV: ${this.currentHealth}/${this.maxHealth}   Mana: ${this.startingMana}/${this.maxMana}`,
-            `AD: ${this.attackDamage}   AP: ${this.abilityPower}`,
-            `Vitesse d'attaque: ${this.attackSpeed}`,
-            `Armure: ${this.armor}   RM: ${this.magicResist}`,
-            `Portée: ${this.range}`
+    }
+
+    setOnArena(){
+        if (this.ISONARENA) return
+        this.container.addChild(this.healthBar);
+        this.container.addChild(this.manaBar)
+        this.ISONARENA = true
+    }
+
+    startFight() {
+        this.ISFIGHTING = true
+    }
+
+    endFight() {
+        this.ISFIGHTING = false;
+    }
+
+    setOffArena(){
+        if (this.ISONARENA) {
+            this.container.removeChild(this.healthBar);
+            this.container.removeChild(this.manaBar)
+            this.ISONARENA = false
+        }
+    }
+
+    canAddOneItem(){
+        return this.items.length < this.MAXITEM
+    }
+
+    addItem(item){
+        if (this.canAddOneItem()) {
+            item.sprite.position.set(this.itemRect.x, this.itemRect.y + this.items.length * this.itemRect.height)
+            item.sprite.width = this.itemRect.width
+            item.sprite.height = this.itemRect.height
+            this.container.addChild(item.sprite)
+            item.apply(this)
+            this.items.push(item)
+        } else {
+            console.log("on peut pas ajouter d'objets a cette unité")
+        }
+    }
+
+    showStats() {
+        // ferme un panneau déjà ouvert (le sien ou celui d'une autre unité)
+        Unit.closeActiveStatsPanel();
+
+        const PANEL_W = 300;
+        const PANEL_H = 380;
+        const PADDING = 20;
+
+        // conteneur racine : pas d'offset, couvre tout l'écran (pour l'overlay)
+        const root = new Container();
+
+        // overlay plein écran, capte le clic "en dehors" pour fermer
+        const overlay = new Graphics()
+            .rect(0, 0, this.app.screen.width, this.app.screen.height)
+            .fill({ color: 0x000000, alpha: 0.001 });
+        overlay.eventMode = 'static';
+        overlay.on('pointerdown', () => this.closeStats());
+
+        // panneau centré, positionné en absolu dans root
+        const bg = new Graphics()
+            .roundRect(0, 0, PANEL_W, PANEL_H, 12)
+            .fill(0x1e1e1e)
+            .stroke({ width: 2, color: 0xffffff, alpha: 0.3 });
+        bg.x = (this.app.screen.width - PANEL_W) / 2;
+        bg.y = (this.app.screen.height - PANEL_H) / 2;
+        bg.eventMode = 'static';
+        bg.on('pointerdown', (e) => e.stopPropagation()); // empêche de fermer en cliquant sur le panneau
+
+        const title = new Text({
+            text: this.name,
+            style: { fill: 0xffffff, fontSize: 24, fontWeight: 'bold' }
+        });
+        title.x = PADDING;
+        title.y = PADDING;
+
+        const statsLines = [
+            `PV : ${Math.round(this.health)} / ${this.maxHealth}`,
+            `Mana : ${Math.round(this.currentMana)} / ${this.maxMana}`,
+            `Dégâts : ${this.basicDamage * this.attackDamage}`,
+            `AbilityPower : ${this.abilityPower}`,
+            `Vitesse d'attaque : ${this.attackSpeed}`,
+            `Armure : ${this.armor}`,
+            `Résistance magique : ${this.magicResist}`,
+            `Portée : ${this.range}`,
+            `Rareté : ${this.rarity}`,
+            `Coût : ${this.cost}`,
+            '',
+            `Capacité : ${this.abilityName}`,
         ];
 
-        const text = new Text({
-            text: lines.join('\n'),
-            style: { fill: 0xffffff, fontSize: 14, lineHeight: 18 }
+        const statsText = new Text({
+            text: statsLines.join('\n'),
+            style: {
+                fill: 0xdddddd,
+                fontSize: 16,
+                lineHeight: 22,
+                wordWrap: true,
+                wordWrapWidth: PANEL_W - PADDING * 2,
+            }
         });
-        text.x = 8;
-        text.y = 8;
+        statsText.x = PADDING;
+        statsText.y = title.y + title.height + 16;
 
-        const bg = new Graphics()
-            .rect(0, 0, text.width + 16, text.height + 16)
-            .fill({ color: 0x000000, alpha: 0.85 })
-            .stroke({ width: 1, color: 0xffffff });
+        const descText = new Text({
+            text: this.abilityDescription ?? '',
+            style: {
+                fill: 0xaaaaaa,
+                fontSize: 13,
+                wordWrap: true,
+                wordWrapWidth: PANEL_W - PADDING * 2,
+            }
+        });
+        descText.x = PADDING;
+        descText.y = statsText.y + statsText.height + 10;
 
-        tooltip.addChild(bg, text);
+        const closeBtn = new Text({
+            text: '✕',
+            style: { fill: 0xffffff, fontSize: 20 }
+        });
+        closeBtn.x = PANEL_W - PADDING - closeBtn.width;
+        closeBtn.y = PADDING - 4;
+        closeBtn.eventMode = 'static';
+        closeBtn.cursor = 'pointer';
+        closeBtn.on('pointerdown', (e) => {
+            e.stopPropagation();
+            this.closeStats();
+        });
 
-        const globalPos = sprite.getGlobalPosition();
-        tooltip.x = globalPos.x;
-        tooltip.y = globalPos.y - tooltip.height - 10;
+        bg.addChild(title, statsText, descText, closeBtn);
+        root.addChild(overlay, bg);
 
-        this.app.stage.addChild(tooltip);
-        this.tooltip = tooltip;
+        root.x = 700
+        root.y = 100
+        this.layers.ui.addChild(root);
+        this.statsPanel = root;
+        Unit.activeStatsPanel = this;
     }
 
-    hideTooltip() {
-        if (this.tooltip) {
-            this.tooltip.parent?.removeChild(this.tooltip);
-            this.tooltip = null;
+    closeStats() {
+        if (this.statsPanel) {
+            this.layers.ui.removeChild(this.statsPanel);
+            this.statsPanel.destroy({ children: true });
+            this.statsPanel = null;
+        }
+        if (Unit.activeStatsPanel === this) {
+            Unit.activeStatsPanel = null;
         }
     }
 
-    // --- Barre de vie ---
-
-    createHealthBar(sprite, container) {
-        const barWidth = 60;
-        const barHeight = 8;
-
-        const healthBar = new Container();
-        healthBar.eventMode = 'none';
-        healthBar.visible = false; // cachée par défaut, affichée seulement en combat
-
-        const bg = new Graphics()
-            .rect(0, 0, barWidth, barHeight)
-            .fill(0x333333)
-            .stroke({ width: 1, color: 0x000000 });
-
-        const fill = new Graphics()
-            .rect(0, 0, barWidth, barHeight)
-            .fill(0x2ecc71);
-
-        healthBar.addChild(bg, fill);
-        healthBar.fillBar = fill;
-        healthBar.barWidth = barWidth;
-        healthBar.barHeight = barHeight;
-
-        // positionne la barre au-dessus du sprite (sprite.anchor = 0.5, 1, donc le sprite "monte" depuis y=0)
-        healthBar.x = sprite.x - barWidth / 2;
-        healthBar.y = sprite.y - sprite.height - 12;
-
-        container.addChild(healthBar);
-        this.healthBar = healthBar;
-
-        Unit.activeUnits.push(this);
-    }
-
-    updateHealthBar() {
-        if (!this.healthBar) return;
-
-        const ratio = Math.max(this.currentHealth / this.maxHealth, 0);
-        const fill = this.healthBar.fillBar;
-
-        fill.clear();
-        fill.rect(0, 0, this.healthBar.barWidth * ratio, this.healthBar.barHeight);
-
-        // couleur qui vire au rouge quand les PV baissent
-        const color = ratio > 0.5 ? 0x2ecc71 : ratio > 0.2 ? 0xf39c12 : 0xe74c3c;
-        fill.fill(color);
-    }
-
-    takeDamage(amount) {
-        this.currentHealth = Math.max(this.currentHealth - amount, 0);
-        this.updateHealthBar();
-
-        if (this.currentHealth <= 0) {
-            this.onDeath();
+    static closeActiveStatsPanel() {
+        if (Unit.activeStatsPanel) {
+            Unit.activeStatsPanel.closeStats();
         }
     }
 
-    heal(amount) {
-        this.currentHealth = Math.min(this.currentHealth + amount, this.maxHealth);
-        this.updateHealthBar();
-    }
+    update(dt) {
 
-    resetHealth() {
-        this.currentHealth = this.maxHealth;
-        this.updateHealthBar();
-    }
+        if (!this.ISFIGHTING) {
+            this.healthShown = 1;
+            this.healthDrawn = -1;
 
-    onDeath() {
-        // à adapter selon ta logique (retrait de l'arène, animation, etc.)
-        console.log(`${this.name} est mort`);
-    }
+            this.health = this.maxHealth;
+            this.currentMana = this.startingMana;
 
-    removeFromActiveUnits() {
-        const index = Unit.activeUnits.indexOf(this);
-        if (index !== -1) Unit.activeUnits.splice(index, 1);
-    }
+            this.manaShown = this.startingMana / this.maxMana; // ou 0
+            this.manaDrawn = -1;
+        } else {
+            const ratioh = Math.min(this.health / this.maxHealth, 1);
+            this.healthShown += (ratioh - this.healthShown) * Math.min(1, 0.15 * dt);  // lerp
+            if (Math.abs(ratioh - this.healthShown) < 0.001) this.healthShown = ratioh;
 
-    // --- Bascule d'affichage combat / hors combat ---
+            const ratiom = Math.min(this.currentMana / this.maxMana, 1);
+            this.manaShown += (ratiom - this.manaShown) * Math.min(1, 0.15 * dt);  // lerp
+            if (Math.abs(ratiom - this.manaShown) < 0.001) this.manaShown = ratiom;
+        }
 
-    static startCombat() {
-        for (const unit of Unit.activeUnits) {
-            unit.resetHealth(); // remet tout le monde à fond avant le combat
-            if (unit.healthBar) unit.healthBar.visible = true;
+
+        if (this.healthShown !== this.healthDrawn) {         // redessine seulement si ça bouge
+            this.healthBar.clear()
+                .rect(-this.UNITWIDTH / 2, -this.UNITWIDTH, this.UNITWIDTH * this.healthShown, 4)
+                .fill(0xff0000);
+            this.healthDrawn = this.healthShown;
+        }
+
+
+        if (this.manaShown !== this.manaDrawn) {         // redessine seulement si ça bouge
+            this.manaBar.clear()
+                .rect(-this.UNITWIDTH / 2, -this.UNITWIDTH + 4, this.UNITWIDTH * this.manaShown, 4)
+                .fill(0x0000ff);
+            this.manaDrawn = this.manaShown;
         }
     }
 
-    static endCombat() {
-        for (const unit of Unit.activeUnits) {
-            if (unit.healthBar) unit.healthBar.visible = false;
-        }
-    }
+
+
 }

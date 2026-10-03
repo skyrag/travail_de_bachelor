@@ -2,187 +2,77 @@ import {Container, Graphics, Text} from "pixi.js";
 
 export class Team {
 
-    UNITWIDTH = 150;
-    YAXIS = 175;
-
-    constructor(app) {
+    constructor(app, rect, layers, id, name) {
         this.app = app;
-        this.units = [];       // sprites sur le plateau
+        this.id = id;
+        this.name = name;
+        this.units = [];
         this.level = 1;
         this.exp = 0;
         this.gold = 30;
         this.bench = new Array(10).fill(null);
 
-        this.x = 350;
-        this.width = window.innerWidth - 700;
-        this.y = 4 * window.innerHeight / 6;
-        this.height = 175;
+        // valeur du placeholder mais aussi de la détection pour le drag
+        this.x = rect.x;
+        this.width = rect.width;
+        this.y = rect.y;
+        this.height = rect.height;
 
+        this.UNITWIDTH = this.width/10;
+
+        // cération du conteneur du bench
+        // Create and add a container to the stage
         const container = new Container();
         container.x = this.x;
         container.y = this.y;
         this.container = container;
-        container.zIndex = 10;
-        app.stage.addChild(container);
+        layers.units.addChild(container);   // au lieu de app.stage
+
     }
 
-    setShop(shop) {
-        this.shop = shop;
+    setShop(shop){
+        this.shop = shop
     }
 
-    // --- Recherche d'une unité (bench + plateau) par son instanceId serveur ---
-
-    findUnitById(instanceId) {
-        const onBoard = this.units.find(sprite => sprite.unitData?.instanceId === instanceId);
-        if (onBoard) return { sprite: onBoard, location: "board" };
-
-        const benchIndex = this.bench.findIndex(sprite => sprite?.unitData?.instanceId === instanceId);
-        if (benchIndex !== -1) return { sprite: this.bench[benchIndex], location: "bench", benchIndex };
-
-        return null;
+    setItemBox(box){
+        this.items = box
     }
-
-    // --- Or ---
-
-    spendGold(amount) {
-        this.gold -= amount;
-        this.shop?.updateUI();
-    }
-
-    refundGold(amount) {
-        this.gold += amount;
-        this.shop?.updateUI();
-    }
-
-    // --- Achat (appelé de manière optimiste par Shop) ---
-
-    applyBuyUnit(unit) {
-        this.spendGold(unit.cost);
-
-        const newUnit = unit.createfighting(0, 0, this.container);
-        // id temporaire tant que le serveur n'a pas confirmé/renvoyé un vrai id d'instance
-        newUnit.instanceId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-        if (this.addUnitToBench(newUnit.fightingSprite)) {
-            return newUnit;
-        }
-        if (this.canAddOne()) {
-            this.addUnit(newUnit.fightingSprite);
-            newUnit.fightingSprite.unitData = newUnit;
-        }
-        return newUnit;
-    }
-
-    rollbackBuyUnit(newUnit) {
-        this.refundGold(newUnit.cost);
-        this.removeUnitFromEverywhere(newUnit.fightingSprite);
-        newUnit.fightingSprite.parent?.removeChild(newUnit.fightingSprite);
-    }
-
-    // --- Vente ---
-
-    applySellUnit(instanceId) {
-        const found = this.findUnitById(instanceId);
-        if (!found) return null;
-
-        const { sprite } = found;
-        const sellValue = sprite.unitData?.cost ?? 0;
-
-        this.refundGold(sellValue);
-        this.removeUnitFromEverywhere(sprite);
-        sprite.parent?.removeChild(sprite);
-
-        return { sprite, sellValue, wasOnBoard: found.location === "board" };
-    }
-
-    rollbackSellUnit(snapshot) {
-        if (!snapshot) return;
-        this.spendGold(snapshot.sellValue);
-        this.container.addChild(snapshot.sprite);
-        if (snapshot.wasOnBoard) {
-            this.addUnit(snapshot.sprite);
-        } else {
-            this.addUnitToBench(snapshot.sprite);
-        }
-    }
-
-    // --- Déplacement ---
-
-    applyMoveUnit(instanceId, x, y) {
-        const found = this.findUnitById(instanceId);
-        if (!found) return null;
-
-        const previous = { x: found.sprite.x, y: found.sprite.y, location: found.location, benchIndex: found.benchIndex };
-
-        if (found.location === "bench" && this.canAddOne()) {
-            this.bench[found.benchIndex] = null;
-            this.container.removeChild(found.sprite);
-            this.container.addChild(found.sprite);
-            this.addUnit(found.sprite);
-        }
-
-        found.sprite.position.set(x, y);
-        return { sprite: found.sprite, previous };
-    }
-
-    rollbackMoveUnit(snapshot) {
-        if (!snapshot) return;
-        snapshot.sprite.position.set(snapshot.previous.x, snapshot.previous.y);
-        if (snapshot.previous.location === "bench") {
-            this.removeUnit(snapshot.sprite);
-            this.bench[snapshot.previous.benchIndex] = snapshot.sprite;
-        }
-    }
-
-    // --- Objet donné à une unité ---
-
-    applyGiveItem(unitInstanceId, item) {
-        const found = this.findUnitById(unitInstanceId);
-        if (!found) return null;
-
-        found.sprite.unitData?.addItem(item);
-        return { sprite: found.sprite, item };
-    }
-
-    rollbackGiveItem(snapshot) {
-        if (!snapshot) return;
-        const unitData = snapshot.sprite.unitData;
-        if (!unitData) return;
-        const index = unitData.item.indexOf(snapshot.item);
-        if (index !== -1) unitData.item.splice(index, 1);
-    }
-
-    // --- Existant, inchangé ---
 
     addUnitToBench(unit) {
-        for (let i = 0; i < this.bench.length; i++) {
-            if (!this.bench[i]) {
-                this.container.addChild(unit);
+        for (let i = 0 ; i < this.bench.length; i++){
+            console.log(this.bench)
+            if (!this.bench[i]){
+                this.container.addChild(unit.container)
                 this.bench[i] = unit;
-                unit.position.set(i * this.UNITWIDTH + this.UNITWIDTH / 2, this.YAXIS);
+                unit.container.position.set(i * this.UNITWIDTH + this.UNITWIDTH/2, this.height)
                 return true;
             }
         }
         return false;
     }
 
-    addUnit(unit) {
-        if (this.canAddOne()) {
-            this.units.push(unit);
+    addUnit(unit){
+        if (this.canAddOne()){
+            this.units[unit.id] = unit
         }
     }
 
-    isInRange(x, y) {
-        return x > this.x && x < this.x + this.width && y > this.y && y < this.y + this.height;
+    isInRange (x,y){
+        console.log("on est la")
+        return x > this.x &&
+            x < this.x + this.width &&
+            y > this.y &&
+            y < this.y + this.height
     }
 
-    removeIfBenched(unit) {
-        if (this.units.length + 1 <= this.level) {
-            for (let i = 0; i < this.bench.length; i++) {
-                if (this.bench[i] === unit) {
+    removeIfBenched(unit){
+        if(this.nbFieldedUnits()+ 1 <= this.level){
+            for (let i = 0 ; i < this.bench.length ; i++){
+                if (this.bench[i] === unit){
+                    console.log("found")
                     this.bench[i] = null;
-                    this.container.removeChild(unit);
-                    this.units.push(unit);
+                    this.container.removeChild(unit.container)
+                    this.units[unit.id] = unit
                 }
             }
         }
@@ -190,7 +80,8 @@ export class Team {
 
     removeUnitFromEverywhere(unit) {
         this.removeFromBench(unit);
-        this.removeUnit(unit);
+        delete this.units[unit.id]
+        this.container.removeChild(unit.container)
     }
 
     removeFromBench(unit) {
@@ -202,52 +93,38 @@ export class Team {
         return false;
     }
 
-    removeUnit(unit) {
-        const index = this.units.indexOf(unit);
-        if (index !== -1) {
-            this.units.splice(index, 1);
-        }
+    nbFieldedUnits(){
+        return this.units.filter(Boolean).length;
     }
 
-    canAddOne() {
-        return this.units.length + 1 <= this.level;
+    canAddOne(){
+        return this.nbFieldedUnits() + 1 <= this.level;
     }
 
     canAddInBench() {
         return this.bench.some(slot => slot == null);
     }
-
+    // XP nécessaire pour passer du niveau courant au suivant
     getExpNeeded(level = this.level) {
         return 2 + level * 2;
     }
 
     addGold(amount) {
         this.gold += amount;
-        this.shop?.updateUI();
+    }
+
+    removeGold(amount) {
+        this.gold -= amount;
     }
 
     buyExperience() {
-        if (!this.shop || this.gold < this.shop.BUY_XP_COST) return false;
+        if (this.gold < this.shop.BUY_XP_COST) return false;
 
-        // apply optimiste ; rollback si le serveur refuse
-        this.spendGold(this.shop.BUY_XP_COST);
-        const previousExp = this.exp;
-        const previousLevel = this.level;
+        //TODO faire un message au backend pour lui demander de buy de l'exp
 
+        this.gold -= this.shop.BUY_XP_COST;
         this.exp += this.shop.BUY_XP_AMOUNT;
         this.checkLevelUp();
-        this.shop.updateUI();
-
-        this.shop.ws.buyExp({
-            apply: () => {}, // déjà appliqué ci-dessus (send() ré-appellerait apply, donc on laisse vide et applique avant l'appel)
-            rollback: () => {
-                this.refundGold(this.shop.BUY_XP_COST);
-                this.exp = previousExp;
-                this.level = previousLevel;
-                this.shop.updateUI();
-            }
-        }).catch(() => {}); // rollback déjà géré par le callback
-
         return true;
     }
 
@@ -258,5 +135,64 @@ export class Team {
             this.level += 1;
             needed = this.getExpNeeded();
         }
+    }
+
+    sell(unit) {
+
+        //TODO envoyer un message au backend pour prévenir de la vente
+
+        this.addGold(unit.cost)
+        this.removeUnitFromEverywhere(unit);
+
+        for (let i = 0; i < unit.items.length; i++) {
+            const item = unit.items.pop()
+            unit.container.removeChild(item.sprite)
+            this.items.addAnItem(item)
+        }
+    }
+
+    clean() {
+        this.units.forEach(unit => {
+            this.removeUnitFromEverywhere(unit.fightingSprite)
+        })
+    }
+
+    resetPositions(arena) { // en gros finir le combat attendre 10 tick puis lancer le clean et cette fonction afin que l'on ait de nouveau notre équipe
+        this.units.forEach(unit => {
+            console.log(unit)
+            if (unit.fightingSprite != null){
+                arena.setToCell(unit, unit.hex.x, unit.hex.y);
+            }
+        })
+    }
+
+    resetUnits() {
+        this.units.forEach(unit => {
+            unit.reset()
+        })
+    }
+
+    addItem(item){
+        this.items.addAnItem(item)
+    }
+
+    findBenchedUnitAt(globalX, globalY) {
+        for (const unit of this.bench) {
+            if (!unit) continue;
+            const bounds = unit.container.getBounds(); // rectangle en coordonnées globales/écran
+            console.log('test point', globalX, globalY);
+            console.log(bounds); // regarde si x/y/width/height sont cohérents
+
+            if (bounds.containsPoint(globalX, globalY)) {
+                return unit;
+            }
+        }
+        return null;
+    }
+
+    update(dt) {
+        this.units.forEach(unit => {
+            unit.update(dt)
+        })
     }
 }

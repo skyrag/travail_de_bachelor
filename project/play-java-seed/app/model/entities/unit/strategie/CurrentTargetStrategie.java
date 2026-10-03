@@ -1,6 +1,7 @@
 package model.entities.unit.strategie;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import model.service.fightingService.ComponentUnit;
 import model.service.fightingService.FightingContext;
 
@@ -12,6 +13,7 @@ import java.util.List;
  * It is a strategie used to apply an effect only on the current target of the caster
  */
 @Entity
+@Table(name = "current_target_strategie")
 public class CurrentTargetStrategie extends Strategie{
 
     public CurrentTargetStrategie(){

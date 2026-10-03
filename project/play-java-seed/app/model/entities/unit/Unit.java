@@ -30,7 +30,7 @@ public class Unit {
     private String patchVersion;
 
     @Column(name = "sprite_key",nullable = false)
-    private long spriteKey;
+    private String spriteKey;
 
     @Column(nullable = false, length = 30)
     private String name;
@@ -193,7 +193,7 @@ public class Unit {
         return rarity;
     }
 
-    public long getSpriteKey() {
+    public String getSpriteKey() {
         return spriteKey;
     }
 }
