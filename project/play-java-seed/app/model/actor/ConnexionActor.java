@@ -267,7 +267,7 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
             case EXP -> game.tell(new GameActor.BuyingExpMessage(userId, msg.text.get(ID).longValue(), getContext().getSelf()));
             case ACK -> {
                 long id = msg.text.get(ID).longValue();
-                reconnectionBuffer.removeIf(node -> node.get(ID).longValue() == id);
+                reconnectionBuffer.removeIf(node -> node.has(ID) && node.get(ID).longValue() == id);
             }
             case RECO -> {
                 if (ws != null) {

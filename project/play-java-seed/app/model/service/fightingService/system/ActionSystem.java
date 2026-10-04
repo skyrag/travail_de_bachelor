@@ -21,7 +21,10 @@ public class ActionSystem implements System{
     @Override
     public List<FightingEventDTO> update(FightingContext context) {
         List<FightingEventDTO> events = new ArrayList<>();
+        context.releaseDeadTiles();
         for (ComponentUnit unit : context.getAliveUnits()){
+            if (!unit.isAlive()) continue;                       // morte pendant ce tick
+            if (context.getCurrentTarget(unit) == null) continue; // plus d'ennemi
             if (unit.isFullMana()){
                 events.addAll(castAbility(unit, context));
             } else {
@@ -34,24 +37,32 @@ public class ActionSystem implements System{
     private List<FightingEventDTO> basicAttack(ComponentUnit unit, FightingContext context){
         List<FightingEventDTO> res = new ArrayList<>();
         ComponentUnit enemy = context.getCurrentTarget(unit);
-        if(unit.getCurrentPosition().distanceFrom(enemy.getCurrentPosition()) <= unit.getRange() * Math.sqrt(2.0) && unit.canAttack()){ //to be able to hit it, the distance between them should be less or equal to range * sqrt(2)
-            int trueDamage = unit.getDamage();
-            boolean crit = false;
+        if (enemy == null) return res;
 
-            if(context.randomInt(100) < unit.getCrit()){
-                trueDamage += trueDamage;
-                crit = true;
+        boolean inRange = unit.getCurrentPosition().distanceFrom(enemy.getCurrentPosition())
+                <= unit.getRange() * Math.sqrt(2.0);
+
+        if (inRange) {
+            if (unit.canAttack()) {                 // en portée : on attaque ou on attend, on ne bouge pas
+                int trueDamage = unit.getDamage();
+                boolean crit = false;
+                if (context.randomInt(100) < unit.getCrit()) {
+                    trueDamage += trueDamage;
+                    crit = true;
+                }
+                int mitigatedDamage = enemy.damagePhysic(trueDamage);
+                if (!enemy.isAlive()) res.add(new DeathDTO(context.getTick(), enemy.getId()));
+                unit.addMana(MANAPERATTACK);
+                res.add(new AttackDTO(context.getTick(), unit.getId(), enemy.getId(), mitigatedDamage, crit));
             }
-
-            int mitigatedDamage = enemy.damagePhysic(trueDamage);
-            if (!enemy.isAlive()) res.add(new DeathDTO(context.getTick(), enemy.getId()));
-            unit.addMana(MANAPERATTACK);
-            res.add(new AttackDTO(context.getTick(), unit.getId(), enemy.getId(), mitigatedDamage, crit));
         } else {
+            Tuple current = unit.getCurrentPosition();
             Tuple move = context.getNextMove(unit);
-            context.move(unit.getCurrentPosition(), move);
-            unit.setCurrentPosition(move);
-            res.add(new MoveToDTO(context.getTick(), unit.getId(), move.x(), move.y()));
+            if (!move.equals(current)) {
+                context.move(current, move);
+                unit.setCurrentPosition(move);
+                res.add(new MoveToDTO(context.getTick(), unit.getId(), move.x(), move.y()));
+            }
         }
         return res;
     }

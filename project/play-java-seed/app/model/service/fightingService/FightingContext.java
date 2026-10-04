@@ -6,10 +6,7 @@ import model.service.fightingService.pathfinding.Tile;
 import model.utils.Tuple;
 import org.apache.pekko.japi.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 import static model.service.fightingService.pathfinding.HexGrid.cubeToOffset;
 
@@ -22,6 +19,9 @@ public class FightingContext {
     private int eventCounter;
     private Random seed;
     private HexGrid board;
+
+    private final Set<ComponentUnit> released = new HashSet<>();
+
 
     public FightingContext(Pair<List<ComponentUnit>, Long> teamA, Pair<List<ComponentUnit>, Long> teamB, Random seed) {
         tick = 0;
@@ -46,6 +46,7 @@ public class FightingContext {
     }
 
     public List<ComponentUnit> getAliveUnits () {
+        System.out.println("getAlive");
         return units.stream().filter(ComponentUnit::isAlive).toList();
     }
 
@@ -58,18 +59,17 @@ public class FightingContext {
     }
 
     private ComponentUnit getClosestUnit(ComponentUnit unit, boolean isEnemy){
-        if (unit.currentEnnemy != null && isEnemy){
+        if (isEnemy && unit.currentEnnemy != null && unit.currentEnnemy.isAlive()) {
             return unit.currentEnnemy;
         }
-
         ComponentUnit closest = null;
-        List<ComponentUnit> targets = getGroup(unit, isEnemy);
-        for (ComponentUnit target : targets.stream().filter(ComponentUnit::isAlive).toList()){
+        for (ComponentUnit target : getGroup(unit, isEnemy)) {
+            if (!target.isAlive() || target == unit) continue;
             if (closest == null || unit.getCurrentPosition().isCloserThanFrom(target.getCurrentPosition(), closest.getCurrentPosition())) {
                 closest = target;
             }
         }
-        unit.currentEnnemy = closest;
+        if (isEnemy) unit.currentEnnemy = closest;   // ne pas écraser la cible avec un allié
         return closest;
     }
 
@@ -98,10 +98,25 @@ public class FightingContext {
     }
 
     public Tuple getNextMove(ComponentUnit unit){
-        Tile src = board.getTile(unit.getCurrentPosition().x(), unit.getCurrentPosition().y());
-        Tuple destTuple = getCurrentTarget(unit).getCurrentPosition();
-        Tile dest = board.getTile(destTuple.x(), destTuple.y());
-        return cubeToOffset(AStarPathfinding.findPath(src, dest).getFirst().getPosition());
+        Tuple current = unit.getCurrentPosition();
+        ComponentUnit target = getCurrentTarget(unit);
+        if (target == null) return current;
+
+        Tile src = board.getTile(current.x(), current.y());
+        Tile dest = board.getTile(target.getCurrentPosition().x(), target.getCurrentPosition().y());
+        List<Tile> path = AStarPathfinding.findPath(src, dest);
+
+        if (path.size() < 3) return current;
+        return cubeToOffset(path.get(1).getPosition());
+    }
+
+    public void releaseDeadTiles() {
+        for (ComponentUnit u : units) {
+            if (!u.isAlive() && released.add(u)) {
+                Tuple p = u.getCurrentPosition();
+                board.getTile(p.x(), p.y()).setObstacle(false);
+            }
+        }
     }
 
     private Tuple getInverse(Tuple pos){

@@ -24,6 +24,7 @@ public class SimulationService {
 
     public CompletionStage<FightingResultDTO> simulateAsync(Team teamA, Team teamB, long fightingSeed) {
         return CompletableFuture.supplyAsync(() -> {
+            System.out.println("ok");
             FightingService engine = new FightingService(fightingSeed, teamA, teamB);
             return engine.simulate();
         }, combatExecutor);

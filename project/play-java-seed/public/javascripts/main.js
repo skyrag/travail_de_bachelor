@@ -167,7 +167,10 @@ export async function startGame(payload, myUserId, username) {
             shop = new Shop(app, layers, ourTeam, arena, textureManager.getButton(), list, layout.shop, ws, basicUnits);
 
             for (const unitDTO of team.units) {
-                ourTeam.addUnitToBench(basicUnits.get(unitDTO.name).copy(unitDTO.instanceId))
+                const unit = basicUnits.get(unitDTO.name).copy(unitDTO.instanceId)
+                unit.createfighting(0,0, ourTeam.container)
+                arena.setToCell(unit, 0, 0)
+                ourTeam.addUnit(unit)
             }
 
         } else {

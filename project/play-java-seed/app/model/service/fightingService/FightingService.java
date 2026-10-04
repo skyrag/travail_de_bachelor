@@ -35,26 +35,49 @@ public class FightingService {
         this.teamA = teamA;
         this.teamB = teamB;
 
+        System.out.println("a");
+
         List<ComponentUnit> teamAUnits = new ArrayList<>();
         List<ComponentUnit> teamBUnits = new ArrayList<>();
 
-        teamAUnits.addAll(teamA.getUnits().stream().map(ComponentUnit::new).toList());
-        teamBUnits.addAll(teamB.getUnits().stream().map(ComponentUnit::new).toList());
+        System.out.println("aa");
+
+        teamAUnits.addAll(teamA.getUnits().stream()
+                .filter(u -> !Team.isBench(u.getPos()))
+                .map(ComponentUnit::new).toList());
+        teamBUnits.addAll(teamB.getUnits().stream()
+                .filter(u -> !Team.isBench(u.getPos()))
+                .map(ComponentUnit::new).toList());
+
+        System.out.println("aaa");
 
         this.context = new FightingContext(new Pair<>(teamAUnits, teamA.getId()), new Pair<>(teamBUnits, teamB.getId()), new Random(seed));
+        System.out.println("1");
+
         this.statusSystem = new StatusSystem();
+        System.out.println("2");
+
         this.actionSystem = new ActionSystem();
+        System.out.println("3");
+
         this.endSystem = new EndSystem();
+        System.out.println("4");
+
         this.initialState = context.getAliveUnits().stream().map(UnitDTOMapper::componentToDTO).toList();
+        System.out.println("on a construit le combat");
+
     }
 
     public FightingResultDTO simulate(){
         while (!endSystem.isFinished() && context.getTick() < MAXTICKS){
+            System.out.println("ca fight");
+            events.addAll(endSystem.update(context));
             events.addAll(statusSystem.update(context));
             events.addAll(actionSystem.update(context));
-            events.addAll(endSystem.update(context));
             context.incrementTick();
         }
+
+        System.out.println("fin de la boucle");
 
         int pvLostTeamA = 0;
         int pvLostTeamB = 0;
@@ -66,11 +89,13 @@ public class FightingService {
             }
         }
         if (pvLostTeamA != 0){
-            pvLostTeamA += teamA.getLvl() * 2;
+            pvLostTeamA += teamB.getLvl() * 2;
         }
         if (pvLostTeamB != 0){
             pvLostTeamB += teamA.getLvl() * 2;
         }
+
+        System.out.println("fin de la simu du comabt");
 
         return new FightingResultDTO(initialState, events, context.getAliveUnits().stream().map(UnitDTOMapper::componentToDTO).toList(), teamA.getId(), pvLostTeamA, teamB.getId(), pvLostTeamB);
 

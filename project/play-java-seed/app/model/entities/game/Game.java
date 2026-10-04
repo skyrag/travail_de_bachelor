@@ -62,7 +62,7 @@ public class Game {
     public List<Team> stillAlive(){
         List<Team> res= new ArrayList<>();
         for (Team team: teams){
-            if (team.isDead()) {
+            if (!team.isDead()) {
                 res.add(team);
             }
         }
@@ -73,7 +73,7 @@ public class Game {
         List<Team> remaining = stillAlive();
         remaining.sort(Comparator.comparingInt(Team::getHealth));
         for (int i = 0; i < remaining.size(); i++){
-            teams.get(i).setRank(i + 1);
+            remaining.get(i).setRank(i + 1);
         }
     }
 
@@ -104,8 +104,8 @@ public class Game {
     }
 
     public void died(Team team){
-        adjustRankings();
         team.die();
+        adjustRankings();
         lastDied = team;
     }
 
@@ -133,6 +133,15 @@ public class Game {
     public Team getTeam(long userId) {
         for (Team team: teams){
             if (team.getUser().getId() == userId){
+                return team;
+            }
+        }
+        return null;
+    }
+
+    public Team getTeamById(long teamId) {
+        for (Team team : teams) {
+            if (team.getId() != null && team.getId() == teamId) {
                 return team;
             }
         }

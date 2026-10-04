@@ -209,6 +209,11 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
     public static final class RoundPersistedMessage implements Message {}
 
+    public static final class FightFailedMessage implements Message {
+        public final String reason;
+        public FightFailedMessage(String reason) { this.reason = reason; }
+    }
+
     private Cancellable deathTimer;
 
     private final TimerScheduler<Message> timers;
@@ -229,7 +234,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private final Random rand;
     private final SpriteMap spriteMap;
 
-    private final int ROUNDTIMEMS = 90000;
+    private final int ROUNDTIMEMS = 9000;
     private static final String ROUND_TIMER_KEY = "round-timer";
 
 
@@ -296,6 +301,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                 .onMessage(SetupMessage.class, this::onSetupMessage)
                 .onMessage(InternalSetupDoneMessage.class, this::onInternalSetupDoneMessage)
                 .onMessage(RoundPersistedMessage.class, this::onRoundPersisted)
+                .onMessage(FightFailedMessage.class, this::onFightFailed)
                 .build();
     }
 
@@ -309,12 +315,15 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onSetupMessage(SetupMessage msg){
         long baseSeed = game.getSeed();
 
+        System.out.println("on setup message");
+
+
         for (Team team : teams){
             team.setSeed(seedGenerator.createFromSeed(baseSeed, "player:" + team.getUser().getId()));
             team.setItems(new ArrayList<>(game.getItems()));
 
             Unit startUnit = game.randomUnitFromPool(pools.getFirst(), team.getSeed());
-            team.addUnit(new InstanceUnit(1, new Tuple(-1,-1), startUnit, team));
+            team.addUnit(new InstanceUnit(1, new Tuple(0,0), startUnit, team));
 
             //set shop units
             List<Unit> shop = new ArrayList<>();
@@ -325,7 +334,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
         }
 
-        System.out.println("on est la");
 
         repo.persistGameSetup(game)
                 .thenAccept(freshGame -> getContext().getSelf().tell(new InternalSetupDoneMessage(freshGame)))
@@ -340,12 +348,12 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
 
     private Behavior<Message> onInternalSetupDoneMessage(InternalSetupDoneMessage msg){
-        System.out.println("on est dans setup done");
+        System.out.println("onInternalSetupDoneMessage");
 
         for (Team fresh : msg.game.getTeams()) {
             for (Team old : teams) {
                 if (Objects.equals(old.getUser().getId(),fresh.getUser().getId())) {
-                    fresh.setRandom(old.getSeed());   // à ajouter dans Team
+                    fresh.setRandom(old.getSeed());
                 }
             }
         }
@@ -376,31 +384,26 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onBuyingUnitMessage(BuyingUnitMessage msg){
         if (gameOver) return Behaviors.same();
         Team team = game.getTeam(msg.userId);
-        System.out.println("user id " + msg.userId + " team " + team);
+
+        System.out.println("onBuyingUnitMessage");
 
 
         if (team == null || msg.slot < 0 || msg.slot >= team.getShop().size()) {
-            System.out.println(msg + "invalid slot");
-            //ERROR
             return Behaviors.same();
         }
 
         Unit unit = team.getShop().get(msg.slot);
 
-        System.out.println(unit.getName());
 
         if (unit == null){
-            System.out.println("rip est le soucsi");
 
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "cannot buy this unit")));
             return Behaviors.same();
         }
 
-        System.out.println("avaant team.result");
 
         Team.Result bought = team.buyUnit(msg.slot);
         if (bought == null) {
-            System.out.println("team.result est le soucsi");
 
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "cannot buy this unit")));
             return Behaviors.same();
@@ -437,22 +440,19 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
         Team team = game.getTeam(msg.userId);
 
-        System.out.println("a");
+        System.out.println("onSellUnit");
+
         InstanceUnit sold = team.getUnitById(msg.unitId);
         if (sold == null) {
-            System.out.println("aa");
 
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE , ERROR).put(LOG, "cannot sell this unit")));
             return Behaviors.same();
         }
-        System.out.println("aaa");
 
         Team.Result results = team.sellUnit(msg.unitId);
         game.canAddUnitToPool(sold.getUnit().getId());
-        System.out.println("aaaa");
 
         if (results == null) {
-            System.out.println("aaaaa");
 
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE , ERROR).put(LOG, "cannot sell this unit")));
             return Behaviors.same();
@@ -481,13 +481,14 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onMovingUnitMessage(MovingUnitMessage msg){
         if (gameOver) return Behaviors.same();
 
+        System.out.println("onMovingUnitMessage");
+
+
         Team team = game.getTeam(msg.userId);
         if (team == null) {
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "cannot move this unit")));
             return Behaviors.same();
         }
-
-        System.out.println("on MovingUnit avant result");
 
         Team.Result result = team.moveUnit(msg.newPosition, msg.unitId);
 
@@ -499,7 +500,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
         Tuple newPos = result.instance().getPos();
 
-        System.out.println("on moving unit avant persist");
 
         repo.persistMove(result, newPos).thenAccept(v -> {
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, OK)));
@@ -525,13 +525,14 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onGivingUnitObjectMessage(GivingUnitObjectMessage msg) {
         if (gameOver) return Behaviors.same();
 
+        System.out.println("onGivingUnitObjectMessage");
+
+
         Team team = game.getTeam(msg.userId);
         if (team == null) {
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "cannot give this item to this unit")));
             return Behaviors.same();
         }
-
-        System.out.println("on giving avant result");
 
 
         Team.Result result = team.addItemToUnit(msg.name, msg.unitId);
@@ -541,8 +542,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                     Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "cannot give this item to this unit")));
             return Behaviors.same();
         }
-
-        System.out.println("on giving avant persist");
 
 
         List<Item> instanceItems = result.instance().getItems();
@@ -568,6 +567,9 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onRerollShopMessage(RerollShopMessage msg){
         if (gameOver) return Behaviors.same();
 
+        System.out.println("onRerollShopMessage");
+
+
         Team team = game.getTeam(msg.userId);
         if (team == null || team.getGold() < REROLLCOST) {
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "no team found")));
@@ -580,8 +582,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
             shop.add(unit);
         }
 
-        System.out.println("on reroll avant result");
-
 
         Event event = team.Reroll(shop);
 
@@ -592,8 +592,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
 
         int gold = team.getGold();
         List<Unit> newShop = team.getShop();
-
-        System.out.println("on reroll avant persist");
 
 
         repo.persistReroll(team, event, gold, newShop).thenAccept(v -> {
@@ -614,14 +612,14 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onBuyingExpMessage(BuyingExpMessage msg) {
         if (gameOver) return Behaviors.same();
 
+        System.out.println("onBuyingExpMessage");
+
+
         Team team = game.getTeam(msg.userId);
         if (team == null || team.getGold() < EXPCOST) {
             msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, ERROR).put(LOG, "cannot buy exp")));
             return Behaviors.same();
         }
-
-        System.out.println("on exp avant result");
-
 
         Event event = team.canBuyExp(gameLevelService.getExpRequired(team.getLvl()));
 
@@ -634,8 +632,6 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         int gold = team.getGold();
         int lvl = team.getLvl();
         int exp = team.getExp();
-
-        System.out.println("on exp avant persist");
 
 
         repo.persistExp(team, event, gold, lvl, exp).thenAccept(v -> msg.respondTo.tell(new ConnexionActor.FeedbackInput(Json.newObject().put(ID, msg.messageId).put(TYPE, OK)))).exceptionally(err -> { getContext().getLog().error("persistExp: {}", err.toString()); return null; });
@@ -653,6 +649,10 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * @return the next behavior
      */
     private Behavior<Message> onStartOfRoundMessage(StartOfRoundMessage msg) {
+
+        System.out.println("onStartOfRoundMessage");
+
+        if (gameOver) return Behaviors.same();
 
         for (Team team: teams){
             team.newRound();
@@ -679,46 +679,54 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
     private Behavior<Message> onEndOfRoundMessage(EndOfRoundMessage msg) {
         if (gameOver) return Behaviors.same();
 
-        List<Team> remainingTeam = game.stillAlive();
-        maxFights = remainingTeam.size()/2;
+        ActorRef<Message> self = getContext().getSelf();
 
+        List<Team> pool = new ArrayList<>(game.stillAlive());
+        List<Team[]> matches = new ArrayList<>();
 
-
-        if(remainingTeam.size() % 2 == 1) {
-            maxFights++;
-            remainingTeam.add(game.getLastDied());
+        while (pool.size() >= 2) {
+            Team a = pool.remove(rand.nextInt(pool.size()));
+            Team b = pool.remove(rand.nextInt(pool.size()));
+            matches.add(new Team[]{a, b});
+        }
+        // nombre impair : combat contre le dernier mort, sinon l'équipe passe son tour
+        if (pool.size() == 1 && game.getLastDied() != null) {
+            matches.add(new Team[]{pool.get(0), game.getLastDied()});
         }
 
         nbFight = 0;
+        maxFights = matches.size();
 
-        for (int i = 0; i < maxFights; i++){
-            Team teamA = remainingTeam.get(rand.nextInt(remainingTeam.size()));
-            remainingTeam.remove(teamA);
-            Team teamB = remainingTeam.getFirst();
-            remainingTeam.remove(teamB);
-            long seed = seedGenerator.createFromSeed(game.getSeed(), "combat:TeamAId="+ teamA.getId() + ":TeamBId=" + teamB.getId() + ":round=" + teamA.getRounds().getLast().getRoundNumber());
+        if (maxFights == 0) {
+            self.tell(new StartOfRoundMessage());
+            return Behaviors.same();
+        }
 
-            CompletionStage<FightingResultDTO> future =
-                    simulationService.simulateAsync(teamA, teamB, seed);
+        for (Team[] m : matches) {
+            Team teamA = m[0];
+            Team teamB = m[1];
+            long seed = seedGenerator.createFromSeed(game.getSeed(),
+                    "combat:TeamAId=" + teamA.getId() + ":TeamBId=" + teamB.getId()
+                            + ":round=" + teamA.getRounds().getLast().getRoundNumber());
 
-            future.thenAccept(result -> {
-                // envoi direct au ConnectionActor, sans passer par le GameActor
-                Team team1 = null;
-                Team team2 = null;
-                for (Team team: teams){
-                    if (team.getId() == result.idTeamA()) team1 = team;
-                    if (team.getId() == result.idTeamB()) team2 = team;
-                }
-                if (team2 == null || team1 == null) {
-                    return;
-                }
-                for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users){
-                    if (Objects.equals(pair.second(),team1.getUser().getId()) || Objects.equals(pair.second(), team2.getUser().getId())){
-                        pair.first().tell(new ConnexionActor.SendFight(Json.toJson(result)));
-                    }
-                }
-                getContext().getSelf().tell(new EndOfFightMessage(result));
-            });
+            simulationService.simulateAsync(teamA, teamB, seed)
+                    .whenComplete((result, err) -> {
+                        if (err != null || result == null) {
+                            if (err != null) err.printStackTrace();
+                            self.tell(new FightFailedMessage(String.valueOf(err)));
+                        } else {
+                            self.tell(new EndOfFightMessage(result));
+                        }
+                    });
+        }
+        return Behaviors.same();
+    }
+
+    private Behavior<Message> onFightFailed(FightFailedMessage msg) {
+        getContext().getLog().error("Fight failed: {}", msg.reason);
+        nbFight++;
+        if (nbFight == maxFights && !gameOver) {
+            getContext().getSelf().tell(new StartOfRoundMessage());
         }
         return Behaviors.same();
     }
@@ -737,69 +745,67 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
         if (gameOver) return Behaviors.same();
 
         nbFight++;
-        Team teamA = game.getTeam(msg.results.idTeamA());
-        Team teamB = game.getTeam(msg.results.idTeamB());
+        FightingResultDTO res = msg.results;
+        Team teamA = game.getTeamById(res.idTeamA());
+        Team teamB = game.getTeamById(res.idTeamB());
+
+        if (teamA == null || teamB == null) {
+            getContext().getLog().error("Equipe introuvable : {} vs {}", res.idTeamA(), res.idTeamB());
+            if (nbFight == maxFights) getContext().getSelf().tell(new StartOfRoundMessage());
+            return Behaviors.same();
+        }
+
+        // envoi du combat aux deux joueurs (avec un id, pour que l'ACK du client fonctionne)
+        ObjectNode fightJson = ((ObjectNode) Json.toJson(res)).put(ID, getUUID());
+        for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users) {
+            if (Objects.equals(pair.second(), teamA.getUser().getId())
+                    || Objects.equals(pair.second(), teamB.getUser().getId())) {
+                pair.first().tell(new ConnexionActor.SendFight(fightJson));
+            }
+        }
 
         Team loser = null;
         Team winner = null;
 
-        if (teamA == null || teamB == null) {
-            return Behaviors.same();
+        // une équipe déjà morte (« fantôme ») n'est pas modifiée
+        if (!teamA.isDead()) {
+            if (res.pvLostTeamA() > 0) { teamA.lostFight(res.pvLostTeamA()); loser = teamA; }
+            else { teamA.wonFight(); winner = teamA; }
         }
-
-        if (msg.results.pvLostTeamA() > 0){
-            teamA.lostFight(msg.results.pvLostTeamA());
-            loser = teamA;
-
-        } else {
-            teamA.wonFight();
-            winner = teamA;
-        }
-
-        if (msg.results.pvLostTeamB() > 0){
-            teamB.lostFight(msg.results.pvLostTeamB());
-            loser = teamB;
-        } else {
-            teamB.wonFight();
-            winner = teamB;
+        if (!teamB.isDead()) {
+            if (res.pvLostTeamB() > 0) { teamB.lostFight(res.pvLostTeamB()); loser = teamB; }
+            else { teamB.wonFight(); winner = teamB; }
         }
         game.adjustRankings();
 
         ObjectNode payload = Json.newObject().set(TEAMA, Json.newObject()
-                .put(USER, teamA.getId())
-                .put(HEALTH, msg.results.pvLostTeamA()));
+                .put(USER, teamA.getId()).put(HEALTH, res.pvLostTeamA()));
         payload.set(TEAMB, Json.newObject()
-                .put(USER, teamB.getId())
-                .put(HEALTH, msg.results.pvLostTeamB()));
-
-        JsonNode node = Json.newObject()
-                .put(ID, getUUID())
-                .put(TYPE, FIGHTRESULT)
-                .set(PAYLOAD, payload);
-
-        tellOtherUsers(node, null); //null so that everyone knows that he lost hp even himself because it is not transmitted with the fight.
+                .put(USER, teamB.getId()).put(HEALTH, res.pvLostTeamB()));
+        JsonNode node = Json.newObject().put(ID, getUUID()).put(TYPE, FIGHTRESULT).set(PAYLOAD, payload);
+        tellOtherUsers(node, null);
 
         checkHealth(teamA);
         checkHealth(teamB);
+        checkGameOver();           // une seule fois, après avoir traité les deux équipes
 
-        if (winner == null || loser == null){
-            loser = teamA;
-            winner = teamB;
+        if (winner == null || loser == null) {
+            boolean aLost = res.pvLostTeamA() > 0;
+            loser = aLost ? teamA : teamB;
+            winner = aLost ? teamB : teamA;
         }
-
-        Round loserRound = loser.getRounds().getLast();
-        Round winnerRound = winner.getRounds().getLast();
-        Fight fight = new Fight(winnerRound, loserRound);
-
-        if (nbFight == maxFights) {
-            getContext().getSelf().tell(new StartOfRoundMessage());
-        }
+        Fight fight = new Fight(winner.getRounds().getLast(), loser.getRounds().getLast());
 
         repo.add(fight);
         repo.merge(game).exceptionally(err -> {
-            System.out.println("Failed to merge game: " + err.getMessage()+ " from " + msg);
+            System.out.println("Failed to merge game: " + err.getMessage());
             return null;
-        });        return Behaviors.same();
+        });
+
+        if (nbFight == maxFights && !gameOver) {
+            getContext().getSelf().tell(new StartOfRoundMessage());
+        }
+        return Behaviors.same();
     }
 
     /**
@@ -809,6 +815,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * @return a stopped behavior
      */
     private Behavior<Message> onEndOfGame (EndOfGame msg){
+        System.out.println("onEndOfGame");
         return Behaviors.stopped();
     }
 
@@ -824,7 +831,7 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      */
     private Behavior<Message> onConnexionSetupMessage (ConnexionSetupMessage msg) {
 
-        System.out.println("on est dans le setup");
+        System.out.println("onConnexionSetupMessage");
 
 
         List<Team> teams1 = game.getTeams();
@@ -862,26 +869,18 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
                     units));
         }
 
-
-        System.out.println("on est avant le getrepo du setup");
-
-        System.out.println("on est avant le frontend1");
-
         ObjectNode response = Json.newObject().put(ID , getUUID()).put(TYPE, SETUP).set(UNITS, Json.toJson(unitDTOS));
         response.set(ITEMS, Json.toJson(game.getItemsDTO()));
         response.set(TEAM, Json.toJson(teamDTOS));
 
-        System.out.println("on est avant le frontend2");
-
         msg.respondTo.tell(new ConnexionActor.SetupMessage(response));
-
-        System.out.println("on est a la fin du setup");
-
 
         return Behaviors.same();
     }
 
     private Behavior<Message> onRoundPersisted(RoundPersistedMessage msg) {
+        System.out.println("onRoundPersisted");
+
         long endTime = System.currentTimeMillis() + ROUNDTIMEMS;
         JsonNode payload = Json.newObject().put(ID, getUUID()).put(TYPE, ROUNDWINDOW).put(PAYLOAD, endTime);
         for (Pair<ActorRef<ConnexionActor.Message>, Long> pair : users) {
@@ -935,6 +934,8 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * @param userId ID of the player concerned
      */
     private void gameOver(JsonNode payload, Long userId) {
+        System.out.println("gameOver");
+
         for (Pair<ActorRef<ConnexionActor.Message>,Long> actor : users){
             if (Objects.equals(actor.second(), userId)){
                 actor.first().tell(new ConnexionActor.EndGame(payload));
@@ -962,26 +963,23 @@ public class GameActor extends AbstractBehavior<GameActor.Message> {
      * @param team the team whose health is being checked
      */
     private void checkHealth(Team team){
-        if (team.getHealth() <= 0) {
-
+        if (!team.isDead() && team.getHealth() <= 0) {
             game.died(team);
-            gameOver(Json.newObject().put(ID, getUUID()).put(TYPE, GAMELOST), team.getId());
-
-            List<Team> remainingTeam = game.stillAlive();
-            if (remainingTeam.size() == 1){
-                gameOver = true;
-
-                JsonNode finalMessage = Json.newObject().put(ID, getUUID()).put(TYPE, GAMEOVER).put(PAYLOAD, remainingTeam.getFirst().getId());
-                for (Pair<ActorRef<ConnexionActor.Message>,Long> actor : users){
-                    actor.first().tell(new ConnexionActor.EndGame(finalMessage));
-                }
-
-                deathTimer = getContext().scheduleOnce(
-                        Duration.ofMinutes(5),
-                        getContext().getSelf(),
-                        EndOfGame.INSTANCE
-                );
-            }
+            gameOver(Json.newObject().put(ID, getUUID()).put(TYPE, GAMELOST), team.getUser().getId()); // userId, pas teamId
         }
+    }
+
+    private void checkGameOver() {
+        if (gameOver) return;
+        List<Team> remaining = game.stillAlive();
+        if (remaining.size() > 1) return;
+
+        gameOver = true;
+        long winnerId = remaining.isEmpty() ? -1L : remaining.getFirst().getId();
+        JsonNode finalMessage = Json.newObject().put(ID, getUUID()).put(TYPE, GAMEOVER).put(PAYLOAD, winnerId);
+        for (Pair<ActorRef<ConnexionActor.Message>, Long> actor : users) {
+            actor.first().tell(new ConnexionActor.EndGame(finalMessage));
+        }
+        deathTimer = getContext().scheduleOnce(Duration.ofMinutes(5), getContext().getSelf(), EndOfGame.INSTANCE);
     }
 }

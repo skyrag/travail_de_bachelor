@@ -19,8 +19,15 @@ public class EndSystem implements System{
         List<ComponentUnit> teamB;
         List<FightingEventDTO> res = new ArrayList<>();
 
-        teamA = context.getAllies(context.getAliveUnits().getFirst()).stream().filter(ComponentUnit::isAlive).toList();
-        teamB = context.getEnemies(context.getAliveUnits().getFirst()).stream().filter(ComponentUnit::isAlive).toList();
+        List<ComponentUnit> alive = context.getAliveUnits();
+        if (alive.isEmpty()) {
+            winner = null;
+            isFinished = true;
+            return List.of(new CombatEndDTO(context.getTick(), -1L));
+        }
+        ComponentUnit ref = alive.getFirst();
+        teamA = context.getAllies(ref).stream().filter(ComponentUnit::isAlive).toList();
+        teamB = context.getEnemies(ref).stream().filter(ComponentUnit::isAlive).toList();
 
         if(teamA.isEmpty() && teamB.isEmpty()){
             winner = null;

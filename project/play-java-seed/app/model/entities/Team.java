@@ -158,7 +158,7 @@ public class Team {
             this.exp = newExp;
             this.lvl++;
         } else {
-            this.exp+= newExp;
+            this.exp = newExp;
         }
     }
 
@@ -267,8 +267,9 @@ public class Team {
     public record Result(InstanceUnit instance, Event event) {}
 
     public Result buyUnit(int slot) {
+        if (slot < 0 || slot >= shop.size()) return null;
         Unit unit = shop.get(slot);
-        System.out.println(unit.getName());
+        if (unit == null) return null;
 
         Tuple newPos = firstEmptySpace();
         if (unit == null || gold < unit.getCost() || newPos == null) return null;

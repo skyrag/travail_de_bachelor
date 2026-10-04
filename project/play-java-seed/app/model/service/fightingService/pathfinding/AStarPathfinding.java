@@ -45,7 +45,7 @@ public class AStarPathfinding {
             }
 
             for (Tile adjacent : current.getAdjacentTiles()) {
-                if (adjacent.isObstacle()) {
+                if (adjacent.isObstacle() && !adjacent.equals(endPoint)) {
                     continue;
                 }
                 if (adjacent.getSearchState() == Tile.SearchState.CLOSED) {
