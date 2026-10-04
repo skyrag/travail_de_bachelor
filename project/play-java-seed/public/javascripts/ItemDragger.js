@@ -1,7 +1,7 @@
 
 export class ItemDragger {
 
-    constructor(app, layers) {
+    constructor(app, layers, websocket) {
         app.stage.eventMode = 'static';
         app.stage.hitArea = app.screen;
 
@@ -12,11 +12,12 @@ export class ItemDragger {
         app.stage.on('pointerupoutside', this.onDragEnd);
         this.app = app;
 
+        this.ws = websocket
+
         this.layers = layers
 
         this.CLICK_THRESHOLD = 8; // px, marge de tolérance avant de considérer que c'est un drag
 
-        //TODO faire en sorte que l'on puisse drag les objet et les mettre sur les unités
     }
     setArena(arena){
         this.arena = arena
@@ -89,11 +90,7 @@ export class ItemDragger {
             console.log(unit)
 
             if (unit && unit.canAddOneItem()){
-                //TODO ajouter un item a l'unité
-                console.log("ai captain")
-                this.itemBox.removeItem(item)
-                unit.addItem(item)
-
+                this.giveItem(item, unit)
 
             } else {
                 item.sprite.position.set(this.lastPos.x, this.lastPos.y);
@@ -103,11 +100,7 @@ export class ItemDragger {
             console.log("benching in progress....")
             const unit = this.team.findBenchedUnitAt(globalPos.x,globalPos.y)
             if (unit && unit.canAddOneItem()){
-                //TODO ajouter un item a l'unité
-                console.log("wesh ca devrait mettre l'item")
-                this.itemBox.removeItem(item)
-                unit.addItem(item)
-
+                this.giveItem(item, unit)
             } else {
                 item.sprite.position.set(this.lastPos.x, this.lastPos.y);
             }
@@ -115,5 +108,17 @@ export class ItemDragger {
         } else {
             item.sprite.position.set(this.lastPos.x, this.lastPos.y);
         }
+    }
+
+    giveItem(item, unit) {
+        this.ws.giveItemToUnit(unit.id, item.name, {
+            apply: () => {
+                this.itemBox.removeItem(item)
+                unit.addItem(item)
+            },
+            rollback: (reason) => {
+                console.warn("action annulé :", reason);
+            }
+        })
     }
 }

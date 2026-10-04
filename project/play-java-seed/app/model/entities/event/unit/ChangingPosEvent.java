@@ -2,6 +2,7 @@ package model.entities.event.unit;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import model.entities.Round;
 import model.entities.unit.InstanceUnit;
 import model.utils.Tuple;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.Type;
  * used to described the changes that a user want a unit to have
  */
 @Entity
+@Table(name = "changing_pos_event")
 public class ChangingPosEvent extends UnitEvent{
 
     @Type(Tuple.TupleType.class)

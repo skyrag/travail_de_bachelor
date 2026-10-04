@@ -2,7 +2,7 @@
 
 @import play.mvc.Http.Request
 
-@(implicit request: Request)
+@(userId: String, username: String)(implicit request: Request)
 
 <!DOCTYPE html>
 <html>
@@ -40,7 +40,7 @@
         <div id="view-game" style="display:none;"></div>
         <script type="module">
                 import { setupLobby } from "@routes.Assets.versioned("javascripts/lobby.js")";
-                setupLobby("@request.session().get("userId").orElse("")");
+                setupLobby("@userId", "@username");
         </script>
     </body>
 </html>

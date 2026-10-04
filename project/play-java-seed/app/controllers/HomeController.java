@@ -175,7 +175,12 @@ public class HomeController extends Controller {
 
         return userLookup.thenApply(existingUser -> {
             if (existingUser != null && hashService.verify(existingUser.getPasswordHash(), data.getPassword().toCharArray())) {
-                return ok(views.html.game.render(request)).addingToSession(request, "userId", existingUser.getStringId());
+                return ok(views.html.game.render(
+                        existingUser.getStringId(),
+                        existingUser.getUsername(),
+                        request))
+                        .addingToSession(request, "userId", existingUser.getStringId())
+                        .addingToSession(request, "username", existingUser.getUsername());
             }
             return badRequest(views.html.login.render(
                     loginForm.withError("login", "Invalid email or password."), request, messagesApi.preferred(request)));

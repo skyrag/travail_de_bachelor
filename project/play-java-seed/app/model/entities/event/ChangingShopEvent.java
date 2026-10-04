@@ -1,9 +1,6 @@
 package model.entities.event;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import model.entities.Round;
 import model.entities.unit.Unit;
 
@@ -16,6 +13,7 @@ import java.util.List;
  * it represents an event where we change the shop of a user with the new ones contained in units
  */
 @Entity
+@Table(name = "changing_shop_event")
 public class ChangingShopEvent extends Event{
 
     @ManyToMany
@@ -24,6 +22,7 @@ public class ChangingShopEvent extends Event{
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "unit_id")
     )
+    @OrderColumn(name = "slot")
     private List<Unit> units = new ArrayList<>();
 
     protected ChangingShopEvent() {

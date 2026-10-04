@@ -21,9 +21,10 @@ let arena, ourTeam, shop, itemBox;
 let basicUnits, items, teams;
 let fightManager;
 let ISFIGHTINGPHASE, ENDOFROUND, countdown;
+let ws;
 
 
-export async function initGame(rootElementId) {
+export async function initGame(rootElementId, websocket) {
 
     // Create a new application
     app = new Application();
@@ -54,8 +55,8 @@ export async function initGame(rootElementId) {
      */
 
     // setup drag and drop for unit and items
-    dragger = new Dragger(app, layers);
-    itemDragger = new ItemDragger(app, layers);
+    dragger = new Dragger(app, layers, websocket);
+    itemDragger = new ItemDragger(app, layers, websocket);
 
 
     //map to contain all units and items in the game
@@ -97,123 +98,91 @@ export async function initGame(rootElementId) {
         ENDOFROUND = true;
     }
 
+    //websocket
+    ws = websocket;
+
     //débug
     countdown.start(90)
 
 }
 
-export async function startGame(payload, myUserId) {
+export async function startGame(payload, myUserId, username) {
+
+    console.log(payload)
+    console.log(myUserId)
+    console.log(username)
+
     //---------------------------------reception du backend
 
     // la liste après extraction du TDO
-    let unitsDTO = [];
-
-    //initialisation de la liste en attendant les connexions
-    //DTO pour l'instant (id, nom, maxHealth, startingMana, maxMana, basicDamage, attackSpeed, armor, magicResist, range, rarity, cost
-    const geraltDTO = {
-        id: 0,
-        name: "geralt",
-        maxHealth: 100,
-        startingMana: 10,
-        maxMana: 40,
-        basicDamage: 20,
-        attackSpeed: 45,
-        armor: 40,
-        magicResist: 40,
-        range: 1,
-        rarity: "COMMON",
-        cost: 1,
-    }
-
-    const geraltRangeDTO = {
-        id: 0,
-        name: "geralt2",
-        maxHealth: 100,
-        startingMana: 10,
-        maxMana: 40,
-        basicDamage: 20,
-        attackSpeed: 45,
-        armor: 40,
-        magicResist: 40,
-        range: 4,
-        rarity: "UNCOMMON",
-        cost: 2,
-    }
-    unitsDTO.push(geraltDTO)
-    unitsDTO.push(geraltRangeDTO)
+    let unitsDTO = payload.units;
 
     // traitement de la réception
 
 
     for (const dto of unitsDTO) {
-        const texture = textureManager.getUnit("geralt") // Débug, it should be dto.name
-        const unit = new Unit(app, layers, dto.name, (await texture).fightingSprite, (await texture).shoppingSprite, dragger, 0, dto.maxHealth, dto.maxMana, dto.startingMana, dto.basicDamage, dto.attackSpeed, dto.armor, dto.magicResist, dto.range, dto.abilityName, dto.abilityDescription, dto.rarity, dto.cost)
+        const texture = textureManager.getUnit(dto.name) // Débug, it should be dto.name
+        const unit = new Unit(app, layers, dto.name, (await texture).fightingSprite, (await texture).shoppingSprite, dragger, 0, dto.maxHealth, dto.maxMana, dto.startingMana, dto.baseAttack, dto.attackSpeed, dto.armor, dto.magicResist, dto.range, dto.abilityName, dto.abilityDescription, dto.rarity, dto.cost)
         basicUnits.set(dto.name, unit);
     }
 
-    // traitement des OBJETs TODO
+    // traitement des OBJETs
 
-    let itemsDTO = []
-
-    const bfDTO = {
-        name: "bfSword",
-        description: "a big fucking sword",
-        sprite: "item.png",
-        effect: [
-            {
-                type: "ATTACKDAMAGE",
-                value: 10,
-            },
-            {
-                type: "HEALTH",
-                value: 100,
-            },
-        ],
-    }
-
-    itemsDTO.push(bfDTO);
+    let itemsDTO = payload.items
 
     for (const dto of itemsDTO) {
-        const texture = textureManager.getItem(dto.sprite)
-        const item = new Item(app, layers, dto.name, dto.description, (await texture), dto.effect)
+        const texture = textureManager.getItem(dto.name)
+        const item = new Item(app, layers, dto.name, dto.description, (await texture), dto.effects)
         items.set(dto.name, item);
     }
 
     // traitement de la liste des unité proposé dans le shop TODO
 
-    // create shopUnits
-    const list = [];
-    for (let i = 0; i < 5; i++) {
-        list.push(basicUnits.get("geralt").copy(i + 1));
-    }
+    const teamsDTO = payload.team
 
-    //création des teams
+    for (const team of teamsDTO){
 
-    // creating our team
+        console.log("items disponibles:", [...items.entries()]);
+        console.log("items de l'équipe (brut):", team.items);
 
-    const team = new Team(app, layout.bench, layers, 0, "skyrag");
+        if (team.username === username){ // creating our team
+            ourTeam = new Team(app, layout.bench, layers, team.id, team.username)
 
-    dragger.setTeam(team);
-    itemDragger.setTeam(team);
+            dragger.setTeam(ourTeam);
+            itemDragger.setTeam(ourTeam);
+            ourTeam.setItemBox(itemBox);
 
-    team.setItemBox(itemBox)
+            console.log("objets" + items)
 
-    teams[team.id] = team;
+            for (const name of team.items) {
+                ourTeam.items.addAnItem(items.get(name).create(itemDragger))
+            }
 
-    for (let i = 1; i < 8; i++) {
-        teams[i] = new Team(app, layout.bench, layers, i, `player${i}`)
+            // create shopUnits
+            const list = [];
+            for (const name of team.shop) {
+                list.push(basicUnits.get(name).copy(0)); // those are not instances
+            }
+
+            shop = new Shop(app, layers, ourTeam, arena, textureManager.getButton(), list, layout.shop, ws, basicUnits);
+
+            for (const unitDTO of team.units) {
+                ourTeam.addUnitToBench(basicUnits.get(unitDTO.name).copy(unitDTO.instanceId))
+            }
+
+        } else {
+            // pas encore d'utilisation des autres équipes
+            teams.push( new Team(app, layout.bench, layers, team.id, team.username))
+            console.log(teams)
+        }
     }
 
     //-----------------------------------fin du traitement de la récéption
 
-
-    // creating the shop
-    const shop = new Shop(app, layers, team, arena, textureManager.getButton(), list, layout.shop);
-
     // le tick
     app.ticker.add((ticker) => {
         shop.update(ticker.deltaTime);
-        team.update(ticker.deltaTime);
+        ourTeam.update(ticker.deltaTime);
         countdown.update(ticker.deltaMS);
 
         if (!ISFIGHTINGPHASE) return;
@@ -222,8 +191,8 @@ export async function startGame(payload, myUserId) {
         arena.checkDeath()
         if (fightManager.checkEnd()) {
             arena.clean()
-            team.resetPositions(arena)
-            team.resetUnits()
+            ourTeam.resetPositions(arena)
+            ourTeam.resetUnits()
             ISFIGHTINGPHASE = false
             countdown.start(90);
         }
@@ -249,7 +218,7 @@ export async function startGame(payload, myUserId) {
         .stroke({width: 2, color: 0x000000});
     itemButton.eventMode = 'static';
     itemButton.cursor = 'pointer';
-    itemButton.on('pointerdown', () => team.addItem(items.get("bfSword").create(itemDragger)));
+    itemButton.on('pointerdown', () => ourTeam.addItem(items.get("bfSword").create(itemDragger)));
     layers.ui.addChild(itemButton);
 }
 

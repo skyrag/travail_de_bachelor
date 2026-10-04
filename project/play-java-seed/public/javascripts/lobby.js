@@ -1,7 +1,7 @@
 import { GameConnection } from "./ws.js";
 import { initGame, startGame } from "./main.js";
 
-export function setupLobby(userId) {
+export function setupLobby(userId, username) {
     const url = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws?userId=${userId}`;
     const ws = new GameConnection(url);
     ws.connect();
@@ -36,8 +36,8 @@ export function setupLobby(userId) {
         if (gameStarted) return;
         gameStarted = true
         showView("view-game");
-        await initGame("view-game");
-        startGame(payload, "skyrag"); // payload = { units, items, team }
+        await initGame("view-game", ws);
+        startGame(payload, userId, username); // payload = { units, items, team }
     });
 
     function showView(id) {

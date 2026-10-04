@@ -1,6 +1,6 @@
 export class Dragger {
 
-    constructor(app, layers) {
+    constructor(app, layers, websocket) {
         app.stage.eventMode = 'static';
         app.stage.hitArea = app.screen;
 
@@ -13,6 +13,8 @@ export class Dragger {
         this.sellZone = null; // { x, y, width, height }
 
         this.layers = layers
+
+        this.ws = websocket
 
         this.CLICK_THRESHOLD = 8; // px, marge de tolérance avant de considérer que c'est un drag
 
@@ -92,13 +94,19 @@ export class Dragger {
 
         if (this.isInSellZone(x, y)) {
 
-            if (wasOnArena) this.arena.removeUnit(unit);
+            this.ws.sellUnit(unit.id, {
+                apply: () => {
+                    if (wasOnArena) this.arena.removeUnit(unit);
+                    this.team.sell(unit)
 
-            this.team.sell(unit)
-
-            unit.container.alpha = 1;
-            this.dragUnit = null;
-            return;
+                    unit.container.alpha = 1;
+                    this.dragUnit = null;
+                },
+                rollback: (reason) => {
+                    console.warn("Achat annulé :", reason);
+                }
+            })
+            return
         }
 
         if (this.arena.isInRange(x, y)) {
@@ -106,7 +114,18 @@ export class Dragger {
             if (wasOnArena) {
                 // Déplacement arène -> arène
                 const moved = this.arena.moveUnit(unit, x, y);
-                if (!moved) unit.container.position.set(this.lastPos.x, this.lastPos.y);
+                if (!moved) {
+                    unit.container.position.set(this.lastPos.x, this.lastPos.y);
+                } else {
+                    this.ws.moveUnit(unit.id, unit.hex.x , unit.hex.y,  {
+                        apply: () => {
+                        },
+                        rollback: (reason) => {
+                            console.warn("Achat annulé :", reason);
+                            //TODO faire un rollback
+                        }
+                    })
+                }
 
             } else if (this.team.canAddOne()) {
 
@@ -115,7 +134,15 @@ export class Dragger {
                 this.team.removeIfBenched(unit);
                 const placed = this.arena.setToClosesCell(unit, x, y);
                 if (placed) {
-                    this.team.addUnit(unit);
+                    this.ws.moveUnit(unit.id, unit.hex.x , unit.hex.y,  {
+                        apply: () => {
+                            this.team.addUnit(unit);
+                        },
+                        rollback: (reason) => {
+                            console.warn("Achat annulé :", reason);
+                            //TODO faire un rollback
+                        }
+                    })
                 } else {
                     unit.container.position.set(this.lastPos.x, this.lastPos.y);
                 }
@@ -126,10 +153,18 @@ export class Dragger {
 
         } else if (this.team.isInRange(x, y) && this.team.canAddInBench()) {
             // Retour au banc (que ce soit depuis l'arène ou ailleurs)
-            if (wasOnArena) this.arena.removeUnit(unit);
-            this.team.removeUnitFromEverywhere(unit);
-            this.team.addUnitToBench(unit);
 
+            this.ws.moveUnit(unit.id, -1 , -1,  {
+                apply: () => {
+                    if (wasOnArena) this.arena.removeUnit(unit);
+                    this.team.removeUnitFromEverywhere(unit);
+                    this.team.addUnitToBench(unit);
+                },
+                rollback: (reason) => {
+                    console.warn("Achat annulé :", reason);
+                    //TODO faire un rollback
+                }
+            })
         } else {
             unit.container.position.set(this.lastPos.x, this.lastPos.y);
         }

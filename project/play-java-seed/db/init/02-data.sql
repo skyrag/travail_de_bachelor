@@ -96,7 +96,7 @@ VALUES (
 
 WITH new_object AS (
 INSERT INTO object (patch_version, name, description)
-VALUES ('1.0.0', 'Épée +10 ATK', 'Augmente les dégâts d''attaque de 10')
+VALUES ('1.0.0', 'bfSword', 'Augmente les dégâts d''attaque de 10')
     RETURNING id
     ),
     new_effect AS (

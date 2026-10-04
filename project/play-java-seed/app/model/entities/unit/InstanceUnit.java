@@ -34,6 +34,9 @@ public class InstanceUnit {
     @Column(nullable = false)
     private Tuple pos;
 
+    @Column(nullable = false)
+    private boolean sold = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "unit_id", nullable = false)
     private Unit unit;
@@ -105,4 +108,7 @@ public class InstanceUnit {
     public void setItems(List<Item> items) {
         this.items = items;
     }
+
+    public boolean isSold() { return sold; }
+    public void markSold() { this.sold = true; }
 }

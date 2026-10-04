@@ -244,7 +244,11 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
                 ws.tell(Json.newObject().put(ID, messageId).put(TYPE, OK),
                         org.apache.pekko.actor.ActorRef.noSender());
             }
-            case BUY -> game.tell(new GameActor.BuyingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
+            case BUY -> {
+                    System.out.println(msg.text);
+                    game.tell(new GameActor.BuyingUnitMessage(userId, msg.text.get(PAYLOAD).get(SLOT).intValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
+            }
+
             case SELL -> game.tell(new GameActor.SellingUnitMessage(userId, msg.text.get(PAYLOAD).get(UNIT).longValue(), msg.text.get(ID).longValue(), getContext().getSelf()));
             case MOVE -> {
                 int x = msg.text.get(PAYLOAD).get(POSITION).get("x").intValue();
@@ -255,9 +259,9 @@ public class ConnexionActor extends AbstractBehavior<ConnexionActor.Message> {
             }
             case GIVE -> {
                 long unitId = msg.text.get(PAYLOAD).get(UNIT).longValue();
-                long itemId = msg.text.get(PAYLOAD).get(ITEM).longValue();
+                String itemName = msg.text.get(PAYLOAD).get(ITEMNAME).asText();
                 long messageId = msg.text.get(ID).longValue();
-                game.tell(new GameActor.GivingUnitObjectMessage(userId, messageId ,unitId, itemId, getContext().getSelf()));
+                game.tell(new GameActor.GivingUnitObjectMessage(userId, messageId ,unitId, itemName, getContext().getSelf()));
             }
             case REROLL -> game.tell(new GameActor.RerollShopMessage(userId, msg.text.get(ID).longValue(), getContext().getSelf()));
             case EXP -> game.tell(new GameActor.BuyingExpMessage(userId, msg.text.get(ID).longValue(), getContext().getSelf()));

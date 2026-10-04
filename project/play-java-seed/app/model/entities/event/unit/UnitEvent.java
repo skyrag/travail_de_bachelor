@@ -1,9 +1,6 @@
 package model.entities.event.unit;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import model.entities.Round;
 import model.entities.event.Event;
 import model.entities.unit.InstanceUnit;
@@ -16,6 +13,7 @@ import model.entities.unit.Unit;
  * own table, joined on the primary key with the base table of event.
  */
 @Entity
+@Table(name = "unit_event")
 public abstract class UnitEvent extends Event {
 
     @ManyToOne(fetch = FetchType.LAZY)

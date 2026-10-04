@@ -10,10 +10,7 @@ import model.entities.unit.Unit;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Represents a single match/game session, tied to a specific
@@ -89,14 +86,20 @@ public class Game {
         return true;
     }
 
-    public boolean canRemoveUnitToPool(long unitId) {
-        PoolEntry entry = getPool(unitId);
+    public boolean canRemoveUnitToPool(long id) {
+        System.out.println("on tente de remove");
+
+        PoolEntry entry = getPool(id);
+        System.out.println(entry);
         if (entry == null){
             return false;
         }
         if (entry.getNumber() - 1 > 0){
             entry.decrement();
         }
+
+        System.out.println("allgood niveau remove");
+
         return true;
     }
 
@@ -144,10 +147,10 @@ public class Game {
         return items;
     }
 
-    public PoolEntry getPool(long unitId){
+    public PoolEntry getPool(long id){
         for(Pool pool : pools){
             for (PoolEntry entry : pool.getEntries()){
-                if (entry.getUnit().getId() == unitId){
+                if (Objects.equals(entry.getUnit().getId(), id)){
                     return entry;
                 }
             }

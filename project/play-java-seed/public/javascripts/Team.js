@@ -2,7 +2,7 @@ import {Container, Graphics, Text} from "pixi.js";
 
 export class Team {
 
-    constructor(app, rect, layers, id, name) {
+    constructor(app, rect, layers, id, name, isEnnemy = true) {
         this.app = app;
         this.id = id;
         this.name = name;
@@ -128,8 +128,6 @@ export class Team {
     }
 
     buyExperience() {
-        if (this.gold < this.shop.BUY_XP_COST) return false;
-
         //TODO faire un message au backend pour lui demander de buy de l'exp
 
         this.gold -= this.shop.BUY_XP_COST;

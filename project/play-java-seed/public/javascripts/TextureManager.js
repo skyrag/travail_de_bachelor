@@ -23,7 +23,7 @@ export class TextureManager {
     }
 
     async getItem(name) {
-        return await Assets.load(`/assets/images/${name}`)
+        return await Assets.load(`/assets/images/${name}.png`)
     }
 
 

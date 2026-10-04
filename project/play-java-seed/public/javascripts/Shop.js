@@ -7,7 +7,7 @@ export class Shop {
     SHOPITEMWIDTH = 180;
     SHOPITEMHIEGHT = 180;
 
-    constructor(app,layers,  team, arena, sprite, list, rect, ws) {
+    constructor(app,layers,  team, arena, sprite, list, rect, ws, basicUnits) {
         this.app = app;
         this.team = team;
         team.setShop(this);
@@ -25,6 +25,8 @@ export class Shop {
         this.SHOPITEMWIDTH = this.SHOPWIDTH / 8
         this.SHOPITEMHIEGHT = this.SHOPHEIGHT;
 
+        this.basicUnits = basicUnits
+
 
         // création du conteneur du shop
         // Create and add a container to the stage
@@ -37,14 +39,11 @@ export class Shop {
         this.createUI(sprite, list);
     }
 
+    setWs(ws){
+        this.ws = ws
+    }
+
     resetShop(units){
-
-        if (this.team.gold < 2) {
-            console.log("Pas de gold, reroll impossible");
-            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
-        }
-
-        //TODO envoyer une message backend pour le reroll et chopper les unités
 
         let list = []
         for (const unit of units){
@@ -70,10 +69,34 @@ export class Shop {
         let i = 2;
         for (let unit of units){
             // creating the sprite for the unit
+
+            const slot = i - 2;
             unit.createShopping(i * this.SHOPITEMWIDTH + i * (this.SHOPITEMWIDTH / 6), 0, (chosen) => this.onUnitClick(chosen), this.container, this.SHOPITEMWIDTH, this.SHOPITEMHIEGHT);
             unit.shoppingSprite.on('pointerdown', () => {
-                console.log("it has been clicked")
-                this.onUnitClick(unit)
+                const benchHasRoom = this.team.canAddInBench();
+                const teamHasRoom = this.team.canAddOne();
+
+                if (!benchHasRoom && !teamHasRoom) {
+                    console.log("Pas de place (banc et équipe pleins), achat annulé");
+                    return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
+                }
+
+                if (this.team.gold < unit.cost) {
+                    console.log("Pas assez d'argent, achat annulé");
+                    return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
+                }
+                this.ws.buyUnit(slot,{
+                    apply: () => {
+                        this.onUnitClick(unit)
+                    },
+                    rollback: (reason) => {
+                        console.warn("Achat annulé :", reason);
+                        //TODO faire une bonne fonction de rollback
+                    }
+                }).then((payload) => {
+                    console.log(payload);
+                    unit.id = payload.instanceId;
+                })
             });
             this.units[unit.id] = unit;
             i++;
@@ -81,21 +104,6 @@ export class Shop {
     }
 
     onUnitClick(unit) {
-        const benchHasRoom = this.team.canAddInBench();
-        const teamHasRoom = this.team.canAddOne();
-
-        if (!benchHasRoom && !teamHasRoom) {
-            console.log("Pas de place (banc et équipe pleins), achat annulé");
-            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
-        }
-
-        if (this.team.gold < unit.cost) {
-            console.log("Pas assez d'argent, achat annulé");
-            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
-        }
-
-        //TODO envoyer une message au backend pour lui prévenir que l'on acheté l'unité et rollback si nécessaire
-
         this.team.removeGold(unit.cost);
 
         unit.createfighting(0, 0, this.team.container);
@@ -129,14 +137,26 @@ export class Shop {
         // Shows hand cursor
         reroll.cursor = 'pointer';
 
-        reroll.on('pointerdown', () => this.onButtonClick(list));
+        reroll.on('pointerdown', () => this.onButtonClick());
 
         // add the sprite to the container
         container.addChild(reroll);
     }
 
-    onButtonClick(list) {
-        this.resetShop(list);
+    onButtonClick() {
+        if (this.team.gold < 2) {
+            console.log("Pas de gold, reroll impossible");
+            return; // on ne touche à rien, pas de sprite retiré, pas d'unité créée
+        }
+
+        this.ws.rerollShop().then(payload => {
+            const names = Object.values(payload.payload);
+            const newShopUnits = names.map(name => this.basicUnits.get(name).copy(0));
+            this.resetShop(newShopUnits);
+        })
+            .catch(err => {
+                console.error("Reroll échoué :", err.message);
+            });
     }
 
     // --- UI ---
@@ -191,7 +211,22 @@ export class Shop {
             .stroke({ width: 2, color: 0x000000 });
         buyButton.eventMode = 'static';
         buyButton.cursor = 'pointer';
-        buyButton.on('pointerdown', () => this.team.buyExperience());
+        buyButton.on('pointerdown', () => {
+            if (this.team.gold < this.BUY_XP_COST) {
+                console.log("not enough money to buy exp")
+                return;
+            }
+
+            this.ws.buyExp({
+                apply: () => {
+                    this.team.buyExperience()
+                },
+                rollback: (reason) => {
+                    console.warn("Achat annulé :", reason);
+                    //TODO faire un vrai rollback
+                }
+            })
+        });
         uiContainer.addChild(buyButton);
 
         const buyText = new Text({

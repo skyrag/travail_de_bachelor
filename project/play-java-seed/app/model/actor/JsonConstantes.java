@@ -33,9 +33,12 @@ public class JsonConstantes {
 
     static final String POSITION = "position";
     static final String UNIT = "unitId";
+    static final String INSTANCEUNIT = "instanceId";
     static final String ITEM = "itemId";
     static final String USER = "userId";
     static final String HEALTH = "health";
+    static final String ITEMNAME = "itemName";
+    static final String SLOT = "slot";
 
     static final String UNITS = "units";
     static final String ITEMS = "items";

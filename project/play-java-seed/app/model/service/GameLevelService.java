@@ -18,17 +18,20 @@ public class GameLevelService {
         // chargement au démarrage
         this.levelsData = jpaApi.withTransaction(em -> {
             return em.createQuery(
-                            "SELECT s FROM LevelData s WHERE s.id.patchVersion = :version", LevelData.class)
-                    .setParameter("version", config.getValue("version").toString())
+                            "SELECT s FROM LevelData s", LevelData.class)
                     .getResultList();
         });
     }
 
     public int getProba(int level, Rarity rarity) {
+
+        System.out.println(levelsData.get(level).getId());
         return levelsData.get(level).getChance(rarity);
     }
 
     public int getExpRequired(int level) {
+
+        System.out.println(levelsData.get(level).getId());
         return levelsData.get(level).getNextLvl();
     }
 }

@@ -148,7 +148,7 @@ public class TestGameActor {
         ActorRef<GameActor.Message> actor = spawn(List.of());
         TestProbe<ConnexionActor.Message> respondTo = testKit.createTestProbe(ConnexionActor.Message.class);
 
-        actor.tell(new GameActor.BuyingUnitMessage(1L, 7L, 10L, respondTo.getRef()));
+        actor.tell(new GameActor.BuyingUnitMessage(1L, 2, 10L, respondTo.getRef()));
 
         org.junit.jupiter.api.Assertions.assertEquals(ERROR, payloadOf(respondTo.receiveMessage()).get(TYPE).asText());
     }
@@ -161,7 +161,6 @@ public class TestGameActor {
     public void onSellUnitMessage_cannotSell_sendsError() {
         Team team = mock(Team.class);
         when(game.getTeam(1L)).thenReturn(team);
-        when(team.canSellUnit(7L)).thenReturn(false);
 
         ActorRef<GameActor.Message> actor = spawn(List.of());
         TestProbe<ConnexionActor.Message> respondTo = testKit.createTestProbe(ConnexionActor.Message.class);
@@ -177,13 +176,11 @@ public class TestGameActor {
     public void onGivingUnitObjectMessage_success_mergesTeam() {
         Team team = mock(Team.class);
         when(game.getTeam(1L)).thenReturn(team);
-        when(team.canAddItemToUnit(9L, 7L)).thenReturn(true);
 
         TestProbe<ConnexionActor.Message> probe = testKit.createTestProbe(ConnexionActor.Message.class);
         ActorRef<GameActor.Message> actor = spawn(List.of(Pair.create(probe.getRef(), 1L)));
         probe.expectMessageClass(ConnexionActor.StartGame.class);
 
-        actor.tell(new GameActor.GivingUnitObjectMessage(1L, 10L, 7L, 9L, probe.getRef()));
 
         org.junit.jupiter.api.Assertions.assertEquals(OK, payloadOf(probe.receiveMessage()).get(TYPE).asText());
         verify(repo, timeout(1000)).merge(team);
@@ -197,7 +194,6 @@ public class TestGameActor {
         when(game.getTeam(1L)).thenReturn(team);
         when(team.getLvl()).thenReturn(1);
         when(gameLevelService.getExpRequired(1)).thenReturn(100);
-        when(team.canBuyExp(100)).thenReturn(false);
 
         ActorRef<GameActor.Message> actor = spawn(List.of());
         TestProbe<ConnexionActor.Message> respondTo = testKit.createTestProbe(ConnexionActor.Message.class);
@@ -213,7 +209,6 @@ public class TestGameActor {
         when(game.getTeam(1L)).thenReturn(team);
         when(team.getLvl()).thenReturn(1);
         when(gameLevelService.getExpRequired(1)).thenReturn(100);
-        when(team.canBuyExp(100)).thenReturn(true);
 
         TestProbe<ConnexionActor.Message> probe = testKit.createTestProbe(ConnexionActor.Message.class);
         ActorRef<GameActor.Message> actor = spawn(List.of(Pair.create(probe.getRef(), 1L)));

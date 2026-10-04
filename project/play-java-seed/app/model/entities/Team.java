@@ -11,12 +11,10 @@ import model.entities.unit.InstanceUnit;
 import model.entities.unit.Item;
 import model.entities.unit.Unit;
 import model.utils.Tuple;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static model.utils.Constante.*;
 
@@ -74,6 +72,7 @@ public class Team {
     private List<Unit> shop = new ArrayList<>();
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
+    @SQLRestriction("sold = false")
     private List<InstanceUnit> units = new ArrayList<>();
 
     @ManyToMany
@@ -108,43 +107,7 @@ public class Team {
         this.exp = 0;
     }
 
-    public Tuple firstEmptySpace(){
-        List<Tuple> positions = new ArrayList<>();
-
-        int benchPlaceTaken = 0;
-        int boardPlaceTaken = 0;
-
-        for(InstanceUnit unit : getUnits()) {
-            model.utils.Tuple pos = unit.getPos();
-            positions.add(unit.getPos());
-            if (pos.y() == 0){
-                benchPlaceTaken++;
-            } else {
-                boardPlaceTaken++;
-            }
-        }
-        if (benchPlaceTaken == MAXBENCHSIZE && boardPlaceTaken == getLvl()){
-            return null;
-        }
-        positions.sort(Comparator.comparingInt(Tuple::y)
-                .thenComparingInt(Tuple::x));
-        Tuple newPos = new Tuple(0,0);
-        for (Tuple pos : positions){
-            if (pos.y() != newPos.y() || pos.x() != newPos.x()){
-                return newPos;
-            }
-            if (newPos.y() == 0 && newPos.x() + 1 >= MAXBENCHSIZE){
-                newPos = new Tuple(0, 1);
-            } else {
-                if (newPos.x() + 1 >= MAXXBOARD){
-                    newPos = new Tuple(0, newPos.y() + 1);
-                } else {
-                    newPos = new Tuple(newPos.x() + 1, newPos.y());
-                }
-            }
-        }
-        return newPos;
-    }
+    private static final Tuple BENCH = new Tuple(-1, -1);
 
     public InstanceUnit isOccupied (Tuple position){
         for (InstanceUnit unit : units){
@@ -155,15 +118,37 @@ public class Team {
         return null;
     }
 
-    public boolean isFull (){
-        int boardPlaceTaken = 0;
+    public static boolean isBench(Tuple pos) {
+        return pos.x() == -1 && pos.y() == -1;
+    }
 
-        for (InstanceUnit unit: units){
-            if (unit.getPos().y() > 0){
-                boardPlaceTaken++;
+    private int benchCount() {
+        int n = 0;
+        for (InstanceUnit u : units) if (isBench(u.getPos())) n++;
+        return n;
+    }
+
+    private int boardCount() {
+        return units.size() - benchCount();
+    }
+
+    public Tuple firstEmptySpace() {
+        if (benchCount() < MAXBENCHSIZE) {
+            return BENCH;
+        }
+        if (boardCount() < lvl) {
+            for (int y = 0; y < MAXYBOARD; y++) {
+                for (int x = 0; x < MAXXTEAMBOARD; x++) {
+                    Tuple p = new Tuple(x, y);
+                    if (isOccupied(p) == null) return p;
+                }
             }
         }
-        return boardPlaceTaken == lvl;
+        return null;
+    }
+
+    public boolean isFull() {
+        return boardCount() >= lvl;
     }
 
     public void addExp(int exp, int maxExp) {
@@ -202,21 +187,24 @@ public class Team {
         round.getEvents().add(new ChangingGoldEvent(0, round, number > 1 ? ENDOFROUNDGOLD : 0));
     }
 
-    public boolean canBuyExp(int maxExp){
-        if (gold < EXPCOST && lvl != 10){
-            return false;
+    public Event canBuyExp(int maxExp){
+        if (gold < EXPCOST || lvl >= 10){
+            return null;
         }
+
+        this.gold -= EXPCOST;
         addExp(AMOUNTEXPBOUGHT, maxExp);
 
         Round currentRound = rounds.getLast();
         int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new LevelingEvent(step, currentRound, AMOUNTEXPBOUGHT));
-        return true;
+        Event event = new LevelingEvent(step, currentRound, AMOUNTEXPBOUGHT);
+        currentRound.getEvents().add(event);
+        return event;
     }
 
-    public boolean canReroll(List<Unit> shop){
+    public Event Reroll(List<Unit> shop){
         if (gold < REROLLCOST){
-            return false;
+            return null;
         }
 
         gold -= REROLLCOST;
@@ -224,15 +212,17 @@ public class Team {
 
         Round currentRound = rounds.getLast();
         int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new ChangingShopEvent(step, currentRound, shop));
-        return true;
+        Event event = new ChangingShopEvent(step, currentRound, new ArrayList<>(shop));
+        currentRound.getEvents().add(event);
+        return event;
     }
 
-    public boolean canAddItemToUnit(long itemId, long unitId){
-        Item item = getItemById(itemId);
+    public Team.Result addItemToUnit(String itemName, long unitId){
+        Item item = getItemByName(itemName);
         InstanceUnit unit = getUnitById(unitId);
+
         if (item == null || unit == null || unit.getItems().size() >= MAXNBITEMHOLDED) {
-            return false;
+            return null;
         }
 
         unit.getItems().add(item);
@@ -241,71 +231,76 @@ public class Team {
 
         Round currentRound = rounds.getLast();
         int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new ChangingUnitObjectEvent(unit, step, currentRound, unit.getItems()));
-        return true;
+        Event event = new ChangingUnitObjectEvent(unit, step, currentRound, unit.getItems());
+        currentRound.getEvents().add(event);
+        return new Result(unit, event);
     }
 
-    public boolean canMoveUnit(Tuple newPosition, long unitId){
-
-        boolean isCorrectPos = newPosition.x() < MAXXTEAMBOARD && newPosition.y() >= 0 && newPosition.y() < MAXYBOARD &&  newPosition.x() >= 0;
+    public Result moveUnit(Tuple newPosition, long unitId) {
         InstanceUnit unit = getUnitById(unitId);
+        if (unit == null) return null;
 
-        if (unit == null || !isCorrectPos) {
-            return false;
-        }
+        boolean fromBench = isBench(unit.getPos());
 
-        InstanceUnit unitToSwap = isOccupied(newPosition);
-        if (unitToSwap != null){
-            unitToSwap.setPos(unit.getPos());
-            unit.setPos(newPosition);
+        if (isBench(newPosition)) {
+            // vers le banc : refuser seulement si le banc est plein ET que l'unité n'y est pas déjà
+            if (!fromBench && benchCount() >= MAXBENCHSIZE) return null;
         } else {
-            if (newPosition.y() == 0){
-                unit.setPos(newPosition);
-            } else {
-                if (!isFull()){
-                    unit.setPos(newPosition);
-                } else {
-                    return false;
-                }
-            }
+            if (!correctPos(newPosition)) return null;          // case valide du plateau
+            if (isOccupied(newPosition) != null) return null;   // case déjà prise
+            if (fromBench && isFull()) return null;             // le plateau n'accepte plus de nouvelle unité
         }
 
+        unit.setPos(newPosition);
 
         Round currentRound = rounds.getLast();
         int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new ChangingPosEvent(unit, step, currentRound, newPosition));
-        return true;
+        Event event = new ChangingPosEvent(unit, step, currentRound, newPosition);
+        currentRound.getEvents().add(event);
+        return new Result(unit, event);
     }
 
-    public boolean canSellUnit(long unitId){
-        InstanceUnit unit = getUnitById(unitId);
-        if (unit == null){
-            return false;
-        }
-        units.remove(unit);
-        gold += (int) (unit.getUnit().getCost() * Math.pow(3, unit.getLvl()) - 1);
-        items.addAll(unit.getItems());
-
-        Round currentRound = rounds.getLast();
-        int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new SellUnitEvent(unit, step, currentRound));
-        return true;
+    private boolean correctPos(Tuple tuple){
+        return tuple.x() < MAXXTEAMBOARD && tuple.y() >= 0 && tuple.y() < MAXYBOARD &&  tuple.x() >= 0;
     }
 
-    public boolean canBuyUnit (Unit unit){
+    public record Result(InstanceUnit instance, Event event) {}
+
+    public Result buyUnit(int slot) {
+        Unit unit = shop.get(slot);
+        System.out.println(unit.getName());
+
         Tuple newPos = firstEmptySpace();
-        if (!shop.contains(unit) || gold < unit.getCost() || newPos == null){
-            return false;
-        }
+        if (unit == null || gold < unit.getCost() || newPos == null) return null;
+
         gold -= unit.getCost();
-        shop.set(shop.indexOf(unit), null);
+        shop.set(slot, null);
         InstanceUnit instance = new InstanceUnit(1, newPos, unit, this);
         addUnit(instance);
 
         Round currentRound = rounds.getLast();
         int step = currentRound.getEvents().getLast().getStep() + 1;
-        currentRound.getEvents().add(new BuyUnitEvent(instance, step, currentRound));
-        return true;
+        BuyUnitEvent event = new BuyUnitEvent(instance, step, currentRound);
+        currentRound.getEvents().add(event);
+        return new Result(instance, event);
+    }
+
+    public Result sellUnit(long id) {
+        InstanceUnit unit = getUnitById(id);
+        if (unit == null){
+            return null;
+        }
+        units.remove(unit);
+        gold += (int) (unit.getUnit().getCost() * Math.pow(3, unit.getLvl() - 1));
+        items.addAll(unit.getItems());
+        unit.getItems().clear();
+
+        Round currentRound = rounds.getLast();
+        int step = currentRound.getEvents().getLast().getStep() + 1;
+        SellUnitEvent event = new SellUnitEvent(unit, step, currentRound);
+        currentRound.getEvents().add(event);
+        return new Result(unit, event);
+
     }
 
 
@@ -315,9 +310,9 @@ public class Team {
         units.add(unit);
     }
 
-    public Item getItemById (long id) {
+    public Item getItemByName(String name) {
         for (Item item: items){
-            if (item.getId() == id){
+            if (Objects.equals(item.getName(), name)){
                 return item;
             }
         }

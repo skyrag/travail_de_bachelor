@@ -123,6 +123,7 @@ CREATE TABLE instance_unit (
     id BIGSERIAL PRIMARY KEY,
     lvl int NOT NULL,
     pos tuple NOT NULL,
+    sold BOOLEAN NOT NULL DEFAULT FALSE,
     unit_id BIGINT NOT NULL,
     team_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -291,7 +292,8 @@ CREATE TABLE changing_shop_event (
 CREATE TABLE changing_shops_unit (
     event_id BIGINT NOT NULL,
     unit_id BIGINT NOT NULL,
-    PRIMARY KEY (event_id, unit_id),
+    slot INT NOT NULL,
+    PRIMARY KEY (event_id, slot),
     CONSTRAINT fk_changing_shops_unit_event FOREIGN KEY (event_id) REFERENCES changing_shop_event(id) ON DELETE CASCADE,
     CONSTRAINT fk_changing_shops_unit_unit FOREIGN KEY (unit_id) REFERENCES unit(id) ON DELETE CASCADE
 );

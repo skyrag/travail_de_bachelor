@@ -1,9 +1,6 @@
 package model.entities.event.unit;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import model.entities.Round;
 import model.entities.unit.InstanceUnit;
 import model.entities.unit.Item;
@@ -16,6 +13,7 @@ import java.util.List;
  * the new set of objects that a user want a unit to have
  */
 @Entity
+@Table(name = "changing_unit_object_event")
 public class ChangingUnitObjectEvent extends UnitEvent{
 
     @ManyToMany

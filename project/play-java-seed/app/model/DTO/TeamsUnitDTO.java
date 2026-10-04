@@ -1,4 +1,4 @@
 package model.DTO;
 
-public record TeamsUnitDTO(long instanceId, long unitID ) {
+public record TeamsUnitDTO(long instanceId, String name ) {
 }

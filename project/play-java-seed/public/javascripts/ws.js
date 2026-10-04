@@ -142,27 +142,33 @@ export class GameConnection {
 
     // --- Actions du joueur ---
 
-    buyUnit(unitId, { apply, rollback }) {
-        return this.send(TYPE.BUY, { unitId }, { optimisticApply: apply, rollback });
+    buyUnit(slot, { apply, rollback }) { //TODO remplacer par le slot du shop
+        console.log("buy envoyer :" + slot)
+        return this.send(TYPE.BUY, { slot: slot}, { optimisticApply: apply, rollback });
     }
 
     sellUnit(unitId, { apply, rollback }) {
-        return this.send(TYPE.SELL, { unitId }, { optimisticApply: apply, rollback });
+        console.log("sell envoyer :" + unitId)
+        return this.send(TYPE.SELL, { unitId: unitId }, { optimisticApply: apply, rollback });
     }
 
     moveUnit(unitId, x, y, { apply, rollback }) {
-        return this.send(TYPE.MOVE, { unitId, position: { x, y } }, { optimisticApply: apply, rollback });
+        console.log("move envoyer :" + unitId + " :" + x + " " + y)
+        return this.send(TYPE.MOVE, { unitId: unitId, position: { x:x, y:y } }, { optimisticApply: apply, rollback });
     }
 
-    giveItemToUnit(unitId, itemId, { apply, rollback }) {
-        return this.send(TYPE.GIVE, { unitId, itemId }, { optimisticApply: apply, rollback });
+    giveItemToUnit(unitId, itemName, { apply, rollback }) {
+        console.log("giveItem envoyer :" + unitId + " " + itemName)
+        return this.send(TYPE.GIVE, { unitId: unitId, itemName: itemName }, { optimisticApply: apply, rollback });
     }
 
     buyExp({ apply, rollback }) {
+        console.log("buyexp envoyer ")
         return this.send(TYPE.EXP, {}, { optimisticApply: apply, rollback });
     }
 
     rerollShop() {
+        console.log("reroll envoyer")
         return this.send(TYPE.REROLL, {});
     }
 
@@ -193,7 +199,7 @@ export class GameConnection {
 
         switch (type) {
             case TYPE.OK:
-                this.resolvePending(id, data.payload);
+                this.resolvePending(id, data);
                 this.ackMessage(id);
                 break;
 

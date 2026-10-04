@@ -2,6 +2,7 @@ package model.entities.event;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import model.entities.Round;
 
 /**
@@ -10,6 +11,7 @@ import model.entities.Round;
  * It represents an event that changes the health of a user
  */
 @Entity
+@Table(name = "losing_health_event")
 public class LosingHealthEvent extends Event{
 
     @Column(nullable = false)
